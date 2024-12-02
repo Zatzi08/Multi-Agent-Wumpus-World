@@ -299,15 +299,7 @@ class EnvGenerator:
                 for xo, yo in set(tile_con[pos]).difference(tile_con_pos):
                     tile_con[(xo, yo)].remove(pos)
 
-        print("PRINTING!", datetime.datetime.now())
-        data = self.convert_to_int(grid)
-        cmap = colors.ListedColormap(['black', 'white'])
-        plt.figure(figsize=(self.width, self.height))
-        plt.pcolor(data[::-1], cmap=cmap, edgecolors='k', linewidths=3)
-        plt.savefig("fig")
-        print("PRINTED", datetime.datetime.now())
-        self.grid = data
-
+        self.grid = self.convert_to_int(grid)
 
     """
     @author: Lucas K
@@ -315,6 +307,14 @@ class EnvGenerator:
     @:return void
     Zum platzieren von Wumpus, Pit und Gold
     """
+
+    def printGrid(self):
+        print("PRINTING!", datetime.datetime.now())
+        cmap = colors.ListedColormap(['black', 'white'])
+        plt.figure(figsize=(self.width, self.height))
+        plt.pcolor(self.grid[::-1], cmap=cmap, edgecolors='k', linewidths=3)
+        plt.savefig("fig")
+        print("PRINTED", datetime.datetime.now())
 
     def placeWorldItems(self):
         if self.grid is None:
