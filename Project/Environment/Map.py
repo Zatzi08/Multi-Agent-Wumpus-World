@@ -34,7 +34,7 @@ class Map:
         return self.filled_map()[y][x]
 
     def getAgentInReach(self, x, y):
-        n = self.getNeighbors(x, y)
+        n = self.getNeighbors(x, y) + [(x, y)]
         adjacent = []
         for i in self.agents:
             if i.getPos in n:

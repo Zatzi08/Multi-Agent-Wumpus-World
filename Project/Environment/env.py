@@ -334,7 +334,7 @@ class EnvGenerator:
     @author: Lucas K
     @:param Grid
     @:return void
-    Zum platzieren von Wumpus, Pit und Gold
+    Zum Platzieren von Wumpus, Pit und Gold
     """
 
     def placeWorldItems(self):
