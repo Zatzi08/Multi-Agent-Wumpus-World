@@ -18,7 +18,7 @@ class Map:
         self.filled_map = gen.getGrid()
         self.agents = {}
         for i in agents:
-            self.agents[i.name] = i
+            self.agents[i.getName] = i
 
     def getNeighbors(self, x, y):
         neighbors = []
@@ -40,3 +40,6 @@ class Map:
             if i.getPos in n:
                 adjacent.append(i)
         return adjacent
+
+    def printMap(self):
+        EnvGenerator.printGrid(self.filled_map)
