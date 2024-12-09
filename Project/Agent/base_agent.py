@@ -1,14 +1,15 @@
 from Project.Simulator import Map
+from Project.Knowledge.KnowledgeBase import KnowledgeBase
 import numpy
 
 class base_agent():
-    def __init__(self, name, health, items, goal, position):
+    def __init__(self, name, health, items, goal, position, map_width, map_height):
         self.name = name
         self.health = health
         self.items = items
         self.goal = goal
         self.gold_capacity = 5
-        self.knowledge = []
+        self.knowledge = KnowledgeBase(name, map_width, map_height, position)
         self.visibility_range = 0
         self.gold_visibility_range = 0
         self.position = (1, 1)
