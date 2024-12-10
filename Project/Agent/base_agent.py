@@ -1,5 +1,5 @@
-from Project.Simulator import Map
-from Project.Knowledge.KnowledgeBase import KnowledgeBase
+from Simulator import Map
+from Knowledge.KnowledgeBase import KnowledgeBase
 import numpy
 
 class base_agent():
