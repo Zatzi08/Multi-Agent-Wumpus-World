@@ -2,6 +2,7 @@ from Simulator import Map
 from Knowledge.KnowledgeBase import KnowledgeBase
 import numpy
 
+
 class base_agent():
     def __init__(self, name, health, items, goal, position, map_width, map_height):
         self.name = name
@@ -14,7 +15,8 @@ class base_agent():
         self.gold_visibility_range = 0
         self.position = (1, 1)
 
-    def move(self, direction):  #soll ich das zu einer Liste von Agenten machen, wenn ein Team irgendwo hin will?
+    def move(self,
+             direction):  #soll ich das zu einer Liste von Agenten machen, wenn ein Team irgendwo hin will? TODO: Nein
         width = Map.shape[0]
         height = Map.shape[1]
         x, y = self.position
@@ -27,14 +29,17 @@ class base_agent():
         new_x, new_y = directions[direction]
 
         if 0 < new_x < height and 0 < new_y < width:
-            if 2 in Map[new_y][new_x]:  #wenn keine wand (enum oder list idk)
+            if 2 in Map[new_y][
+                new_x]:  #wenn keine wand (enum oder list idk) TODO: gute Frage... wahrscheinlich werden alle Infos aus der KB genommen, aber vielleicht nochmal fragen
+                # TODO: also wahrscheinlich Enum
                 print("Invalid move!")
 
             # Wumpus oderso
             elif 4 in Map[new_y][new_x]:
                 if "shield" in self.items and self.health > 1:
                     self.health -= 1
-                elif "swordsman" in Map[new_y][new_x]:  #swordsman ist im team
+                elif "swordsman" in Map[new_y][
+                    new_x]:  #swordsman ist im team TODO: Eigentlich ist jeder Agent für sich du musst also nur einen allgemeinen Move machen, denke ich
                     pass
                 else:
                     self.agentDeath()
@@ -42,34 +47,36 @@ class base_agent():
             elif 7 in Map[new_y][new_x]:
                 self.agentDeath()
 
-            #gold:wenn ein team auf gold ist, wer kriegt das gold dann?
+            #gold:wenn ein team auf gold ist, wer kriegt das gold dann? TODO: Jeder Agent für sich. Erster mit leerem Beutel oder Vote (kann diskutiert werden)
             elif 10 in Map[new_y][new_x]:
-                if self.items.count("gold") < self.gold_capacity: #soll gold in items oder in eigenem counter sein?
+                if self.items.count(
+                        "gold") < self.gold_capacity:  #soll gold in items oder in eigenem counter sein? TODO: kp
                     self.items.append("gold")
 
-            #update knowledge base?
+            #update knowledge base? TODO: ja
 
             self.position = new_x, new_y
             return self.position
 
-
-    #check pit and wumpus in move: arrow or sword? -> call methods
+    #check pit and wumpus in move: arrow or sword? -> call methods TODO: Hätte gedacht du musst nichts checken sondern nur machen
 
     def shoot(self, direction):
-        if "Arrow" in self.items and self.items[1] > 0: #kriegt jeder jetzt pfeile? range erstmal auf 3 gesetzt
+        if "Arrow" in self.items and self.items[
+            1] > 0:  #kriegt jeder jetzt pfeile? range erstmal auf 3 gesetzt TODO: Range = infty = bis hit Wall oder Ding
+            # TODO: friendly fire?
             x, y = self.position
             ranges = {
-                "up": [(x,y+1),(x,y+2),(x,y+3)],
-                "down": [(x,y-1),(x,y-2),(x,y-3)],
-                "right": [(x+1,y),(x+2,y),(x+3,y)],
-                "left": [(x-1,y),(x-2,y),(x-3,y)]
+                "up": [(x, y + 1), (x, y + 2), (x, y + 3)],
+                "down": [(x, y - 1), (x, y - 2), (x, y - 3)],
+                "right": [(x + 1, y), (x + 2, y), (x + 3, y)],
+                "left": [(x - 1, y), (x - 2, y), (x - 3, y)]
             }
 
             self.checkShoot(ranges[direction])
 
         else:
             print(self.name, "has no arrows left!")
-        #if wall or wumpus then stop flying oder kann man 2 töten?
+        #if wall or wumpus then stop flying oder kann man 2 töten? TODO: 1 Pfeil = max 1 Kill
 
     def checkShoot(self, positions):
         for pos in positions:
@@ -81,8 +88,6 @@ class base_agent():
                     #break ?
                 elif 1 in Map[pos[1]][pos[0]]:
                     break
-
-
 
     def agentDeath(self):
         self.health = 0
