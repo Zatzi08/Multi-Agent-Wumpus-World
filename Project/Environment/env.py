@@ -1,4 +1,3 @@
-import math
 import random
 
 import numpy as np
@@ -24,24 +23,6 @@ class EnvGenerator:
 
     def getGrid(self):
         return self.grid.copy()
-
-    """
-    @author: Lucas K
-    @:param Array (zukünftiges Grid)
-    @:return void
-    Zur visuellen Ausgabe des Grids in der Konsole
-    """
-
-    def print_grid(self, grid: np.ndarray):
-        f = open("grid.txt", 'w', encoding='UTF-8')
-        for y in range(0, self.height):
-            line = ""
-            for x in range(0, self.width):
-                if grid[y][x] == ' ':
-                    line += " "
-                else:
-                    line += "■  "
-            f.write(line + "\n")
 
     """
     @author: Lucas K
@@ -353,7 +334,7 @@ class EnvGenerator:
     @author: Lucas K
     @:param Grid
     @:return void
-    Zum platzieren von Wumpus, Pit und Gold
+    Zum Platzieren von Wumpus, Pit und Gold
     """
 
     def placeWorldItems(self):
@@ -394,7 +375,7 @@ class EnvGenerator:
         dead = find_dead_end()
 
         treasure = random.sample(dead, k=int(len(dead)*self.treasure_prob))
-        treasureWumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
+        treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
         pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
         room_without_pit = list(set(self.room_list).difference(set(pit_room)))
         wumpus_room = random.sample(room_without_pit, k=int(len(room_without_pit) * self.wumpus_prob))
@@ -402,7 +383,7 @@ class EnvGenerator:
         for tx, ty in treasure:
             grid[ty][tx].append(3)
 
-        for tx, ty in treasureWumpus:
+        for tx, ty in treasure_Wumpus:
             nei = getNeighbors(tx, ty)
             x, y = random.choices(nei, k=1)[0]
             grid[y][x].append(4)
