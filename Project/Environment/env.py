@@ -1,4 +1,3 @@
-import math
 import random
 
 import numpy as np
@@ -9,56 +8,38 @@ import datetime
 
 
 class EnvGenerator:
-    __slots__ = ['height', 'width', 'start_pos', 'gold_count', 'wumpus_prob', 'pit_prob', 'seed', 'grid']
+    __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid', 'room_list']
 
     def __init__(self, height, width, seed=42):
         self.height = height
         self.width = width
         self.start_pos = (1, 1)
-        self.gold_count = math.sqrt((height * width))
         self.wumpus_prob = 0.5
-        self.pit_prob = 0.01
+        self.pit_prob = 0.3
+        self.treasure_prob = 0.3
         self.seed = seed
         self.grid = None
+        self.room_list = []
 
     def getGrid(self):
-        return self.grid
-
-    """
-    @author: Lucas K
-    @:param Array (zukünftiges Grid)
-    @:return void
-    Zur visuellen Ausgabe des Grids in der Konsole
-    """
-
-    def print_grid(self, grid: np.ndarray):
-        f = open("grid.txt", 'w', encoding='UTF-8')
-        for y in range(0, self.height):
-            line = ""
-            for x in range(0, self.width):
-                if grid[y][x] == ' ':
-                    line += " "
-                else:
-                    line += "■  "
-            f.write(line + "\n")
+        return self.grid.copy()
 
     """
     @author: Lucas K
     @:param Array
     @:return Array.astype(int)
-    1 für Wand, 0 für Weg Umwandlung zu int
+    None für Wand, [] für Weg Umwandlung zu Array
     """
 
-    def convert_to_int(self, grid):
-        g = np.ndarray((self.height, self.width))
-        g.astype(int)
-
+    def convert_to_Array(self, grid):
+        g = np.ndarray((self.height, self.width), list)
+        # Path = [] Wall = None
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if grid[y][x] == ' ':
-                    g[y][x] = 0
+                    g[y][x] = []
                 else:
-                    g[y][x] = 1
+                    g[y][x] = None
         return g
 
     # define Tiles -> gen grid using Tiles by prob and some rules
@@ -141,14 +122,19 @@ class EnvGenerator:
         @:param None
         @:return Leeres Array.astype(str)
         Erweitert die gegebene Höhe und Breite auf ein vielfaches von 3 
+        
+        @ Explanation
+        Wall = None
+        Path = [...]
+        Events:
+            Shine   = [..., 3, ...] = Gold
+            Breeze  = [..., 9, ...]
+            Stench   = [..., 6, ...]
+            Pit     = [..., 7, ...]
+            Wumpus  = [..., 4, ...]
         """
 
         def getGrid() -> np.ndarray:
-            # extend grid to fit full tiles
-            if self.width % 3 != 0:
-                self.width += 3 - (self.width % 3)
-            if self.height % 3 != 0:
-                self.height += 3 - (self.height % 3)
             # Return Grid
             return np.ndarray((self.height, self.width)).astype(str)
 
@@ -269,7 +255,7 @@ class EnvGenerator:
                     grid[y][x] = f"({x}, {y})"
 
         grid = getGrid()
-        fillWithPos(grid)
+        #fillWithPos(grid)
 
         toSet = set()
         toSet.add(self.start_pos)
@@ -288,6 +274,9 @@ class EnvGenerator:
             else:
                 blank_count += 1
 
+            if t == 6:
+                self.room_list.append(pos)
+
             if t != -1:
                 setTile(t, o, pos)
                 x, y = pos
@@ -299,27 +288,119 @@ class EnvGenerator:
                 for xo, yo in set(tile_con[pos]).difference(tile_con_pos):
                     tile_con[(xo, yo)].remove(pos)
 
-        self.grid = self.convert_to_int(grid)
+        self.grid = self.convert_to_Array(grid)
+
+    """
+    @author: Lucas K
+    @:return void
+    Zum speichern des Grid als png
+    """
+
+    def printGrid(self):
+
+        def convert_to_int(grid):
+            g = np.ndarray((self.height, self.width), int)
+
+            for y in range(0, self.height):
+                for x in range(0, self.width):
+                    # Wall
+                    if grid[y][x] is None:
+                        g[y][x] = 0
+                    # Wumpus
+                    elif 4 in grid[y][x]:
+                        g[y][x] = 40
+                    # Gold
+                    elif 3 in grid[y][x]:
+                        g[y][x] = 20
+                    # Pit
+                    elif 7 in grid[y][x]:
+                        g[y][x] = 30
+                    # Path
+                    else:
+                        g[y][x] = 10
+            return g
+
+        data = convert_to_int(self.grid)
+        print("PRINTING!", datetime.datetime.now())
+        cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
+        bounds = [0, 10, 20, 30, 40, 50]
+        norm = colors.BoundaryNorm(bounds, cmap.N)
+        plt.figure(figsize=(self.width, self.height))
+        plt.pcolor(data[::-1], cmap=cmap, norm=norm, edgecolors='k', linewidths=3)
+        plt.savefig("fig")
+        print("PRINTED", datetime.datetime.now())
 
     """
     @author: Lucas K
     @:param Grid
     @:return void
-    Zum platzieren von Wumpus, Pit und Gold
+    Zum Platzieren von Wumpus, Pit und Gold
     """
-
-    def printGrid(self):
-        print("PRINTING!", datetime.datetime.now())
-        cmap = colors.ListedColormap(['black', 'white'])
-        plt.figure(figsize=(self.width, self.height))
-        plt.pcolor(self.grid[::-1], cmap=cmap, edgecolors='k', linewidths=3)
-        plt.savefig("fig")
-        print("PRINTED", datetime.datetime.now())
 
     def placeWorldItems(self):
         if self.grid is None:
             raise Exception("No Grid defined")
-        pass
+        random.seed(self.seed)
+
+        grid = self.grid.copy()
+
+        def getNeighbors(x: int, y: int):
+            neighbors = []
+            for xi in [-1, 0, 1]:
+                for yj in [-1, 0, 1]:
+                    if abs(xi) == abs(yj):
+                        continue
+                    elif 0 < x + xi < self.width and 0 < y + yj < self.height and grid[y + yj][x + xi] is not None:
+                        neighbors.append((x + xi, y + yj))
+            return neighbors
+
+        def find_dead_end() -> list[tuple[int, int]]:
+
+            ends = []
+            sx, sy = self.start_pos
+            visit = [self.start_pos]
+            visited = np.ndarray((self.width, self.height)).astype(bool)
+            visited.fill(False)
+            while visit:
+                x, y = visit.pop()
+                visited[y][x] = True
+                n = getNeighbors(x, y)
+                if len(n) == 1 and abs(x-sx) + abs(y-sy) > 1:
+                    ends.append((x, y))
+                for xi, yi in n:
+                    if not visited[yi][xi]:
+                        visit.append((xi, yi))
+            return ends
+
+        dead = find_dead_end()
+
+        treasure = random.sample(dead, k=int(len(dead)*self.treasure_prob))
+        treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
+        pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
+        room_without_pit = list(set(self.room_list).difference(set(pit_room)))
+        wumpus_room = random.sample(room_without_pit, k=int(len(room_without_pit) * self.wumpus_prob))
+
+        for tx, ty in treasure:
+            grid[ty][tx].append(3)
+
+        for tx, ty in treasure_Wumpus:
+            nei = getNeighbors(tx, ty)
+            x, y = random.choices(nei, k=1)[0]
+            grid[y][x].append(4)
+            for sx, sy in getNeighbors(x, y):
+                grid[sy][sx].append(6)
+
+        for wx, wy in wumpus_room:
+            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
+            grid[wy + y][wx + x].append(4)
+            for sx, sy in getNeighbors(wx + x, wy + y):
+                grid[sy][sx].append(6)
+
+        for px, py in pit_room:
+            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
+            grid[py + y][px + x].append(7)
+            for bx, by in getNeighbors(px + x, py + y):
+                grid[by][bx].append(9)
 
     # --------------------------------------------------------------------------------------------------------- #
     # Every other tile (both dim) is wall -> set other walls by random with prob p_w
@@ -327,6 +408,7 @@ class EnvGenerator:
         pass
 
 
-a = EnvGenerator(300, 300, 123)
+a = EnvGenerator(120, 120, 42)
 a.genByTile()
-a.getGrid()
+a.placeWorldItems()
+a.printGrid()
