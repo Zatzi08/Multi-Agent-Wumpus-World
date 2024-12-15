@@ -38,9 +38,12 @@ class base_agent():
             elif TileCondition.WUMPUS in Map[new_y][new_x]:
                 if "shield" in self.items and self.health > 1:
                     self.health -= 1
+
                 elif "swordsman" in Map[new_y][
                     new_x]:  #swordsman ist im team TODO: Eigentlich ist jeder Agent für sich du musst also nur einen allgemeinen Move machen, denke ich
                     pass
+
+
                 else:
                     self.agentDeath()
 
@@ -48,15 +51,29 @@ class base_agent():
             elif TileCondition.PIT in Map[new_y][new_x]:
                 self.agentDeath()
 
+
             #gold:wenn ein team auf gold ist, wer kriegt das gold dann? TODO: Jeder Agent für sich. Erster mit leerem Beutel oder Vote (kann diskutiert werden)
             elif TileCondition.SHINY in Map[new_y][new_x]:
                 if self.gold_count < self.gold_capacity:
                     self.gold_count += 1
 
+            #gold:wenn ein team auf gold ist, wer kriegt das gold dann?
+            elif 10 in Map[new_y][new_x]:
+                if self.items.count("gold") < self.gold_capacity:  #soll gold in items oder in eigenem counter sein?
+                    self.items.append("gold")
+
             #update knowledge base? TODO: ja
 
             self.position = new_x, new_y
             return self.position
+
+    def agentDeath(self):
+        x, y = self.position
+        self.health = 0
+        # lösche agent aus karte
+        index = Map[y][x].index(self.name)  # wie wird ein Agent auf einer bestimmten Position gespeichert?
+        Map[y][x].pop(index)
+        print(self.name, "has died!")
 
     def shoot(self, direction):
         if "Arrow" in self.items and self.items[1] > 0:
@@ -92,13 +109,34 @@ class base_agent():
         else:
             print(self.name, "has no arrows left!")
 
-    def agentDeath(self):
-        x, y = self.position
-        self.health = 0
-        #lösche agent aus karte
-        index = Map[y][x].index(self.name)  #wie wird ein Agent auf einer bestimmten Position gespeichert?
-        Map[y][x].pop(index)
-        print(self.name, "has died!")
+        #hat swordsman eine Reichweite zum Nachbarsfeld?
+
+    #check pit and wumpus in move: arrow or sword? -> call methods
+
+    def shoot(self, direction):
+        if "Arrow" in self.items and self.items[1] > 0:  #kriegt jeder jetzt pfeile? range erstmal auf 3 gesetzt
+            xPos, yPos = self.position
+            directions = {
+                "up": {"x": 0, "y": 1},
+                "down": {"x": 0, "y": -1},
+                "right": {"x": 1, "y": 1},
+                "left": {"x": -1, "y": 0}
+            }
+
+            for pos in directions[direction]:  #hier code beendet
+                if 0 < pos[0] < Map.shape[0] and 0 < pos[1] < Map.shape[1]:
+                    if 2 in Map[pos[1]][pos[0]]:
+                        index = Map[pos[1]][pos[0]].index(2)
+                        Map[pos[1]][pos[0]].pop(index)
+                        print(self.name, "has killed a Wumpus!")
+                        # break ?
+                    elif 1 in Map[pos[1]][pos[0]]:
+                        break
+
+
+        else:
+            print(self.name, "has no arrows left!")
+
 
 #reload Method?
 #karte zeichnen Method?
