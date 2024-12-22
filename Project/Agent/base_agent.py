@@ -138,8 +138,8 @@ class base_agent():
             print(self.name, "has no arrows left!")
 
 
-#reload Method?
-#karte zeichnen Method?
+# reload Method?
+# karte zeichnen Method? TODO: Sollte Knowledge-Base sein, also Kartograf wird einfach mit mehr Wissen initialisiert
 
 class hunter(base_agent):
     def __init__(self, name, health):  #Bogen als Item?

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Union, Optional
-from Agent.base_agent import *
-from Environment import Map
+from Project.Agent.base_agent import *
+from Project.Environment import Map
 
 
 class Performative(Enum):
@@ -39,14 +39,13 @@ class Message:
         self.receiver = receiver
         self.content = content
 
-    def __repr__(self):
-        return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \
+    def __repr__(self): # TODO: Warum ist hier ein "obj" drin, aber nicht in der Klasse
+        return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \ 
                f"receiver={self.receiver}, content={self.content})"
 
-
 # Kommunikationskanal
-class CommunicationChannel:
-    def __init__(self, initiator, participants, map_instance: Map):
+class CommunicationChannel: # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
+    def __init__(self, initiator, participants, map_instance: Map): # TODO: Warum benötigtest du hier die Map. Solltest doch einfach davon ausgehen können, dass participants valid sind
         self.initiator = initiator
         self.participants = self.filter_neighbors(initiator, participants, map_instance)
         self.completed = False
@@ -64,7 +63,7 @@ class CommunicationChannel:
 
     def send_direct(self, sender, recipient, message: Message):
         print(f"[Channel] {sender.name} sent direct message to {recipient.name}: {message}")
-        recipient.receive_message(message)
+        recipient.receive_message(message) # TODO: Sollte der Responce nicht gespeichert/zurückgeben werden oder so?
 
     def broadcast(self, message: Message):
         print(f"[Channel] {message.sender} broadcasted: {message}")
@@ -76,6 +75,12 @@ class CommunicationChannel:
             f"[Channel] Communication between {self.initiator.name} and {len(self.participants)} participants closed.")
         self.completed = True
 
+
+# TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
+# Eventueller Ablauf von kommunikation:
+#   - Initiator initialisiert Kanal mit Sender, Receiver, Request, usw.
+#   - Kanal übernimmt kommunikation bis Ergebnis vorhanden
+#   - Kanal gibt Ergebnis an Initiator zurück
 
 def handle_request(sender, receiver, request_type: ContentKey, counteroffer):
     print(f"[Request] {sender.name} sent request to {receiver.name}: {request_type}, Counteroffer: {counteroffer}")

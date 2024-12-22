@@ -1,3 +1,6 @@
+from Project.Knowledge.KnowledgeBase import TileCondition
+
+
 import random
 
 import numpy as np
@@ -307,13 +310,13 @@ class EnvGenerator:
                     if grid[y][x] is None:
                         g[y][x] = 0
                     # Wumpus
-                    elif 4 in grid[y][x]:
+                    elif TileCondition.WUMPUS in grid[y][x]:
                         g[y][x] = 40
                     # Gold
-                    elif 3 in grid[y][x]:
+                    elif TileCondition.SHINY in grid[y][x]:
                         g[y][x] = 20
                     # Pit
-                    elif 7 in grid[y][x]:
+                    elif TileCondition.PIT in grid[y][x]:
                         g[y][x] = 30
                     # Path
                     else:
@@ -381,31 +384,27 @@ class EnvGenerator:
         wumpus_room = random.sample(room_without_pit, k=int(len(room_without_pit) * self.wumpus_prob))
 
         for tx, ty in treasure:
-            grid[ty][tx].append(3)
+            grid[ty][tx].append(TileCondition.SHINY)
 
         for tx, ty in treasure_Wumpus:
             nei = getNeighbors(tx, ty)
             x, y = random.choices(nei, k=1)[0]
-            grid[y][x].append(4)
+            grid[y][x].append(TileCondition.WUMPUS)
             for sx, sy in getNeighbors(x, y):
-                grid[sy][sx].append(6)
+                grid[sy][sx].append(TileCondition.STENCH)
 
         for wx, wy in wumpus_room:
             x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[wy + y][wx + x].append(4)
+            grid[wy + y][wx + x].append(TileCondition.WUMPUS)
             for sx, sy in getNeighbors(wx + x, wy + y):
-                grid[sy][sx].append(6)
+                grid[sy][sx].append(TileCondition.STENCH)
 
         for px, py in pit_room:
             x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[py + y][px + x].append(7)
+            grid[py + y][px + x].append(TileCondition.PIT)
             for bx, by in getNeighbors(px + x, py + y):
-                grid[by][bx].append(9)
+                grid[by][bx].append(TileCondition.BREEZE)
 
-    # --------------------------------------------------------------------------------------------------------- #
-    # Every other tile (both dim) is wall -> set other walls by random with prob p_w
-    def genByRandom(self):
-        pass
 
 
 a = EnvGenerator(120, 120, 42)

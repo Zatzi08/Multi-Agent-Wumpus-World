@@ -1,4 +1,5 @@
 from Project.Environment.env import EnvGenerator
+from Project.Knowledge.KnowledgeBase import TileCondition
 
 
 class Map:
@@ -10,6 +11,7 @@ class Map:
             self.width += 3 - (self.width % 3)
         if height % 3 != 0:
             self.height += 3 - (self.height % 3)
+
         self.start_pos = (1, 1)
         gen = EnvGenerator(self.height, self.width)
         gen.genByTile()
@@ -31,7 +33,7 @@ class Map:
         return neighbors
 
     def getEventsOnTile(self, x, y):
-        return self.filled_map()[y][x]
+        return self.filled_map[y][x]
 
     def getAgentInReach(self, x, y):
         n = self.getNeighbors(x, y) + [(x, y)]
@@ -40,6 +42,10 @@ class Map:
             if i.getPos in n:
                 adjacent.append(i)
         return adjacent
+
+    def deleteCondition(self, x, y, cond: TileCondition):
+        if cond in self.getEventsOnTile(x, y):
+            self.map.filled_map[y][x].remove(cond)
 
     def printMap(self):
         EnvGenerator.printGrid(self.filled_map)

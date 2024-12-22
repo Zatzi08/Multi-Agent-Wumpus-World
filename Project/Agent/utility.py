@@ -181,6 +181,7 @@ def utility_movement(map_knowledge: KnowledgeBase, agent):
 #   Knight will
 # if cfp für Informationsaustausch:
 #       goal = map -->
+# TODO: Wie wäre es mit Nutzen der Kommunikation ist gleich Nutzen der bekommenden Info/Dienstleistung - Nutzen gegebener Info/Dienstleistung (Nutzen ist ja ähnlich zu Wert)
 def utility_communication():
 
     pass
