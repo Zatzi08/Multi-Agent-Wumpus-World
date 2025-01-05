@@ -11,6 +11,7 @@ class Performative(Enum):
     INFORMATION: 4
 
 
+# TODO: Frage: Was genau ist Content Key? Unterschied Help und Request?
 class ContentKey(Enum):
     POSITION: 1
     COUNTEROFFER: 2
@@ -23,11 +24,12 @@ class Status(Enum):
     DENY: 2
 
 
+# TODO: Warum kein allgemeines Offer Enum mit GOLD, KNOWDLEDGE, REQUEST ?
 class CounterOffer(Enum):
     GOLD: 1
     REQUEST: 2
 
-
+# TODO: warum nicht obj in Message init?
 class Message:
     def __init__(self,
                  performative: Performative,
@@ -47,7 +49,7 @@ class Message:
 class CommunicationChannel: # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
     def __init__(self, initiator, participants, map_instance: Map): # TODO: Warum benötigtest du hier die Map. Solltest doch einfach davon ausgehen können, dass participants valid sind
         self.initiator = initiator
-        self.participants = self.filter_neighbors(initiator, participants, map_instance)
+        self.participants = self.filter_neighbors(initiator, participants, map_instance) # TODO: kann man mit den Nachbarn kommunizieren? Dachte nur auf gleichem Feld
         self.completed = False
 
         if not self.participants:
