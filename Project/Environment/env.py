@@ -1,6 +1,5 @@
 from Project.Knowledge.KnowledgeBase import TileCondition
 
-
 import random
 
 import numpy as np
@@ -11,7 +10,8 @@ import datetime
 
 
 class EnvGenerator:
-    __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid', 'room_list']
+    __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
+                 'room_list']
 
     def __init__(self, height, width, seed=42):
         self.height = height
@@ -358,7 +358,6 @@ class EnvGenerator:
             return neighbors
 
         def find_dead_end() -> list[tuple[int, int]]:
-
             ends = []
             sx, sy = self.start_pos
             visit = [self.start_pos]
@@ -368,7 +367,7 @@ class EnvGenerator:
                 x, y = visit.pop()
                 visited[y][x] = True
                 n = getNeighbors(x, y)
-                if len(n) == 1 and abs(x-sx) + abs(y-sy) > 1:
+                if len(n) == 1 and abs(x - sx) + abs(y - sy) > 1:
                     ends.append((x, y))
                 for xi, yi in n:
                     if not visited[yi][xi]:
@@ -377,7 +376,7 @@ class EnvGenerator:
 
         dead = find_dead_end()
 
-        treasure = random.sample(dead, k=int(len(dead)*self.treasure_prob))
+        treasure = random.sample(dead, k=int(len(dead) * self.treasure_prob))
         treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
         pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
         room_without_pit = list(set(self.room_list).difference(set(pit_room)))
@@ -404,7 +403,6 @@ class EnvGenerator:
             grid[py + y][px + x].append(TileCondition.PIT)
             for bx, by in getNeighbors(px + x, py + y):
                 grid[by][bx].append(TileCondition.BREEZE)
-
 
 
 a = EnvGenerator(120, 120, 42)
