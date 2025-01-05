@@ -5,15 +5,15 @@ import numpy
 
 
 class TileCondition(Enum):
-    SAFE: 0
-    WALL: 1
-    SHINY: 2
-    WUMPUS: 3
-    PREDICTED_WUMPUS: 4
-    STENCH: 5
-    PIT: 6
-    PREDICTED_PIT: 7
-    BREEZE: 8
+    SAFE = 0
+    WALL = 1
+    SHINY = 2
+    WUMPUS = 3
+    PREDICTED_WUMPUS = 4
+    STENCH = 5
+    PIT = 6
+    PREDICTED_PIT = 7
+    BREEZE = 8
 
 
 class _Tile:
@@ -101,8 +101,14 @@ class KnowledgeBase:
     # MAP
     #
 
-    def __add_condition_if_all_surrounding_tiles_allow(self, x: int, y: int, tile_condition: TileCondition in {TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS, TileCondition.PREDICTED_PIT}) -> bool:
+    def __add_condition_if_all_surrounding_tiles_allow(self, x: int, y: int, tile_condition: TileCondition) -> bool:
         """adds (predicted) dangers if no adjacent tile disallows it"""
+
+        # check for allowed tile_condition values
+        if tile_condition not in {TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS, TileCondition.PREDICTED_PIT}:
+            raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, "
+                             f"{TileCondition.WUMPUS}, and {TileCondition.PREDICTED_PIT}.")
+
         # get tile condition that the surrounding tiles have to fulfill
         if tile_condition == TileCondition.PREDICTED_PIT:
             surrounding_tiles_condition = TileCondition.BREEZE
@@ -124,8 +130,14 @@ class KnowledgeBase:
             return True
         return False
 
-    def __predict(self, x: int, y: int, tile_condition: TileCondition in {TileCondition.PREDICTED_WUMPUS, TileCondition.PREDICTED_PIT}) -> bool:
+    def __predict(self, x: int, y: int, tile_condition: TileCondition) -> bool:
         """predicts dangers"""
+
+        # check for allowed tile_condition values
+        if tile_condition not in {TileCondition.PREDICTED_WUMPUS, TileCondition.PREDICTED_PIT}:
+            raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, and "
+                             f"{TileCondition.PREDICTED_PIT}.")
+
         # check if prediction is already made
         if self.__map.access(x, y).has(tile_condition):
             return True
@@ -151,8 +163,14 @@ class KnowledgeBase:
         # add, if consistent with surrounding tiles
         return self.__add_condition_if_all_surrounding_tiles_allow(x, y, tile_condition)
 
-    def __add_stench_or_breeze(self, x: int, y: int, tile_condition: TileCondition in {TileCondition.STENCH, TileCondition.BREEZE}) -> bool:
+    def __add_stench_or_breeze(self, x: int, y: int, tile_condition: TileCondition) -> bool:
         """adds stenches or breezes if possible, then predicts dangers"""
+
+        # check for allowed tile_condition values
+        if tile_condition not in {TileCondition.STENCH, TileCondition.BREEZE}:
+            raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.STENCH}, and "
+                             f"{TileCondition.BREEZE}.")
+
         # check if stench or breeze is already placed
         if self.__map.access(x, y).has(tile_condition):
             return True
@@ -190,8 +208,14 @@ class KnowledgeBase:
                     return True
         return True
 
-    def __discard_and_re_predict(self, x: int, y: int, tile_condition: TileCondition in {TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.PREDICTED_PIT}):
+    def __discard_and_re_predict(self, x: int, y: int, tile_condition: TileCondition):
         """discards (predicted) dangers, then re-evaluates stenches and danger predictions accordingly"""
+
+        # check for allowed tile_condition values
+        if tile_condition not in {TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS, TileCondition.PREDICTED_PIT}:
+            raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, "
+                             f"{TileCondition.WUMPUS}, and {TileCondition.PREDICTED_PIT}.")
+
         if self.__map.access(x, y).has(tile_condition):
             # discard danger
             self.__map.access(x, y).remove(tile_condition)

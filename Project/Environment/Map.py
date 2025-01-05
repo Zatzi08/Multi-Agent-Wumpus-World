@@ -44,8 +44,22 @@ class Map:
         return adjacent
 
     def deleteCondition(self, x, y, cond: TileCondition):
-        if cond in self.getEventsOnTile(x, y):
-            self.map.filled_map[y][x].remove(cond)
+        def deleteCond(ix, iy, icond):
+            if cond in self.getEventsOnTile(ix, iy):
+                self.map.filled_map[y][x].remove(icond)
+
+        deleteCond(x, y, cond)
+        if cond in [TileCondition.WUMPUS, TileCondition.PIT]:
+            if cond == TileCondition.WUMPUS:
+                secCond = TileCondition.STENCH
+            else:
+                secCond = TileCondition.BREEZE
+            for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
+                deleteCond(ox, oy, secCond)
+
+    def deleteAgent(self, name):
+        if self.agents.get(name, None) is not None:
+            self.agents.pop(name)
 
     def printMap(self):
         EnvGenerator.printGrid(self.filled_map)
