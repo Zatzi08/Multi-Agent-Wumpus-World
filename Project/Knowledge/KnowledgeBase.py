@@ -5,15 +5,15 @@ import numpy
 
 
 class TileCondition(Enum):
-    SAFE: 0
-    WALL: 1
-    SHINY: 2
-    WUMPUS: 3
-    PREDICTED_WUMPUS: 4
-    STENCH: 5
-    PIT: 6
-    PREDICTED_PIT: 7
-    BREEZE: 8
+    SAFE = 0
+    WALL = 1
+    SHINY = 2
+    WUMPUS = 3
+    PREDICTED_WUMPUS = 4
+    STENCH = 5
+    PIT = 6
+    PREDICTED_PIT = 7
+    BREEZE = 8
 
 
 class _Tile:
