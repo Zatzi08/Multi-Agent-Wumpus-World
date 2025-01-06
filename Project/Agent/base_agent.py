@@ -4,9 +4,12 @@ import numpy
 
 
 class base_agent():
+
+    HUNTER_ARROW = 5; DEFAULT_HEALTH = 1; KNIGHT_HEALTH = 3
+    REPLENISH_TIME = 3;
     def __init__(self, name, health, items, goal, position, map_width, map_height):
         self.name = name
-        self.health = health
+        self.health = base_agent.DEFAULT_HEALTH
         self.items = items
         self.goal = goal
         self.gold_capacity = 5
@@ -15,6 +18,7 @@ class base_agent():
         self.visibility_range = 0
         self.gold_visibility_range = 0
         self.position = (1, 1)
+        self.roundcount = 0
 
     def move(self, direction):
         height = Map.shape[0]
@@ -40,40 +44,28 @@ class base_agent():
                     self.health -= 1
 
                 elif "swordsman" in Map[new_y][
-                    new_x]:  #swordsman ist im team TODO: Eigentlich ist jeder Agent für sich du musst also nur einen allgemeinen Move machen, denke ich
+                    new_x]:  #swordsman ist im team TODO: Entweder ist swordsman einfach zuerst dran oder man macht aktion -> death -> move
                     pass
 
 
                 else:
-                    self.agentDeath()
+                    map.deleteAgent(self.name)
 
             #pit
             elif TileCondition.PIT in Map[new_y][new_x]:
-                self.agentDeath()
+                map.deleteAgent(self.name)
 
 
             #gold:wenn ein team auf gold ist, wer kriegt das gold dann? TODO: Jeder Agent für sich. Erster mit leerem Beutel oder Vote (kann diskutiert werden)
             elif TileCondition.SHINY in Map[new_y][new_x]:
                 if self.gold_count < self.gold_capacity:
+                    Map.deleteCondition(self, x, y, TileCondition.SHINY)
                     self.gold_count += 1
-
-            #gold:wenn ein team auf gold ist, wer kriegt das gold dann?
-            elif 10 in Map[new_y][new_x]:
-                if self.items.count("gold") < self.gold_capacity:  #soll gold in items oder in eigenem counter sein?
-                    self.items.append("gold")
-
-            #update knowledge base? TODO: ja
 
             self.position = new_x, new_y
             return self.position
 
-    def agentDeath(self):
-        x, y = self.position
-        self.health = 0
-        # lösche agent aus karte
-        index = Map[y][x].index(self.name)  # wie wird ein Agent auf einer bestimmten Position gespeichert?
-        Map[y][x].pop(index)
-        print(self.name, "has died!")
+
 
     def shoot(self, direction):
         if "Arrow" in self.items and self.items[1] > 0:
@@ -93,49 +85,35 @@ class base_agent():
                 if TileCondition.SAFE not in Map[y][x]:
                     if TileCondition.WUMPUS in Map[y][x]:
                         #remove Wumpus from list
-                        index = Map[y][x].index(TileCondition.WUMPUS)
-                        Map[y][x].pop(index)
-                        print(self.name, "has killed a Wumpus!")
-                        inAir = False
+                        Map.deleteCondition(self, x, y, TileCondition.WUMPUS)
                         break
 
                     elif TileCondition.WALL:
                         inAir = False
                         break
 
-                    #elif TileCondition.AGENT:
+                    #TODO: elif TileCondition.AGENT: -> wird ein Bündnis zwischen den Agenten gemacht?
                     #pass
 
         else:
             print(self.name, "has no arrows left!")
 
-        #hat swordsman eine Reichweite zum Nachbarsfeld?
 
-    #check pit and wumpus in move: arrow or sword? -> call methods
+def checkReplenish(self, name, item):
+    #check if a hunter arrow has already been used
+    if name == "hunter":
+        if self.item[1] < base_agent.HUNTER_ARROW:
+            if self.roundcount == base_agent.REPLENISH_TIME:
+                self.item[1]+=1
+            else:
+                self.roundcount += 1
 
-    def shoot(self, direction):
-        if "Arrow" in self.items and self.items[1] > 0:  #kriegt jeder jetzt pfeile? range erstmal auf 3 gesetzt
-            xPos, yPos = self.position
-            directions = {
-                "up": {"x": 0, "y": 1},
-                "down": {"x": 0, "y": -1},
-                "right": {"x": 1, "y": 1},
-                "left": {"x": -1, "y": 0}
-            }
-
-            for pos in directions[direction]:  #hier code beendet
-                if 0 < pos[0] < Map.shape[0] and 0 < pos[1] < Map.shape[1]:
-                    if 2 in Map[pos[1]][pos[0]]:
-                        index = Map[pos[1]][pos[0]].index(2)
-                        Map[pos[1]][pos[0]].pop(index)
-                        print(self.name, "has killed a Wumpus!")
-                        # break ?
-                    elif 1 in Map[pos[1]][pos[0]]:
-                        break
-
-
-        else:
-            print(self.name, "has no arrows left!")
+    #check if health is already lost
+    elif name == "knight":
+        if self.health < base_agent.KNIGHT_HEALTH:
+            if self.roundcount == base_agent.REPLENISH_TIME:
+                self.health+=1
+            self.roundcount += 1
 
 
 # reload Method?
@@ -143,7 +121,7 @@ class base_agent():
 
 class hunter(base_agent):
     def __init__(self, name, health):  #Bogen als Item?
-        super().__init__(name, health, [["Arrow", 5]], ["wumpus"])
+        super().__init__(name, health, [["Arrow", base_agent.HUNTER_ARROW]], ["wumpus"])
 
 
 class cartographer(base_agent):
@@ -157,6 +135,7 @@ class cartographer(base_agent):
 class knight(base_agent):
     def __init__(self, name, health):  #Schwert und Schild als Items?
         super().__init__(name, health, [["sword", 1], ["shield", 1]], ["gold", "wumpus"])
+        self.health = base_agent.KNIGHT_HEALTH
 
 
 class bwl_student(base_agent):
