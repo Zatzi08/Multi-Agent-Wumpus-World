@@ -5,27 +5,27 @@ from Project.Environment import Map
 
 
 class Performative(Enum):
-    CFP: 1
-    REQUEST: 2
-    RESPONSE: 3
-    INFORMATION: 4
+    CFP = 1
+    REQUEST = 2
+    RESPONSE = 3
+    INFORMATION = 4
 
 
 class ContentKey(Enum):
-    POSITION: 1
-    COUNTEROFFER: 2
-    HELP: 3
-    STATUS: 4
+    POSITION = 1
+    COUNTEROFFER = 2
+    HELP = 3
+    STATUS = 4
 
 
 class Status(Enum):
-    ACCEPT: 1
-    DENY: 2
+    ACCEPT = 1
+    DENY = 2
 
 
 class CounterOffer(Enum):
-    GOLD: 1
-    REQUEST: 2
+    GOLD = 1
+    REQUEST = 2
 
 
 class Message:
@@ -39,13 +39,15 @@ class Message:
         self.receiver = receiver
         self.content = content
 
-    def __repr__(self): # TODO: Warum ist hier ein "obj" drin, aber nicht in der Klasse
-        return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \ 
+    def __repr__(self):  # TODO: Warum ist hier ein "obj" drin, aber nicht in der Klasse
+        return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \
                f"receiver={self.receiver}, content={self.content})"
 
+
 # Kommunikationskanal
-class CommunicationChannel: # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
-    def __init__(self, initiator, participants, map_instance: Map): # TODO: Warum benötigtest du hier die Map. Solltest doch einfach davon ausgehen können, dass participants valid sind
+class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
+    def __init__(self, initiator, participants,
+                 map_instance: Map):  # TODO: Warum benötigtest du hier die Map. Solltest doch einfach davon ausgehen können, dass participants valid sind
         self.initiator = initiator
         self.participants = self.filter_neighbors(initiator, participants, map_instance)
         self.completed = False
@@ -63,7 +65,7 @@ class CommunicationChannel: # TODO: Sollte der Kanal nicht den state speichern; 
 
     def send_direct(self, sender, recipient, message: Message):
         print(f"[Channel] {sender.name} sent direct message to {recipient.name}: {message}")
-        recipient.receive_message(message) # TODO: Sollte der Responce nicht gespeichert/zurückgeben werden oder so?
+        recipient.receive_message(message)  # TODO: Sollte der Responce nicht gespeichert/zurückgeben werden oder so?
 
     def broadcast(self, message: Message):
         print(f"[Channel] {message.sender} broadcasted: {message}")
