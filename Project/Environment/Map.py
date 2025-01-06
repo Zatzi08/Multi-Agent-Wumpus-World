@@ -20,7 +20,14 @@ class Map:
         self.filled_map = gen.getGrid()
         self.agents = {}
         for i in agents:
-            self.agents[i.getName] = i
+            self.agents[i.getName()] = i
+
+    def addAgent(self, agent):
+        if self.agents.get(agent.getName(), None) is None:
+            self.agents[agent.getName()] = agent
+
+    def getAgents(self) -> list:
+        return self.agents
 
     def getNeighbors(self, x, y):
         neighbors = []
