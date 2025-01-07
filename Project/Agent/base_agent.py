@@ -4,9 +4,11 @@ import numpy
 
 
 class base_agent():
+    HUNTER_ARROW = 5
+    DEFAULT_HEALTH = 1
+    KNIGHT_HEALTH = 3
+    REPLENISH_TIME = 3
 
-    HUNTER_ARROW = 5; DEFAULT_HEALTH = 1; KNIGHT_HEALTH = 3
-    REPLENISH_TIME = 3;
     def __init__(self, name, health, items, goal, position, map_width, map_height):
         self.name = name
         self.health = base_agent.DEFAULT_HEALTH
@@ -65,8 +67,6 @@ class base_agent():
             self.position = new_x, new_y
             return self.position
 
-
-
     def shoot(self, direction):
         if "Arrow" in self.items and self.items[1] > 0:
             # TODO: friendly fire?
@@ -104,7 +104,7 @@ def checkReplenish(self, name, item):
     if name == "hunter":
         if self.item[1] < base_agent.HUNTER_ARROW:
             if self.roundcount == base_agent.REPLENISH_TIME:
-                self.item[1]+=1
+                self.item[1] += 1
             else:
                 self.roundcount += 1
 
@@ -112,7 +112,7 @@ def checkReplenish(self, name, item):
     elif name == "knight":
         if self.health < base_agent.KNIGHT_HEALTH:
             if self.roundcount == base_agent.REPLENISH_TIME:
-                self.health+=1
+                self.health += 1
             self.roundcount += 1
 
 

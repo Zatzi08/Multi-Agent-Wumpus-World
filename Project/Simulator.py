@@ -1,6 +1,10 @@
-import Environment.env
+from Project.Environment.Map import Map
 
-a = Environment.env.EnvGenerator(120, 120, 123)
-a.genByTile()
-Map = a.getGrid()
+import random
 
+random.seed()
+PLAYINGFIELD = Map(int(input("width of Grid\n")), int(input("height of Grid\n")), [])
+
+for i in range(int(input("Anzahl an Agenten\n"))):
+    pass
+    #PLAYINGFIELD.addAgent()

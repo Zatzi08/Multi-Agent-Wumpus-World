@@ -403,9 +403,3 @@ class EnvGenerator:
             grid[py + y][px + x].append(TileCondition.PIT)
             for bx, by in getNeighbors(px + x, py + y):
                 grid[by][bx].append(TileCondition.BREEZE)
-
-
-a = EnvGenerator(120, 120, 42)
-a.genByTile()
-a.placeWorldItems()
-a.printGrid()
