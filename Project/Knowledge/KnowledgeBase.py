@@ -66,7 +66,7 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class KnowledgeBase:
-    def __init__(self, name: int, position: tuple[int, int]):
+    def __init__(self, position: tuple[int, int]):
         #
         # POSITION
         #
@@ -83,8 +83,7 @@ class KnowledgeBase:
         # AGENTS
         #
 
-        self.__name: int = name  # name of agent owning this knowledge base
-        self.__agents = set()  # info about agents
+        self.__shouts: dict[tuple[int, int], int] = {}
 
     #
     # POSITION
@@ -322,3 +321,12 @@ class KnowledgeBase:
     #
     # AGENTS
     #
+
+    def add_shout(self, x: int, y: int, time: int):
+        self.__shouts[(x, y)] = time
+
+    def get_shouts(self) -> dict[tuple[int, int], int]:
+        return self.__shouts
+
+    def remove_shout(self, x: int, y: int):
+        self.__shouts.pop((x, y))

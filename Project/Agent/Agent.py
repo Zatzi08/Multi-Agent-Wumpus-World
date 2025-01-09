@@ -44,7 +44,7 @@ class Agent:
         self.gold_visibility_range: int = gold_visibility_range
 
         # knowledge
-        self.knowledge: KnowledgeBase = KnowledgeBase(name, spawn_position)
+        self.knowledge: KnowledgeBase = KnowledgeBase(spawn_position)
 
         # status (information given by simulator each step)
         self.position: tuple[int, int] = spawn_position
@@ -57,6 +57,7 @@ class Agent:
             self.items[item[0]] = item[1]
             count += item[1]
         self.current_item_count: int = count
+        self.time = 0
 
 
     def communicate(self, agents: list[tuple[int, AgentRole]]) -> tuple[bool, list[int]]:
@@ -69,12 +70,16 @@ class Agent:
         # deny
         # return False, []
 
-    def receive_tile_information(self, x: int, y: int, tile_conditions: [TileCondition]):
+    def receive_tile_information(self, x: int, y: int, time: int, tile_conditions: [TileCondition]):
         self.knowledge.update_tile(x, y, tile_conditions)
         self.knowledge.update_position(self.position)
+        self.time = time
 
     def get_next_action(self) -> AgentAction:
         call to utility here
+
+    def receive_shout_action_information(self, x: int, y: int):
+        self.knowledge.add_shout(x, y, self.time)
 
     def replenish(self):
         pass
