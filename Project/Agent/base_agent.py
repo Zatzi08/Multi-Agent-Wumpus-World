@@ -48,8 +48,15 @@ class base_agent():
     def getNextAction(self) -> AgentAction:
         get next action here
 
-    def communicate(self, agents: list[tuple[int, AgentRole]]):
-        start communication here
+    def communicate(self, agents: list[tuple[int, AgentRole]]) -> tuple[bool, list[int]]:
+        # accept: choose agents to communicate with
+        agents_to_communicate_with: list[int] = []
+        for agent in agents:
+            agents_to_communicate_with.append(agent[0])
+        return True, agents_to_communicate_with
+
+        # deny
+        return False, []
 
     def receive_tile_information(self, x: int, y: int, tile_conditions: [TileCondition]):
         self.knowledge.update_tile(x, y, tile_conditions)
