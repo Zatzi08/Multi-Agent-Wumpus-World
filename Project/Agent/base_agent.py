@@ -42,11 +42,11 @@ class base_agent():
         return self.role
 
     def getPos(self):
-        return self.position
+        return self.knowledge.get_position()
 
     # TODO: Do
     def getNextAction(self) -> AgentAction:
-        get next action here
+        # TODO: get next action here
 
     def communicate(self, agents: list[tuple[int, AgentRole]]) -> tuple[bool, list[int]]:
         # accept: choose agents to communicate with
