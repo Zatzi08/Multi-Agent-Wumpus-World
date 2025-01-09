@@ -44,7 +44,7 @@ class Agent:
         self.gold_visibility_range: int = gold_visibility_range
 
         # knowledge
-        self.knowledge: KnowledgeBase = KnowledgeBase(name)
+        self.knowledge: KnowledgeBase = KnowledgeBase(name, spawn_position)
 
         # status (information given by simulator each step)
         self.position: tuple[int, int] = spawn_position
@@ -67,6 +67,7 @@ class Agent:
 
     def receive_tile_information(self, x: int, y: int, tile_conditions: [TileCondition]):
         self.knowledge.update_tile(x, y, tile_conditions)
+        self.knowledge.update_position(self.position)
 
     def get_next_action(self) -> AgentAction:
         call to utility here

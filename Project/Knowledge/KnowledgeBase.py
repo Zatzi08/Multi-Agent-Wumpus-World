@@ -66,7 +66,13 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class KnowledgeBase:
-    def __init__(self, name: int):
+    def __init__(self, name: int, position: tuple[int, int]):
+        #
+        # POSITION
+        #
+
+        self.__position: tuple[int, int] = position
+
         #
         # MAP
         #
@@ -79,6 +85,13 @@ class KnowledgeBase:
 
         self.__name: int = name  # name of agent owning this knowledge base
         self.__agents = set()  # info about agents
+
+    #
+    # POSITION
+    #
+
+    def update_position(self, position: tuple[int, int]):
+        self.__position = position
 
     #
     # MAP
