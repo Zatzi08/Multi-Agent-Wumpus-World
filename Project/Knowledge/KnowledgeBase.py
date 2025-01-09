@@ -2,18 +2,19 @@ from enum import Enum
 from typing import cast
 from numpy.typing import NDArray
 import numpy
+from Project.Simulator import MAP_WIDTH, MAP_HEIGHT
 
 
 class TileCondition(Enum):
-    SAFE = 0
-    WALL = 1
-    SHINY = 2
-    WUMPUS = 3
-    PREDICTED_WUMPUS = 4
-    STENCH = 5
-    PIT = 6
-    PREDICTED_PIT = 7
-    BREEZE = 8
+    SAFE: int = 0
+    WALL: int = 1
+    SHINY: int = 2
+    WUMPUS: int = 3
+    PREDICTED_WUMPUS: int = 4
+    STENCH: int = 5
+    PIT: int = 6
+    PREDICTED_PIT: int = 7
+    BREEZE: int = 8
 
 
 class _Tile:
@@ -65,37 +66,19 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class KnowledgeBase:
-    def __init__(self, name: int, map_width: int, map_height: int, position: tuple[int, int]):
-        #
-        # POSITION
-        #
-
-        self.__position: tuple[int, int] = position
-
+    def __init__(self, name: int):
         #
         # MAP
         #
 
-        self.__map: _Map = _Map(map_width, map_height)
+        self.__map: _Map = _Map(MAP_WIDTH, MAP_HEIGHT)
 
         #
         # AGENTS
         #
 
-        self.__name: str = name  # name of agent owning this knowledge base
+        self.__name: int = name  # name of agent owning this knowledge base
         self.__agents = set()  # info about agents
-
-    #
-    # POSITION
-    #
-
-    def update_position(self, x: int, y: int):
-        """updates own position"""
-        self.__position = (x, y)
-
-    def get_position(self) -> tuple[int, int]:
-        """returns own position"""
-        return self.__position[0], self.__position[1]
 
     #
     # MAP

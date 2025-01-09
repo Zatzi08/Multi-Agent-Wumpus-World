@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List, Union, Optional
-from Project.Agent.base_agent import *
+from Project.Agent.Agent import *
 from Project.Environment import Map
 
 

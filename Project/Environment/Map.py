@@ -26,10 +26,10 @@ class Map:
         for i in agents:
             self.agents[i.getName()] = i
 
-    def addAgent(self, agent):
-        add agent randomly on map here please
+    def addAgent(self, agent, spawn_position):
         if self.agents.get(agent.getName(), None) is None:
             self.agents[agent.getName()] = agent
+        ADD AGENT BY SPAWN POSITION
 
     def getAgents(self) -> dict:
         return self.agents
@@ -62,19 +62,28 @@ class Map:
                 adjacent.append(i.getName())
         return adjacent
 
-    def deleteCondition(self, x, y, cond: TileCondition):
-        def deleteCond(ix, iy, icond):
-            if cond in self.getEventsOnTile(ix, iy):
-                self.map.filled_map[y][x].remove(icond)
-
-        deleteCond(x, y, cond)
-        if cond in [TileCondition.WUMPUS, TileCondition.PIT]:
-            if cond == TileCondition.WUMPUS:
-                secCond = TileCondition.STENCH
+    def delete_condition(self, x, y, condition: TileCondition):
+        self.map.filled_map[y][x].remove(condition)
+        if condition in [TileCondition.WUMPUS, TileCondition.PIT]:
+            if condition == TileCondition.WUMPUS:
+                second_condition = TileCondition.STENCH
             else:
-                secCond = TileCondition.BREEZE
+                second_condition = TileCondition.BREEZE
             for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-                deleteCond(ox, oy, secCond)
+                self.map.filled_map.__delete_stench_or_breeze(ox, oy, second_condition)
+
+    def __delete_stench_or_breeze(self, x, y, condition: TileCondition):
+        if condition != TileCondition.STENCH and condition != TileCondition.BREEZE:
+            raise "Invalid Condition"
+        if condition not in self.getEventsOnTile(x, y):
+            raise "Incorrect Map Initialization"
+        delete = True
+        for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
+            if TileCondition.WUMPUS in self.map.filled_map[y][x]:
+                delete = False
+                break
+        if delete:
+            self.map.filled_map[y][x].remove(condition)
 
     def deleteAgent(self, name):
         if self.agents.get(name, None) is not None:
