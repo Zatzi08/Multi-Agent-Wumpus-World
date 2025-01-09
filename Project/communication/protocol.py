@@ -8,7 +8,7 @@ class Performative(Enum):
     CFP = 1
     REQUEST = 2
     RESPONSE = 3
-    COUNTEROFFER = 4
+    INFORM = 4
 
 
 class RequestTypeObj(Enum):
