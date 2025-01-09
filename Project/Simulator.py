@@ -21,7 +21,7 @@ grid = Map(MAP_HEIGHT, MAP_WIDTH, [])
 
 random.seed()
 
-# add agents
+# agents
 agents: dict[int, Agent] = {}
 for i in range(0, number_of_agents, 1):
     spawn_position: tuple[int, int] = random.choice(grid.getSafeTiles())
@@ -37,6 +37,31 @@ for i in range(0, number_of_agents, 1):
     grid.addAgent(agents[i], spawn_position)
 
 # simulate
+def agent_move_action(agent: Agent, x: int, y: int):
+    if TileCondition.WALL in grid.getEventsOnTile(x, y):
+        return
+    elif TileCondition.WUMPUS in grid.getEventsOnTile(x, y):
+        if agent.role == AgentRole.KNIGHT:
+            grid.delete_condition(x, y, TileCondition.WUMPUS)
+        agent.health -= 1
+        if agent.health == 0:
+            grid.deleteAgent(agent.name)
+        return
+    elif TileCondition.PIT in grid.getEventsOnTile(x, y):
+        grid.deleteAgent(agent.name)
+        del agents[agent.name]
+
+        return
+    agent.position = (x, y + 1)
+
+
+def agent_shoot_action(agent: Agent, x: int, y: int):
+    if agent.items[AgentItem.ARROW] > 0:
+        agent.items[AgentItem.ARROW] -= 1
+        agent.current_item_count -= 1
+    if TileCondition.WUMPUS in grid.getEventsOnTile(x, y):
+        grid.delete_condition(x, y, TileCondition.WUMPUS)
+
 for i in range(0, number_of_simulation_steps, 1):
     # give every agent knowledge of the tile they are on
     for _, agent in agents.items():
@@ -71,27 +96,26 @@ for i in range(0, number_of_simulation_steps, 1):
         y: int = agent.position[1]
         match action:
             case AgentAction.MOVE_UP:
-                if TileCondition.WALL in grid.getEventsOnTile(x, y+1):
-                    break
-                elif TileCondition.WUMPUS in grid.getEventsOnTile(x, y+1):
-                    if agent.role == AgentRole.KNIGHT:
-                        grid.delete_condition(x, y, TileCondition.WUMPUS)
-                    agent.health -= 1
-                    if agent.health == 0:
-                        grid.deleteAgent(agent.name)
-                    break
-                elif TileCondition.PIT in grid.getEventsOnTile(x, y+1):
-                    grid.deleteAgent(agent.name)
-                    break
-                agent.position = (x, y+1)
+                agent_move_action(agent, x, y+1)
             case AgentAction.MOVE_LEFT:
+                agent_move_action(agent, x-1, y)
             case AgentAction.MOVE_RIGHT:
+                agent_move_action(agent, x+1, y)
             case AgentAction.MOVE_DOWN:
+                agent_move_action(agent, x, y-1)
             case AgentAction.PICK_UP:
+                if agent.current_item_count < agent.item_capacity and TileCondition.SHINY in grid.getEventsOnTile(x, y):
+                        agent.items[AgentItem.GOLD] += 1
+                        agent.current_item_count += 1
+                        grid.delete_condition(x, y, TileCondition.SHINY)
             case AgentAction.SHOOT_UP:
+                agent_shoot_action(agent, x, y+1)
             case AgentAction.SHOOT_LEFT:
+                agent_shoot_action(agent, x-1, y)
             case AgentAction.SHOOT_RIGHT:
+                agent_shoot_action(agent, x+1, y)
             case AgentAction.SHOOT_DOWN:
+                agent_shoot_action(agent, x, y-1)
             case AgentAction.SHOUT:
 
     # replenish

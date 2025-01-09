@@ -52,8 +52,12 @@ class Agent:
         self.items: dict[AgentItem, int] = {}
         for item in AgentItem:
             self.items[item] = 0
+        count = 0
         for item in items:
             self.items[item[0]] = item[1]
+            count += item[1]
+        self.current_item_count: int = count
+
 
     def communicate(self, agents: list[tuple[int, AgentRole]]) -> tuple[bool, list[int]]:
         # accept: choose agents to communicate with
@@ -86,8 +90,9 @@ class Hunter(Agent):
                          [(AgentItem.ARROW, Hunter.START_ARROWS)])
 
     def replenish(self):
-        if self.items[AgentItem.ARROW] < Hunter.REPLENISH_ARROWS:
+        if self.items[AgentItem.ARROW] < Hunter.REPLENISH_ARROWS and self.current_item_count < self.item_capacity:
             self.items[AgentItem.ARROW] += 1
+            self.current_item_count += 1
 
 
 class Cartographer(Agent):
