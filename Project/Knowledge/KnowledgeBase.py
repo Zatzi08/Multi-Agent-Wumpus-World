@@ -65,7 +65,7 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class KnowledgeBase:
-    def __init__(self, name: str, map_width: int, map_height: int, position: tuple[int, int]):
+    def __init__(self, name: int, map_width: int, map_height: int, position: tuple[int, int]):
         #
         # POSITION
         #

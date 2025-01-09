@@ -27,6 +27,7 @@ class Map:
             self.agents[i.getName()] = i
 
     def addAgent(self, agent):
+        add agent randomly on map here please
         if self.agents.get(agent.getName(), None) is None:
             self.agents[agent.getName()] = agent
 
@@ -49,16 +50,16 @@ class Map:
     def getEventsOnTile(self, x, y):
         return self.filled_map[y][x]
 
-    def getAgentInReach(self, name):
+    def getAgentsInReach(self, name) -> list[int]:
         agent = self.agents.get(name, None)
-        adjacent = []
-        if agent == None:
+        if agent is None:
             raise "Invalid Name"
+        adjacent = []
         x, y = agent.getPos()
         n = self.__getNeighbors(x, y) + [(x, y)]
         for i in self.agents:
             if i.getPos in n:
-                adjacent.append(i)
+                adjacent.append(i.getName())
         return adjacent
 
     def deleteCondition(self, x, y, cond: TileCondition):

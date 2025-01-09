@@ -1,7 +1,19 @@
-from Project.Simulator import PLAYINGFIELD as Map
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
 import numpy
+from enum import Enum
 
+class AgentRole(Enum):
+    HUNTER = 0
+    CARTOGRAPHER = 1
+    KNIGHT = 2
+    BWL_STUDENT = 3
+
+class AgentAction(Enum):
+    MOVE_UP = 0
+    MOVE_LEFT = 1
+    MOVE_RIGHT = 2
+    MOVE_DOWN = 3
+    SHOOT = 4
 
 class base_agent():
     HUNTER_ARROW = 5
@@ -9,8 +21,9 @@ class base_agent():
     KNIGHT_HEALTH = 3
     REPLENISH_TIME = 3
 
-    def __init__(self, name, health, items, goal, position, map_width, map_height):
+    def __init__(self, name: int, role: AgentRole, items, goal, position, map_width, map_height):
         self.name = name
+        self.role = role
         self.health = base_agent.DEFAULT_HEALTH
         self.items = items
         self.goal = goal
@@ -25,15 +38,21 @@ class base_agent():
     def getName(self):
         return self.name
 
+    def get_role(self) -> AgentRole:
+        return self.role
+
     def getPos(self):
         return self.position
 
     # TODO: Do
-    def getNextAction(self):
-        pass
+    def getNextAction(self) -> AgentAction:
+        get next action here
 
-    def communicate(self):
-        pass
+    def communicate(self, agents: list[tuple[int, AgentRole]]):
+        start communication here
+
+    def receive_tile_information(self, x: int, y: int, tile_conditions: [TileCondition]):
+        self.knowledge.update_tile(x, y, tile_conditions)
 
     def move(self, direction):
         height = Map.shape[0]
@@ -133,26 +152,26 @@ def checkReplenish(self, name, item):
 # karte zeichnen Method? TODO: Sollte Knowledge-Base sein, also Kartograf wird einfach mit mehr Wissen initialisiert
 
 class hunter(base_agent):
-    def __init__(self, name, health):  #Bogen als Item?
-        super().__init__(name, health, [["Arrow", base_agent.HUNTER_ARROW]], ["wumpus"])
+    def __init__(self, name):  #Bogen als Item?
+        super().__init__(name, AgentRole.HUNTER, [["Arrow", base_agent.HUNTER_ARROW]], ["wumpus"])
 
 
 class cartographer(base_agent):
-    def __init__(self, name, health):  #Karte als Item?
-        super().__init__(name, health, ["map", 1], ["map"])
+    def __init__(self, name):  #Karte als Item?
+        super().__init__(name, AgentRole.CARTOGRAPHER, ["map", 1], ["map"])
 
     def init_knowledge(self, knowledge):  #alle haben ja theoretisch knowledge, nicht?
         self.knowledge = knowledge
 
 
 class knight(base_agent):
-    def __init__(self, name, health):  #Schwert und Schild als Items?
-        super().__init__(name, health, [["sword", 1], ["shield", 1]], ["gold", "wumpus"])
+    def __init__(self, name):  #Schwert und Schild als Items?
+        super().__init__(name, AgentRole.KNIGHT, [["sword", 1], ["shield", 1]], ["gold", "wumpus"])
         self.health = base_agent.KNIGHT_HEALTH
 
 
 class bwl_student(base_agent):
-    def __init__(self, name, health):  #Sack als Item?
-        super().__init__(name, health, [], ["gold"])
+    def __init__(self, name):  #Sack als Item?
+        super().__init__(name, AgentRole.BWL_STUDENT, [], ["gold"])
         self.gold_capacity = 10
         self.gold_visibility_range = 3
