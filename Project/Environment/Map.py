@@ -3,22 +3,25 @@ from Project.Knowledge.KnowledgeBase import TileCondition
 
 
 class Map:
-    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents']
+    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds']
 
     def __init__(self, width, height, agents: list):
         # extend grid to fit full tiles
+        self.height = height
+        self.width = width
+
         if width % 3 != 0:
-            self.width += 3 - (self.width % 3)
+            self.width += 3 - (width % 3)
         if height % 3 != 0:
-            self.height += 3 - (self.height % 3)
+            self.height += 3 - (height % 3)
 
         self.start_pos = (1, 1)
         gen = EnvGenerator(self.height, self.width)
-        gen.genByTile()
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
         self.agents = {}
+        self.numDeadEnds = gen.getNumDeadEnds()
         for i in agents:
             self.agents[i.getName()] = i
 
@@ -26,8 +29,11 @@ class Map:
         if self.agents.get(agent.getName(), None) is None:
             self.agents[agent.getName()] = agent
 
-    def getAgents(self) -> list:
+    def getAgents(self) -> dict:
         return self.agents
+
+    def getNumOfDeadEnds(self):
+        return self.numDeadEnds
 
     def getNeighbors(self, x, y):
         neighbors = []

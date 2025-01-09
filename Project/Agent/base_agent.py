@@ -22,6 +22,9 @@ class base_agent():
         self.position = (1, 1)
         self.roundcount = 0
 
+    def getName(self):
+        return self.name
+
     def move(self, direction):
         height = Map.shape[0]
         width = Map.shape[1]

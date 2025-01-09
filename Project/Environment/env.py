@@ -11,7 +11,7 @@ import datetime
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
-                 'room_list']
+                 'room_list', 'num_dead_end']
 
     def __init__(self, height, width, seed=42):
         self.height = height
@@ -21,11 +21,48 @@ class EnvGenerator:
         self.pit_prob = 0.3
         self.treasure_prob = 0.3
         self.seed = seed
-        self.grid = None
         self.room_list = []
+        self.num_dead_end: int = -1
+        self.grid = []
+        self.__genByTile()
+
 
     def getGrid(self):
         return self.grid.copy()
+
+    def getNeighbors(self, x: int, y: int):
+        neighbors = []
+        for xi in [-1, 0, 1]:
+            for yj in [-1, 0, 1]:
+                if abs(xi) == abs(yj):
+                    continue
+                elif 0 < x + xi < self.width and 0 < y + yj < self.height and self.grid[y + yj][x + xi] is not None:
+                    neighbors.append((x + xi, y + yj))
+        return neighbors
+
+    def __findDeadEnd(self) -> list[tuple[int, int]]:
+        ends = []
+        sx, sy = self.start_pos
+        visit = [self.start_pos]
+        visited = np.ndarray((self.width, self.height)).astype(bool)
+        visited.fill(False)
+        while visit:
+            x, y = visit.pop()
+            visited[y][x] = True
+            n = self.getNeighbors(x, y)
+            if len(n) == 1 and abs(x - sx) + abs(y - sy) > 1:
+                ends.append((x, y))
+            for xi, yi in n:
+                if not visited[yi][xi]:
+                    visit.append((xi, yi))
+        self.num_dead_end = len(ends)
+        return ends
+
+    def getNumDeadEnds(self):
+        if self.num_dead_end == -1:
+            if self.grid is not None and type(self.grid[1][1]) is list:
+                self.num_dead_end = len(self.__findDeadEnd())
+        return self.num_dead_end
 
     """
     @author: Lucas K
@@ -34,7 +71,7 @@ class EnvGenerator:
     None für Wand, [] für Weg Umwandlung zu Array
     """
 
-    def convert_to_Array(self, grid):
+    def __convertToArray(self, grid):
         g = np.ndarray((self.height, self.width), list)
         # Path = [] Wall = None
         for y in range(0, self.height):
@@ -46,7 +83,7 @@ class EnvGenerator:
         return g
 
     # define Tiles -> gen grid using Tiles by prob and some rules
-    def genByTile(self):
+    def __genByTile(self):
         # Liste aller Tiles
         tiles = [np.array([["W", "W", "W"], ["W", "W", "W"], ["W", "W", "W"]]),
                  np.array([["W", "W", "W"], ["W", " ", " "], ["W", "W", "W"]]),
@@ -290,8 +327,7 @@ class EnvGenerator:
                         tile_con_pos.append((xo, yo))
                 for xo, yo in set(tile_con[pos]).difference(tile_con_pos):
                     tile_con[(xo, yo)].remove(pos)
-
-        self.grid = self.convert_to_Array(grid)
+        self.grid = self.__convertToArray(grid)
 
     """
     @author: Lucas K
@@ -301,7 +337,7 @@ class EnvGenerator:
 
     def printGrid(self):
 
-        def convert_to_int(grid):
+        def convertToInt(grid):
             g = np.ndarray((self.height, self.width), int)
 
             for y in range(0, self.height):
@@ -323,7 +359,7 @@ class EnvGenerator:
                         g[y][x] = 10
             return g
 
-        data = convert_to_int(self.grid)
+        data = convertToInt(self.grid)
         print("PRINTING!", datetime.datetime.now())
         cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
         bounds = [0, 10, 20, 30, 40, 50]
@@ -347,36 +383,9 @@ class EnvGenerator:
 
         grid = self.grid.copy()
 
-        def getNeighbors(x: int, y: int):
-            neighbors = []
-            for xi in [-1, 0, 1]:
-                for yj in [-1, 0, 1]:
-                    if abs(xi) == abs(yj):
-                        continue
-                    elif 0 < x + xi < self.width and 0 < y + yj < self.height and grid[y + yj][x + xi] is not None:
-                        neighbors.append((x + xi, y + yj))
-            return neighbors
+        dead = self.__findDeadEnd()
 
-        def find_dead_end() -> list[tuple[int, int]]:
-            ends = []
-            sx, sy = self.start_pos
-            visit = [self.start_pos]
-            visited = np.ndarray((self.width, self.height)).astype(bool)
-            visited.fill(False)
-            while visit:
-                x, y = visit.pop()
-                visited[y][x] = True
-                n = getNeighbors(x, y)
-                if len(n) == 1 and abs(x - sx) + abs(y - sy) > 1:
-                    ends.append((x, y))
-                for xi, yi in n:
-                    if not visited[yi][xi]:
-                        visit.append((xi, yi))
-            return ends
-
-        dead = find_dead_end()
-
-        treasure = random.sample(dead, k=int(len(dead) * self.treasure_prob))
+        treasure = random.sample(dead, k=int(self.getNumDeadEnds() * self.treasure_prob))
         treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
         pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
         room_without_pit = list(set(self.room_list).difference(set(pit_room)))
@@ -386,20 +395,20 @@ class EnvGenerator:
             grid[ty][tx].append(TileCondition.SHINY)
 
         for tx, ty in treasure_Wumpus:
-            nei = getNeighbors(tx, ty)
+            nei = self.getNeighbors(tx, ty)
             x, y = random.choices(nei, k=1)[0]
             grid[y][x].append(TileCondition.WUMPUS)
-            for sx, sy in getNeighbors(x, y):
+            for sx, sy in self.getNeighbors(x, y):
                 grid[sy][sx].append(TileCondition.STENCH)
 
         for wx, wy in wumpus_room:
             x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
             grid[wy + y][wx + x].append(TileCondition.WUMPUS)
-            for sx, sy in getNeighbors(wx + x, wy + y):
+            for sx, sy in self.getNeighbors(wx + x, wy + y):
                 grid[sy][sx].append(TileCondition.STENCH)
 
         for px, py in pit_room:
             x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
             grid[py + y][px + x].append(TileCondition.PIT)
-            for bx, by in getNeighbors(px + x, py + y):
+            for bx, by in self.getNeighbors(px + x, py + y):
                 grid[by][bx].append(TileCondition.BREEZE)
