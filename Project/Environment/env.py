@@ -11,7 +11,7 @@ import datetime
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
-                 'room_list', 'num_dead_end']
+                 'room_list', 'num_dead_end', 'info']
 
     def __init__(self, height, width, seed=42):
         self.height = height
@@ -24,7 +24,9 @@ class EnvGenerator:
         self.room_list = []
         self.num_dead_end: int = -1
         self.grid = []
+        self.info = {}
         self.__genByTile()
+        self.__analyseMap()
 
 
     def getGrid(self):
@@ -57,6 +59,40 @@ class EnvGenerator:
                     visit.append((xi, yi))
         self.num_dead_end = len(ends)
         return ends
+
+    def __analyseMap(self):
+        safe = []
+        wumpus = []
+        gold = []
+        pit = []
+
+        visit = [self.start_pos]
+        visited = np.ndarray((self.width, self.height)).astype(bool)
+        visited.fill(False)
+        while visit:
+            x, y = visit.pop()
+            visited[y][x] = True
+            n = self.getNeighbors(x, y)
+            if self.grid[y][x] is not None:
+                if not self.grid[y][x]:
+                    safe.append((x, y))
+                if TileCondition.PIT in self.grid[y][x]:
+                    pit.append((x, y))
+                if TileCondition.WUMPUS in self.grid[y][x]:
+                    wumpus.append((x, y))
+                if TileCondition.SHINY in self.grid[y][x]:
+                    gold.append((x, y))
+
+            for xi, yi in n:
+                if not visited[yi][xi]:
+                    visit.append((xi, yi))
+
+        self.info[TileCondition.SAFE] = safe
+        self.info[TileCondition.WUMPUS] = wumpus
+        self.info[TileCondition.SHINY] = gold
+        self.info[TileCondition.PIT] = pit
+
+
 
     def getNumDeadEnds(self):
         if self.num_dead_end == -1:

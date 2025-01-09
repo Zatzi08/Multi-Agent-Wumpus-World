@@ -1,4 +1,4 @@
-from Project.Simulator import Map
+from Project.Simulator import PLAYINGFIELD as Map
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
 import numpy
 
@@ -24,6 +24,16 @@ class base_agent():
 
     def getName(self):
         return self.name
+
+    def getPos(self):
+        return self.position
+
+    # TODO: Do
+    def getNextAction(self):
+        pass
+
+    def communicate(self):
+        pass
 
     def move(self, direction):
         height = Map.shape[0]

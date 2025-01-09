@@ -3,7 +3,7 @@ from Project.Knowledge.KnowledgeBase import TileCondition
 
 
 class Map:
-    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds']
+    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds', 'info']
 
     def __init__(self, width, height, agents: list):
         # extend grid to fit full tiles
@@ -22,6 +22,7 @@ class Map:
         self.filled_map = gen.getGrid()
         self.agents = {}
         self.numDeadEnds = gen.getNumDeadEnds()
+        self.info = gen.info
         for i in agents:
             self.agents[i.getName()] = i
 
@@ -35,7 +36,7 @@ class Map:
     def getNumOfDeadEnds(self):
         return self.numDeadEnds
 
-    def getNeighbors(self, x, y):
+    def __getNeighbors(self, x, y):
         neighbors = []
         for xi in [-1, 0, 1]:
             for yj in [-1, 0, 1]:
@@ -48,9 +49,13 @@ class Map:
     def getEventsOnTile(self, x, y):
         return self.filled_map[y][x]
 
-    def getAgentInReach(self, x, y):
-        n = self.getNeighbors(x, y) + [(x, y)]
+    def getAgentInReach(self, name):
+        agent = self.agents.get(name, None)
         adjacent = []
+        if agent == None:
+            raise "Invalid Name"
+        x, y = agent.getPos()
+        n = self.__getNeighbors(x, y) + [(x, y)]
         for i in self.agents:
             if i.getPos in n:
                 adjacent.append(i)
@@ -73,6 +78,9 @@ class Map:
     def deleteAgent(self, name):
         if self.agents.get(name, None) is not None:
             self.agents.pop(name)
+
+    def getSafeTiles(self):
+        return self.info[TileCondition.SAFE]
 
     def printMap(self):
         EnvGenerator.printGrid(self.filled_map)
