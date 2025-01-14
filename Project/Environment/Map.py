@@ -1,7 +1,6 @@
-from Project.Agent import Agent
 from Project.Environment.env import EnvGenerator
 from Project.Knowledge.KnowledgeBase import TileCondition
-
+from Project.SimulatedAgent import SimulatedAgent
 
 class Map:
     __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds', 'info']
@@ -21,14 +20,14 @@ class Map:
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
-        self.agents: dict[int, Agent] = {}
+        self.agents: dict[int, SimulatedAgent] = {}
         self.numDeadEnds = gen.getNumDeadEnds()
         self.info = gen.info
 
-    def add_agents(self, agents: dict[int, Agent]):
+    def add_agents(self, agents: dict[int, SimulatedAgent]):
         self.agents = agents.copy()
 
-    def get_agents(self) -> dict[int, Agent]:
+    def get_agents(self) -> dict[int, SimulatedAgent]:
         return self.agents
 
     def get_number_of_dead_ends(self):
@@ -46,7 +45,7 @@ class Map:
         return adjacent
 
     def get_agents_in_reach(self, name: int, distance: int) -> list[int]:
-        agent: Agent = self.agents[name]
+        agent: SimulatedAgent = self.agents[name]
 
         # find adjacent tiles (reachable in [distance] moves)
         x: int = agent.position[0]
@@ -79,7 +78,7 @@ class Map:
 
         # find adjacent agents (on adjacent tiles)
         adjacent_agents = []
-        for _, agent in self.agents.items():
+        for agent in self.agents.values():
             if agent.position in adjacent_tiles:
                 adjacent_agents.append(agent.name)
         return adjacent_agents

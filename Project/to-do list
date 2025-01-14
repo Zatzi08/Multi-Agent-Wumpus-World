@@ -1,0 +1,5 @@
+Knowledge.KnowledgeBase: store potential offers and accepted tasks
+Agent.Cartographer: needs map with walls
+Agent.Agent::communicate(...): add decision making to accept or deny communication
+Agent.Agent::get_next_action(...): has to be implemented
+Environment.Map::display_map(...) and/or Simulator.display_map(...): has to be implemented
