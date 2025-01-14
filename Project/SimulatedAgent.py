@@ -2,7 +2,7 @@ from Project.Agent.Agent import AgentRole, AgentItem, Agent, Hunter, Cartographe
 
 
 class SimulatedAgent:
-    def __init__(self, name: int, role: AgentRole, spawn_position: tuple[int, int]):
+    def __init__(self, name: int, role: AgentRole, spawn_position: tuple[int, int], map_width: int, map_height: int):
         self.name: int = name
         self.role: AgentRole = role
         self.position: tuple[int, int] = spawn_position
@@ -14,25 +14,25 @@ class SimulatedAgent:
         self.available_item_space: int
         match role:
             case AgentRole.HUNTER:
-                self.agent = Hunter(name, HunterValue.GOLD_VISIBILITY_DISTANCE, spawn_position)
+                self.agent = Hunter(name, HunterValue.GOLD_VISIBILITY_DISTANCE, spawn_position, map_width, map_height)
                 self.gold_visibility_distance = HunterValue.GOLD_VISIBILITY_DISTANCE
                 self.health = HunterValue.HEALTH
                 self.items = HunterValue.ITEMS
                 self.available_item_space = HunterValue.ITEM_CAPACITY
             case AgentRole.CARTOGRAPHER:
-                self.agent = Cartographer(name, CartographerValue.GOLD_VISIBILITY_DISTANCE, spawn_position)
+                self.agent = Cartographer(name, CartographerValue.GOLD_VISIBILITY_DISTANCE, spawn_position, map_width, map_height)
                 self.gold_visibility_distance = CartographerValue.GOLD_VISIBILITY_DISTANCE
                 self.health = CartographerValue.HEALTH
                 self.items = CartographerValue.ITEMS
                 self.available_item_space = CartographerValue.ITEM_CAPACITY
             case AgentRole.KNIGHT:
-                self.agent = Knight(name, KnightValue.GOLD_VISIBILITY_DISTANCE, spawn_position)
+                self.agent = Knight(name, KnightValue.GOLD_VISIBILITY_DISTANCE, spawn_position, map_width, map_height)
                 self.gold_visibility_distance = KnightValue.GOLD_VISIBILITY_DISTANCE
                 self.health = KnightValue.HEALTH
                 self.items = KnightValue.ITEMS
                 self.available_item_space = KnightValue.ITEM_CAPACITY
             case AgentRole.BWL_STUDENT:
-                self.agent = BWLStudent(name, BWLStudentValue.GOLD_VISIBILITY_DISTANCE, spawn_position)
+                self.agent = BWLStudent(name, BWLStudentValue.GOLD_VISIBILITY_DISTANCE, spawn_position, map_width, map_height)
                 self.gold_visibility_distance = BWLStudentValue.GOLD_VISIBILITY_DISTANCE
                 self.health = BWLStudentValue.HEALTH
                 self.items = BWLStudentValue.ITEMS

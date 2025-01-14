@@ -402,8 +402,8 @@ class EnvGenerator:
         norm = colors.BoundaryNorm(bounds, cmap.N)
         plt.figure(figsize=(self.width, self.height))
         plt.pcolor(data[::-1], cmap=cmap, norm=norm, edgecolors='k', linewidths=3)
-        plt.savefig("fig")
         print("PRINTED", datetime.datetime.now())
+        return plt
 
     """
     @author: Lucas K
