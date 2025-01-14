@@ -113,4 +113,12 @@ class Map:
         return self.info[TileCondition.SAFE]
 
     def print_map(self):
-        EnvGenerator.printGrid(self.filled_map)
+        plt = EnvGenerator.printGrid(self.filled_map)
+        position = dict()
+        for a in self.agents.values():
+            position[a.position] = f"{position.get(a.position, "")}{a.name} "
+        for key in position.keys():
+            print(key, position[key])
+        plt.show()
+
+

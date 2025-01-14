@@ -21,7 +21,7 @@ number_of_simulation_steps: int = int(input("   number of simulation steps: "))
 print("\n\n")
 
 # grid/map
-grid = Map(MAP_HEIGHT, MAP_WIDTH)
+grid = Map(MAP_WIDTH, MAP_HEIGHT)
 
 random.seed()
 
@@ -30,7 +30,7 @@ agents: dict[int, SimulatedAgent] = {}
 for i in range(0, number_of_agents, 1):
     spawn_position: tuple[int, int] = random.choice(grid.get_safe_tiles())
     role: AgentRole = random.choice(list(AgentRole))
-    agents[i] = SimulatedAgent(i, role, spawn_position)
+    agents[i] = SimulatedAgent(i, role, spawn_position, MAP_WIDTH, MAP_HEIGHT)
 grid.add_agents(agents)
 
 

@@ -2,7 +2,6 @@ from enum import Enum
 from typing import cast
 from numpy.typing import NDArray
 import numpy
-from Project.Simulator import MAP_WIDTH, MAP_HEIGHT
 
 
 class TileCondition(Enum):
@@ -66,7 +65,7 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class KnowledgeBase:
-    def __init__(self, position: tuple[int, int]):
+    def __init__(self, position: tuple[int, int], map_width: int, map_height: int):
         #
         # POSITION
         #
@@ -77,7 +76,7 @@ class KnowledgeBase:
         # MAP
         #
 
-        self.__map: _Map = _Map(MAP_WIDTH, MAP_HEIGHT)
+        self.__map: _Map = _Map(map_width,  map_height)
 
         #
         # AGENTS

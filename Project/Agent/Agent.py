@@ -30,7 +30,7 @@ class AgentGoal(Enum):
 
 class Agent:
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], gold_visibility_range: int,
-                 spawn_position: tuple[int, int]):
+                 spawn_position: tuple[int, int], map_width: int, map_height: int):
         # set a single time
         self.__name: int = name
         self.__role: AgentRole = role
@@ -38,7 +38,7 @@ class Agent:
         self.__gold_visibility_range: int = gold_visibility_range
 
         # knowledge
-        self.__knowledge: KnowledgeBase = KnowledgeBase(spawn_position)
+        self.__knowledge: KnowledgeBase = KnowledgeBase(spawn_position, map_width, map_height)
 
         # status (information given by simulator each step)
         self.__position: tuple[int, int] = (0, 0)
@@ -74,20 +74,20 @@ class Agent:
         self.__knowledge.add_shout(x, y, self.__time)
 
 class Hunter(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int]):
+    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
         super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, gold_visibility,
-                         spawn_position)
+                         spawn_position, map_width, map_height)
 
 class Cartographer(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int]):
-        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, gold_visibility, spawn_position)
+    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
+        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, gold_visibility, spawn_position, map_width, map_height)
 
 
 class Knight(Agent):
-    def __init__(self, name, gold_visibility: int, spawn_position: tuple[int, int]):
-        super().__init__(name, AgentRole.KNIGHT, {AgentGoal.WUMPUS, AgentGoal.GOLD}, gold_visibility, spawn_position)
+    def __init__(self, name, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
+        super().__init__(name, AgentRole.KNIGHT, {AgentGoal.WUMPUS, AgentGoal.GOLD}, gold_visibility, spawn_position, map_width, map_height)
 
 
 class BWLStudent(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int]):
-        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, gold_visibility, spawn_position)
+    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
+        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, gold_visibility, spawn_position, map_width, map_height)
