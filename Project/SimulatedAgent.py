@@ -67,11 +67,12 @@ class DefaultAgentValue:
 
 
 class HunterValue(DefaultAgentValue):
+    ITEM_CAPACITY: int = 3
     ITEMS: list[int] = DefaultAgentValue.ITEMS
-    ITEMS[AgentItem.ARROW.value] = 5
+    ITEMS[AgentItem.ARROW.value] = 1
 
     # specifics
-    REPLENISH_ARROWS: int = 5
+    REPLENISH_ARROWS: int = 1
 
 
 class CartographerValue(DefaultAgentValue):
@@ -79,11 +80,11 @@ class CartographerValue(DefaultAgentValue):
 
 
 class KnightValue(DefaultAgentValue):
-    HEALTH: int = 3
+    HEALTH: int = 2
     ITEM_CAPACITY: int = 3
 
     # specifics
-    REPLENISH_HEALTH: int = 3
+    REPLENISH_HEALTH: int = 2
 
 
 class BWLStudentValue(DefaultAgentValue):

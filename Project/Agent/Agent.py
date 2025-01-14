@@ -28,7 +28,7 @@ class AgentGoal(Enum):
     WUMPUS: int = 1
     MAP_PROGRESS: int = 2
 
-class Agent:
+class Agent: # TODO: fildUtility Funktion
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], gold_visibility_range: int,
                  spawn_position: tuple[int, int], map_width: int, map_height: int):
         # set a single time
@@ -49,6 +49,10 @@ class Agent:
 
     def communicate(self, agents: list[tuple[int, AgentRole]]) -> tuple[bool, list[int]]:
         # accept: choose agents to communicate with
+        # TODO: - akzeptiere Kommunikation (2 Funktionen für Sender/Empfänger)
+        #       - gibt Offer
+        #       - akzeptiere/evaluiere Offer -> ggf. Counteroffer
+        #       - entgegennahme von Tasks/Contracts
         agents_to_communicate_with: list[int] = []
         for agent in agents:
             agents_to_communicate_with.append(agent[0])
@@ -70,7 +74,6 @@ class Agent:
     def get_next_action(self) -> AgentAction:
         pass
 
-    def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
 
 class Hunter(Agent):
@@ -78,6 +81,7 @@ class Hunter(Agent):
         super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, gold_visibility,
                          spawn_position, map_width, map_height)
 
+    def receive_shout_action_information(self, x: int, y: int):
 class Cartographer(Agent):
     def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
         super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, gold_visibility, spawn_position, map_width, map_height)

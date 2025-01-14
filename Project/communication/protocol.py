@@ -11,7 +11,7 @@ class Performative(Enum):
     INFORM = 4
 
 
-class RequestTypeObj(Enum):
+class RequestTypeObj(Enum): # TODO: mit CounterOfferObj zusammen + ServiceType (KILL_WUMPUS)
     POSITION = 1
     HELP = 2
 
@@ -27,7 +27,7 @@ class CounterOfferObj(Enum):
     HELP = 2
     POSITION = 3
 
-# TODO: warum nicht obj in Message init?
+# TODO: warum nicht obj in Message init? Wahrscheinlich useless
 class Message:
     def __init__(self,
                  performative: Performative,
@@ -47,11 +47,10 @@ class Message:
 
 
 # Kommunikationskanal
-class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
-    def __init__(self, initiator, participants,
-                 map_instance: Map):  # TODO: Warum benötigtest du hier die Map. Solltest doch einfach davon ausgehen können, dass participants valid sind
+class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt -> class = Dokument
+    def __init__(self, initiator, participants): # TODO: init = startCommunication() -> Variablen global definieren
         self.initiator = initiator
-        self.participants = participants # TODO: kann man mit den Nachbarn kommunizieren? Dachte nur auf gleichem Feld
+        self.participants = participants
         self.completed = False
 
         if not self.participants:
@@ -70,7 +69,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 # Eventueller Ablauf von kommunikation:
 #   - Initiator initialisiert Kanal mit Sender, Receiver, Request, usw.
 #   - Kanal übernimmt kommunikation bis Ergebnis vorhanden
-#   - Kanal gibt Ergebnis an Initiator zurück
+#   - Kanal setzt Ergebnis um (an Agent)
 
 #wenn mehrere agenten auf einem Feld sind wird Kommunikation gestartet
 #abfragen, ob mit gleichem Agenten schonmal kommuniziert wurde
@@ -78,20 +77,21 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 # bwler würde gold verlangen, um Position zu geben
 # knight würde für help gold verlangen
 
-def startCommunication(agents, ):
+def startCommunication(agents, ): # TODO: setzen der (global) Variablen
     #von simulator aufgerufen
     #baseagent fragen ob kommunizieren (annehmen oder nicht annehmen), 
     # anfrage, ob agent der request beitreten will, dann erst handle request etc
     # wenn kein offer kann man gleich declinen
 
 
+
 #simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
 def handle_request(sender, receiver, request_type: RequestTypeObj, offer):
-    response = utility.calcResponse(sender,receiver, request_type, offer) #response (Status, Objekt) oderso
+    response = utility.calcResponse(sender,receiver, request_type, offer) #response (Status, Objekt) oderso TODO: utility über Agent aufrufen
     if response[0] == Status.ACCEPT:
         print(f"[Request] {receiver.name} accepted the request.")
         
-        #ist das Angebot Gold, Position oder Help?
+        #ist das Angebot Gold, Position oder Help? TODO: offer Objekt nutzen
         if offer[0] = "gold":
             #remove gold
             return [position]

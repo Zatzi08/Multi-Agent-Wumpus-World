@@ -28,7 +28,6 @@ class EnvGenerator:
         self.__genByTile()
         self.__analyseMap()
 
-
     def getGrid(self):
         return self.grid.copy()
 
@@ -38,7 +37,7 @@ class EnvGenerator:
             for yj in [-1, 0, 1]:
                 if abs(xi) == abs(yj):
                     continue
-                elif 0 < x + xi < self.width and 0 < y + yj < self.height and self.grid[y + yj][x + xi] is not None:
+                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL in self.grid[y + yj][x + xi]:
                     neighbors.append((x + xi, y + yj))
         return neighbors
 
@@ -73,7 +72,7 @@ class EnvGenerator:
             x, y = visit.pop()
             visited[y][x] = True
             n = self.getNeighbors(x, y)
-            if self.grid[y][x] is not None:
+            if TileCondition.WALL not in self.grid[y][x]:
                 if not self.grid[y][x]:
                     safe.append((x, y))
                 if TileCondition.PIT in self.grid[y][x]:
@@ -87,16 +86,14 @@ class EnvGenerator:
                 if not visited[yi][xi]:
                     visit.append((xi, yi))
 
-        self.info[TileCondition.SAFE] = safe
-        self.info[TileCondition.WUMPUS] = wumpus
-        self.info[TileCondition.SHINY] = gold
-        self.info[TileCondition.PIT] = pit
-
-
+        self.info[TileCondition.SAFE.value] = safe
+        self.info[TileCondition.WUMPUS.value] = wumpus
+        self.info[TileCondition.SHINY.value] = gold
+        self.info[TileCondition.PIT.value] = pit
 
     def getNumDeadEnds(self):
         if self.num_dead_end == -1:
-            if self.grid is not None and type(self.grid[1][1]) is list:
+            if TileCondition.WALL not in self.grid and type(self.grid[1][1]) is list:
                 self.num_dead_end = len(self.__findDeadEnd())
         return self.num_dead_end
 
@@ -104,18 +101,22 @@ class EnvGenerator:
     @author: Lucas K
     @:param Array
     @:return Array.astype(int)
-    None für Wand, [] für Weg Umwandlung zu Array
+    [TileCondition.WALL] für Wand, [] für Weg Umwandlung zu Array
     """
 
     def __convertToArray(self, grid):
         g = np.ndarray((self.height, self.width), list)
-        # Path = [] Wall = None
+
+        self.info[TileCondition.WALL.value] = []
+
+        # Path = [] Wall = [TileCondition.WALL]
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if grid[y][x] == ' ':
                     g[y][x] = []
                 else:
-                    g[y][x] = None
+                    g[y][x] = [TileCondition.WALL]
+                    self.info[TileCondition.WALL.value] += [(x, y)]
         return g
 
     # define Tiles -> gen grid using Tiles by prob and some rules
@@ -195,12 +196,12 @@ class EnvGenerator:
 
         """
         @author: Lucas K
-        @:param None
+        @:param [TileCondition.WALL]
         @:return Leeres Array.astype(str)
         Erweitert die gegebene Höhe und Breite auf ein vielfaches von 3 
         
         @ Explanation
-        Wall = None
+        Wall = [TileCondition.WALL]
         Path = [...]
         Events:
             Shine   = [..., 3, ...] = Gold
@@ -379,7 +380,7 @@ class EnvGenerator:
             for y in range(0, self.height):
                 for x in range(0, self.width):
                     # Wall
-                    if grid[y][x] is None:
+                    if TileCondition.WALL in grid[y][x]:
                         g[y][x] = 0
                     # Wumpus
                     elif TileCondition.WUMPUS in grid[y][x]:

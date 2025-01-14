@@ -7,7 +7,7 @@ from Project.communication.protocol import startCommunication
 import random
 
 # constants
-REPLENISH_TIME: int = 5
+REPLENISH_TIME: int = 32
 
 # user input
 print("Please input the following things:\n")
