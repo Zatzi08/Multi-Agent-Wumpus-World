@@ -2,7 +2,7 @@ from Project.Environment.Map import Map
 from Project.SimulatedAgent import SimulatedAgent
 from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
 from Project.Knowledge.KnowledgeBase import TileCondition
-from Project.communication.protocol import startCommunication
+from Project.communication.protocol import CommunicationChannel
 
 import random
 
@@ -32,6 +32,7 @@ for i in range(0, number_of_agents, 1):
     role: AgentRole = random.choice(list(AgentRole))
     agents[i] = SimulatedAgent(i, role, spawn_position, MAP_WIDTH, MAP_HEIGHT)
 grid.add_agents(agents)
+communication_channel: CommunicationChannel = CommunicationChannel(agents)
 
 
 # simulate
@@ -75,22 +76,10 @@ for i in range(1, number_of_simulation_steps + 1, 1):
     # give every agent the possibility to establish communication
     for agent in agents.values():
         names_of_agents_in_proximity: list[int] = grid.get_agents_in_reach(i, 1)
-        agents_in_proximity: list[tuple[int, AgentRole]] = []
+        agents_in_proximity: [tuple[int, AgentRole]] = []
         for name in names_of_agents_in_proximity:
             agents_in_proximity.append((name, agents[name].role))
-        answer: tuple[bool, list[int]] = agent.agent.communicate(agents_in_proximity)
-
-        # check if communication is wanted
-        if answer[0]:
-            agents_in_communication: list[int] = [agent.name]
-            for name in answer[1]:
-                answer_to_invite: tuple[bool, list[int]] = agents[name].agent.communicate([(agent.name, agent.role)])
-                if answer_to_invite[0]:
-                    agents_in_communication.append(name)
-
-            # start communication
-            if len(agents_in_communication) > 1:
-                startCommunication(agents_in_communication)
+        communication_channel.communicate(agent.name, agents_in_proximity)
 
     # have every agent perform an action
     for agent in agents.values():

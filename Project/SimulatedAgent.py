@@ -25,6 +25,7 @@ class SimulatedAgent:
                 self.health = CartographerValue.HEALTH
                 self.items = CartographerValue.ITEMS
                 self.available_item_space = CartographerValue.ITEM_CAPACITY
+                # TODO: map with walls
             case AgentRole.KNIGHT:
                 self.agent = Knight(name, KnightValue.GOLD_VISIBILITY_DISTANCE, spawn_position, map_width, map_height)
                 self.gold_visibility_distance = KnightValue.GOLD_VISIBILITY_DISTANCE

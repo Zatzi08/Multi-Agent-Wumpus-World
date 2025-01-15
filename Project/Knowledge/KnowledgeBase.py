@@ -83,6 +83,7 @@ class KnowledgeBase:
         #
 
         self.__shouts: dict[tuple[int, int], int] = {}
+        # TODO: store accepted tasks
 
     #
     # POSITION

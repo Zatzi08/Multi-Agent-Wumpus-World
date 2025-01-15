@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Union, Optional
 from Project.Agent.Agent import *
 from Project.Environment import Map
-
+from Project.SimulatedAgent import SimulatedAgent
 
 class Performative(Enum):
     CFP = 1
@@ -11,10 +11,10 @@ class Performative(Enum):
     INFORM = 4
 
 
-class RequestTypeObj(Enum): # TODO: mit CounterOfferObj zusammen + ServiceType (KILL_WUMPUS)
-    POSITION = 1
-    HELP = 2
-
+class RequestObject(Enum):
+    GOLD = 1
+    TILE_INFORMATION = 2
+    KILL_WUMPUS = 3
 
 class ResponseType(Enum):
     ACCEPT = 1
@@ -22,10 +22,22 @@ class ResponseType(Enum):
     COUNTEROFFER = 3
 
 
-class CounterOfferObj(Enum):
-    GOLD = 1
-    HELP = 2
-    POSITION = 3
+class OfferedObjects:
+    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]], wumpus_positions: [tuple[int, int]]):
+        self.gold_amount = gold_amount
+        self.tile_information = tile_information
+        self.wumpus_positions = wumpus_positions
+
+class RequestedObjects:
+    def __init__(self, gold: int, tiles: list[tuple[int, int]], wumpus_positions: int):
+        self.gold: int = gold
+        self.tiles: list[tuple[int, int]] = tiles
+        self.wumpus_positions: int = wumpus_positions
+
+class Offer:
+    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects):
+        # TODO create offer from OfferedObjects and RequestedObjects
+        pass
 
 # TODO: warum nicht obj in Message init? Wahrscheinlich useless
 class Message:
@@ -33,8 +45,8 @@ class Message:
                  performative: Performative,
                  sender: str,
                  receiver: Union[str, List[str]],
-                 content: dict[RequestTypeObj, Union[str, int, tuple]],
-                 obj: Union[RequestTypeObj, CounterOfferObj]):
+                 content: dict[RequestObject, Union[str, int, tuple]],
+                 obj: Union[RequestObject, RequestObject]):
         self.performative = performative
         self.sender = sender
         self.receiver = receiver
@@ -45,25 +57,40 @@ class Message:
         return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \
                f"receiver={self.receiver}, content={self.content})"
 
+class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
+    def __init__(self, agents: dict[int, SimulatedAgent]):
+        self.agents = agents
+        self.initiator: int = 0 # set for each communication
+        self.participants: [int] = [] # set for each communication
 
-# Kommunikationskanal
-class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt -> class = Dokument
-    def __init__(self, initiator, participants): # TODO: init = startCommunication() -> Variablen global definieren
-        self.initiator = initiator
-        self.participants = participants
-        self.completed = False
+    def set_agents(self, agents: dict[int, SimulatedAgent]):
+        self.agents = agents
 
-        if not self.participants:
-            raise ValueError(f"No neighbors in range for {initiator.name}. Communication not possible.")
+    def communicate(self, sender: int, potential_receivers: [int, AgentRole]) -> None:
+        answer: tuple[list[int], OfferedObjects, RequestedObjects] = self.agents[sender].agent.start_communication(potential_receivers)
+        receivers: list[int] = answer[0]
+        offered_objects: OfferedObjects = answer[1]
 
-        print(f"[Channel] Initialized with participants: {[p.name for p in self.participants]}")
+        # check if communication should take place
+        if not receivers:
+            return
+        if not verify_offered_objects(offered_objects):
+            return
 
+        # set sender and receivers
+        self.initiator = sender
+        self.participants = receivers
 
-    def close(self):
-        print(
-            f"[Channel] Communication between {self.initiator.name} and {len(self.participants)} participants closed.")
-        self.completed = True
+        # TODO create offer from offered_objects and requested_objects
+        offer: Offer = None
 
+        # for each participant: get answer to offer
+        for participant in self.participants:
+            self.agents[participant].agent.answer_to_offer(self.initiator, offer)
+
+        # TODO evaluate answers
+
+        # TODO finish communication (distribute offered objects)
 
 # TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
 # Eventueller Ablauf von kommunikation:
@@ -77,16 +104,14 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 # bwler würde gold verlangen, um Position zu geben
 # knight würde für help gold verlangen
 
-def startCommunication(agents, ): # TODO: setzen der (global) Variablen
-    #von simulator aufgerufen
-    #baseagent fragen ob kommunizieren (annehmen oder nicht annehmen), 
-    # anfrage, ob agent der request beitreten will, dann erst handle request etc
-    # wenn kein offer kann man gleich declinen
+def verify_offered_objects(offer_objects: OfferedObjects) -> bool:
+    # TODO check if an offer is valid
+    return False
 
 
 
 #simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
-def handle_request(sender, receiver, request_type: RequestTypeObj, offer):
+def handle_request(sender, receiver, request_type: RequestObject, offer):
     response = utility.calcResponse(sender,receiver, request_type, offer) #response (Status, Objekt) oderso TODO: utility über Agent aufrufen
     if response[0] == Status.ACCEPT:
         print(f"[Request] {receiver.name} accepted the request.")
