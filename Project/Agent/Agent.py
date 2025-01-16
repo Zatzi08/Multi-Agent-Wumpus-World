@@ -104,6 +104,9 @@ class Agent: # TODO: fieldUtility Funktion
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
 
+    def receive_bump_information(self, x: int, y: int):
+        self.__knowledge.update_tile(x, y, [TileCondition.WALL])
+
 class Hunter(Agent):
     def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
         super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, gold_visibility,

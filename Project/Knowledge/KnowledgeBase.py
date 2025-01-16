@@ -1,7 +1,4 @@
 from enum import Enum
-from typing import cast
-from numpy.typing import NDArray
-import numpy
 
 
 class TileCondition(Enum):
@@ -16,52 +13,71 @@ class TileCondition(Enum):
     BREEZE: int = 8
 
 
-class _Tile:
-    def __init__(self):
-        self.__visited: bool = False
-        self.__size: int = len(TileCondition)
-        self.__bitmask: int = int('0' * len(TileCondition), 2)
-
-    def add(self, condition: TileCondition):
-        self.__bitmask |= 1 << condition.value()
-
-    def has(self, condition: TileCondition) -> bool:
-        return self.__bitmask & 1 << condition.value() is True
-
-    def remove(self, condition: TileCondition):
-        self.__bitmask &= ~(1 << condition.value())
-
-    def get_conditions(self) -> list[TileCondition]:
-        return [condition for condition in TileCondition if self.has(condition)]
-
-    def set_visited(self):
-        self.__visited = True
-
-    def visited(self) -> bool:
-        return self.__visited
+SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class _Map:
     def __init__(self, map_width: int, map_height: int):
-        self.__width: int = map_width
-        self.__height: int = map_height
-        self.__map = NDArray[NDArray[_Tile]] = numpy.array(
-            [[_Tile() for _ in range(map_height)] for _ in range(map_width)],
-            dtype=object
-        )
+        self.__map: list[list[set[TileCondition]]] = [[set()] * map_height] * map_width
+        self.__visited_map: list[list[bool]] = [[False] * map_height] * map_width
+        self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set()] * len(TileCondition)
+        self.__closest_unvisited_tiles: set[tuple[int, int]] = set()
+        self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = set()
+
         # add map border (walls)
         for x in range(map_width):
-            cast(_Tile, self.__map[x, 0]).add(TileCondition.WALL)
-            cast(_Tile, self.__map[x, map_height-1]).add(TileCondition.WALL)
+            self.__map[x][0].add(TileCondition.WALL)
+            self.__map[x][map_height - 1].add(TileCondition.WALL)
         for y in range(map_height):
-            cast(_Tile, self.__map[0, y]).add(TileCondition.WALL)
-            cast(_Tile, self.__map[map_width-1, y]).add(TileCondition.WALL)
+            self.__map[0][y].add(TileCondition.WALL)
+            self.__map[map_width - 1][y].add(TileCondition.WALL)
 
-    def access(self, x: int, y: int) -> _Tile:
-        return cast(_Tile, self.__map[x][y])
+    def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int):
+        if TileCondition.WALL in self.__map[x][y]:
+            return
 
+        self.__closest_unknown_tiles_to_any_known_tiles.remove((x, y))
 
-SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
+        for position in SURROUNDING_TILES:
+            if not self.__map[x + position[0]][y + position[1]]:
+                self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
+
+    def add_condition_to_tile(self, x: int, y: int, condition: TileCondition):
+        self.__map[x][y].add(condition)
+        self.__tiles_by_tile_condition[condition.value].add((x, y))
+        self.__update_closest_unknown_tiles_using_new_tile(x, y)
+
+    def tile_has_condition(self, x: int, y: int, condition: TileCondition) -> bool:
+        return condition in self.__map[x][y]
+
+    def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition):
+        self.__map[x][y].remove(condition)
+        self.__tiles_by_tile_condition[condition.value].remove((x, y))
+
+    def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
+        return self.__map[x][y]
+
+    def set_visited(self, x: int, y: int):
+        self.__visited_map[x][y] = True
+        self.__closest_unvisited_tiles.remove((x, y))
+        for position in SURROUNDING_TILES:
+            if (self.visited(x + position[0], y + position[1])
+                    or self.tile_has_condition(x + position[0], y + position[1], TileCondition.WALL)
+                    or self.tile_has_condition(x + position[0], y + position[1], TileCondition.PIT)):
+                continue
+            self.__closest_unvisited_tiles.add((x + position[0], y + position[1]))
+
+    def visited(self, x: int, y: int) -> bool:
+        return self.__visited_map[x][y]
+
+    def get_tiles_by_condition(self, condition: TileCondition) -> set[tuple[int, int]]:
+        return self.__tiles_by_tile_condition[condition.value]
+
+    def get_closest_unvisited_tiles(self) -> set[tuple[int, int]]:
+        return self.__closest_unvisited_tiles
+
+    def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
+        return self.__closest_unknown_tiles_to_any_known_tiles
 
 
 class KnowledgeBase:
@@ -76,8 +92,7 @@ class KnowledgeBase:
         # MAP
         #
 
-        self.__map: _Map = _Map(map_width,  map_height)
-        self.__tiles_by_tile_conditions: list[set[tuple[int, int]]] = [set()] * len(TileCondition)
+        self.__map: _Map = _Map(map_width, map_height)
 
         #
         # AGENTS
@@ -114,16 +129,15 @@ class KnowledgeBase:
         # check if all surrounding tiles fulfill the test condition
         count = 0
         for position in SURROUNDING_TILES:
-            if self.__map.access(x + position[0], y + position[1]).has(surrounding_tiles_condition):
+            if self.__map.tile_has_condition(x + position[0], y + position[1], surrounding_tiles_condition):
                 count += 1
                 continue
             # do not have to check for walls and pits independently as they cannot be visited
-            if self.__map.access(x + position[0], y + position[1]).visited():
+            if self.__map.visited(x + position[0], y + position[1]):
                 break
             count += 1
         if count == 4:
-            self.__map.access(x, y).add(tile_condition)
-            self.__tiles_by_tile_conditions[tile_condition.value].add((x, y))
+            self.__map.add_condition_to_tile(x, y, tile_condition)
             return True
         return False
 
@@ -136,7 +150,7 @@ class KnowledgeBase:
                              f"{TileCondition.PREDICTED_PIT}.")
 
         # check if prediction is already made
-        if self.__map.access(x, y).has(tile_condition):
+        if self.__map.tile_has_condition(x, y, tile_condition):
             return True
 
         # get check parameters
@@ -148,13 +162,13 @@ class KnowledgeBase:
             tile_check_2 = TileCondition.PIT
 
         # check if knowledge is already known
-        if self.__map.access(x, y).has(tile_check_1):
+        if self.__map.tile_has_condition(x, y, tile_check_1):
             return True
 
         # skip if prediction is not consistent
-        if (self.__map.access(x, y).has(TileCondition.SAFE)
-                or self.__map.access(x, y).has(TileCondition.WALL)
-                or self.__map.access(x, y).has(tile_check_2)):
+        if (self.__map.tile_has_condition(x, y, TileCondition.SAFE)
+                or self.__map.tile_has_condition(x, y, TileCondition.WALL)
+                or self.__map.tile_has_condition(x, y, tile_check_2)):
             return False
 
         # add, if consistent with surrounding tiles
@@ -169,15 +183,14 @@ class KnowledgeBase:
                              f"{TileCondition.BREEZE}.")
 
         # check if stench or breeze is already placed
-        if self.__map.access(x, y).has(tile_condition):
+        if self.__map.tile_has_condition(x, y, tile_condition):
             return True
 
         # add, if not wall or pit
-        if (self.__map.access(x, y).has(TileCondition.WALL)
-                or self.__map.access(x, y).has(TileCondition.PIT)):
+        if (self.__map.tile_has_condition(x, y, TileCondition.WALL)
+                or self.__map.tile_has_condition(x, y, TileCondition.PIT)):
             return False
-        self.__map.access(x, y).add(tile_condition)
-        self.__tiles_by_tile_conditions[tile_condition.value].add((x, y))
+        self.__map.add_condition_to_tile(x, y, tile_condition)
 
         # get danger types that are to be found
         if tile_condition == TileCondition.STENCH:
@@ -196,14 +209,12 @@ class KnowledgeBase:
         if count == 0:
             # for breezes there cannot be 0
             # for stenches: remove if 0 (stench cannot be there anymore)
-            self.__map.access(x, y).remove(TileCondition.STENCH)
-            self.__tiles_by_tile_conditions[TileCondition.STENCH.value].remove((x, y))
+            self.__map.remove_condition_from_tile(x, y, TileCondition.STENCH)
         elif count == 1:
             # resolve, as predicted danger is real (prediction is correct)
             for position in SURROUNDING_TILES:
-                if self.__map.access(x + position[0], y + position[1]).has(predicted_danger):
-                    self.__map.access(x + position[0], y + position[1]).remove(predicted_danger)
-                    self.__tiles_by_tile_conditions[predicted_danger.value].remove((x, y))
+                if self.__map.tile_has_condition(x + position[0], y + position[1], predicted_danger):
+                    self.__map.remove_condition_from_tile(x + position[0], y + position[1], predicted_danger)
                     self.update_tile(x + position[0], y + position[1], [real_danger])
                     return True
         return True
@@ -216,10 +227,9 @@ class KnowledgeBase:
             raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, "
                              f"{TileCondition.WUMPUS}, and {TileCondition.PREDICTED_PIT}.")
 
-        if self.__map.access(x, y).has(tile_condition):
+        if self.__map.tile_has_condition(x, y, tile_condition):
             # discard danger
-            self.__map.access(x, y).remove(tile_condition)
-            self.__tiles_by_tile_conditions[tile_condition.value].remove((x, y))
+            self.__map.remove_condition_from_tile(x, y, tile_condition)
 
             # get tile condition to re-predict
             if tile_condition == TileCondition.PREDICTED_PIT:
@@ -229,29 +239,27 @@ class KnowledgeBase:
 
             # (if possible) remove or re-predict surroundings
             for position in SURROUNDING_TILES:
-                if self.__map.access(x + position[0], y + position[1]).has(prediction_condition):
-                    self.__map.access(x + position[0], y + position[1]).remove(prediction_condition)
-                    self.__tiles_by_tile_conditions[prediction_condition.value].remove((x, y))
+                if self.__map.tile_has_condition(x + position[0], y + position[1], prediction_condition):
+                    self.__map.remove_condition_from_tile(x + position[0], y + position[1], prediction_condition)
                     self.__add_stench_or_breeze(x + position[0], y + position[1], prediction_condition)
 
     def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition]):
         """updates map knowledge given some knowledge about a tile"""
         # developer has to make sure that all (missing) tile conditions are listed on visit
         if (x, y) == self.__position:
-            self.__map.access(x, y).set_visited()
+            self.__map.set_visited(x, y)
 
         # for every condition: check for consistency and potentially add it
         for tile_condition in tile_conditions:
             # filter already known conditions
-            if self.__map.access(x, y).has(tile_condition):
+            if self.__map.tile_has_condition(x, y, tile_condition):
                 continue
 
             # consistency
             match tile_condition:
                 case TileCondition.SAFE:
                     # add
-                    self.__map.access(x, y).add(TileCondition.SAFE)
-                    self.__tiles_by_tile_conditions[TileCondition.SAFE.value].add((x, y))
+                    self.__map.add_condition_to_tile(x, y, TileCondition.SAFE)
 
                     # remove (predicted) dangers as the tile is safe now
                     self.__discard_and_re_predict(x, y, TileCondition.WUMPUS)
@@ -263,22 +271,18 @@ class KnowledgeBase:
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_PIT)
 
                     # add
-                    self.__map.access(x, y).add(TileCondition.WALL)
-                    self.__tiles_by_tile_conditions[TileCondition.WALL.value].add((x, y))
+                    self.__map.add_condition_to_tile(x, y, TileCondition.WALL)
                 case TileCondition.SHINY:
                     # add
-                    self.__map.access(x, y).add(TileCondition.SHINY)
-                    self.__tiles_by_tile_conditions[TileCondition.SHINY.value].add((x, y))
+                    self.__map.add_condition_to_tile(x, y, TileCondition.SHINY)
                 case TileCondition.WUMPUS:
                     # if tile is safe already, wumpus is already gone
-                    if self.__map.access(x, y).has(TileCondition.SAFE):
+                    if self.__map.tile_has_condition(x, y, TileCondition.SAFE):
                         continue
 
                     # remove predictions as there is a resolution now
-                    self.__map.access(x, y).remove(TileCondition.PREDICTED_WUMPUS)
-                    self.__tiles_by_tile_conditions[TileCondition.PREDICTED_WUMPUS.value].remove((x, y))
-                    self.__map.access(x, y).remove(TileCondition.PREDICTED_PIT)
-                    self.__tiles_by_tile_conditions[TileCondition.PREDICTED_PIT.value].remove((x, y))
+                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_WUMPUS)
+                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_PIT)
 
                     # add, if all surrounding tiles could be stenches
                     if self.__add_condition_if_all_surrounding_tiles_allow(x, y, TileCondition.WUMPUS):
@@ -287,14 +291,13 @@ class KnowledgeBase:
                             self.__add_stench_or_breeze(x + position[0], y + position[1], TileCondition.STENCH)
                     else:
                         # wumpus not added: tile must be safe now
-                        self.__map.access(x, y).add(TileCondition.SAFE)
-                        self.__tiles_by_tile_conditions[TileCondition.SAFE.value].add((x, y))
+                        self.__map.add_condition_to_tile(x, y, TileCondition.SAFE)
 
                         # remove surrounding stenches if possible
                         for position in SURROUNDING_TILES:
-                            if self.__map.access(x + position[0], y + position[1]).has(TileCondition.STENCH):
-                                self.__map.access(x + position[0], y + position[1]).remove(TileCondition.STENCH)
-                                self.__tiles_by_tile_conditions[TileCondition.STENCH.value].remove((x, y))
+                            if self.__map.tile_has_condition(x + position[0], y + position[1], TileCondition.STENCH):
+                                self.__map.remove_condition_from_tile(x + position[0], y + position[1],
+                                                                      TileCondition.STENCH)
                                 self.__add_stench_or_breeze(x + position[0], y + position[1], TileCondition.STENCH)
                 case TileCondition.PREDICTED_WUMPUS:
                     # predict wumpus
@@ -305,12 +308,10 @@ class KnowledgeBase:
                 case TileCondition.PIT:
                     # remove predicted dangers as the tile is a pit
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_WUMPUS)
-                    self.__map.access(x, y).remove(TileCondition.PREDICTED_PIT)
-                    self.__tiles_by_tile_conditions[TileCondition.PREDICTED_WUMPUS.value].remove((x, y))
+                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_PIT)
 
                     # add
-                    self.__map.access(x, y).add(TileCondition.PIT)
-                    self.__tiles_by_tile_conditions[TileCondition.PIT.value].add((x, y))
+                    self.__map.add_condition_to_tile(x, y, TileCondition.PIT)
 
                     # place breezes around pit
                     for position in SURROUNDING_TILES:
@@ -324,18 +325,24 @@ class KnowledgeBase:
         return
 
     def get_tiles_by_condition(self, condition: TileCondition) -> set[tuple[int, int]]:
-        return self.__tiles_by_tile_conditions[condition.value]
+        return self.__map.get_tiles_by_condition(condition)
 
     def visited(self, x: int, y: int) -> bool:
         """returns whether a certain tile has been visited"""
-        return self.__map.access(x, y).visited()
+        return self.__map.visited(x, y)
 
-    def get_tile(self, x: int, y: int) -> list[TileCondition]:
+    def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
         """returns all information about a tile"""
-        return self.__map.access(x, y).get_conditions()
+        return self.__map.get_conditions_of_tile(x, y)
 
     def tile_has_condition(self, x: int, y: int, tile_condition: TileCondition) -> bool:
-        return self.__map.access(x, y).has(tile_condition)
+        return self.__map.tile_has_condition(x, y, tile_condition)
+
+    def get_closest_unvisited_tiles(self) -> set[tuple[int, int]]:
+        return self.__map.get_closest_unvisited_tiles()
+
+    def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
+        return self.__map.get_closest_unknown_tiles_to_any_known_tiles()
 
     #
     # AGENTS
