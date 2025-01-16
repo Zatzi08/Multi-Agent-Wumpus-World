@@ -32,7 +32,7 @@ class _Map:
             self.__map[0][y].add(TileCondition.WALL)
             self.__map[map_width - 1][y].add(TileCondition.WALL)
 
-    def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int):
+    def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
         if TileCondition.WALL in self.__map[x][y]:
             return
 
@@ -42,7 +42,7 @@ class _Map:
             if not self.__map[x + position[0]][y + position[1]]:
                 self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
 
-    def add_condition_to_tile(self, x: int, y: int, condition: TileCondition):
+    def add_condition_to_tile(self, x: int, y: int, condition: TileCondition) -> None:
         self.__map[x][y].add(condition)
         self.__tiles_by_tile_condition[condition.value].add((x, y))
         self.__update_closest_unknown_tiles_using_new_tile(x, y)
@@ -50,14 +50,14 @@ class _Map:
     def tile_has_condition(self, x: int, y: int, condition: TileCondition) -> bool:
         return condition in self.__map[x][y]
 
-    def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition):
+    def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition) -> None:
         self.__map[x][y].remove(condition)
         self.__tiles_by_tile_condition[condition.value].remove((x, y))
 
     def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
         return self.__map[x][y]
 
-    def set_visited(self, x: int, y: int):
+    def set_visited(self, x: int, y: int) -> None:
         self.__visited_map[x][y] = True
         self.__closest_unvisited_tiles.remove((x, y))
         for position in SURROUNDING_TILES:
@@ -87,6 +87,7 @@ class KnowledgeBase:
         #
 
         self.__position: tuple[int, int] = position
+        self.__path: list[tuple[int, int]] = []
 
         #
         # MAP
@@ -105,8 +106,12 @@ class KnowledgeBase:
     # POSITION
     #
 
-    def update_position(self, position: tuple[int, int]):
+    def update_position(self, position: tuple[int, int]) -> None:
         self.__position = position
+        self.__path.append(position)
+
+    def get_path(self) -> list[tuple[int, int]]:
+        return self.__path
 
     #
     # MAP
@@ -219,7 +224,7 @@ class KnowledgeBase:
                     return True
         return True
 
-    def __discard_and_re_predict(self, x: int, y: int, tile_condition: TileCondition):
+    def __discard_and_re_predict(self, x: int, y: int, tile_condition: TileCondition) -> None:
         """discards (predicted) dangers, then re-evaluates stenches and danger predictions accordingly"""
 
         # check for allowed tile_condition values
@@ -243,7 +248,7 @@ class KnowledgeBase:
                     self.__map.remove_condition_from_tile(x + position[0], y + position[1], prediction_condition)
                     self.__add_stench_or_breeze(x + position[0], y + position[1], prediction_condition)
 
-    def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition]):
+    def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition]) -> None:
         """updates map knowledge given some knowledge about a tile"""
         # developer has to make sure that all (missing) tile conditions are listed on visit
         if (x, y) == self.__position:
@@ -348,11 +353,11 @@ class KnowledgeBase:
     # AGENTS
     #
 
-    def add_shout(self, x: int, y: int, time: int):
+    def add_shout(self, x: int, y: int, time: int) -> None:
         self.__shouts[(x, y)] = time
 
     def get_shouts(self) -> dict[tuple[int, int], int]:
         return self.__shouts
 
-    def remove_shout(self, x: int, y: int):
+    def remove_shout(self, x: int, y: int) -> None:
         self.__shouts.pop((x, y))
