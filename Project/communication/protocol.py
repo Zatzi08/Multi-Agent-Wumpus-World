@@ -67,13 +67,14 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         self.agents = agents
 
     def communicate(self, sender: int, potential_receivers: [int, AgentRole]) -> None:
-        answer: tuple[list[int], OfferedObjects, RequestedObjects] = self.agents[sender].agent.start_communication(potential_receivers)
+        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[sender].agent.start_communication(potential_receivers)
         receivers: list[int] = answer[0]
-        offered_objects: OfferedObjects = answer[1]
+        offered_objects: OfferedObjects = answer[1][0]
 
         # check if communication should take place
         if not receivers:
             return
+        # TODO handle verification of offered objects/maybe keep the verified parts instead of breaking communication
         if not verify_offered_objects(offered_objects):
             return
 
@@ -81,8 +82,12 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         self.initiator = sender
         self.participants = receivers
 
+        # set requested objects
+        requested_objects: RequestedObjects = answer[1][1]
+
+
         # TODO create offer from offered_objects and requested_objects
-        offer: Offer = None
+        offer: Offer = Offer(offered_objects, requested_objects)
 
         # for each participant: get answer to offer
         for participant in self.participants:
