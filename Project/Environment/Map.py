@@ -1,6 +1,11 @@
-from Project.Environment.env import EnvGenerator
+from Project.Environment.env import EnvGenerator, printGrid
 from Project.Knowledge.KnowledgeBase import TileCondition
 from Project.SimulatedAgent import SimulatedAgent
+
+from plotly import offline
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 class Map:
     __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds', 'info']
@@ -39,7 +44,7 @@ class Map:
     def __get_neighbors_of(self, x: int, y: int) -> list[tuple[int, int]]:
         adjacent: list[tuple[int, int]] = []
         for (xi, yi) in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            if TileCondition.WALL in self.filled_map[y+yi][x+xi]:
+            if TileCondition.WALL in self.filled_map[y + yi][x + xi]:
                 continue
             adjacent.append((x, y))
         return adjacent
@@ -91,7 +96,7 @@ class Map:
             else:
                 second_condition = TileCondition.BREEZE
             for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-                self.map.filled_map.__delete_stench_or_breeze(x+ox, y+oy, second_condition)
+                self.map.filled_map.__delete_stench_or_breeze(x + ox, y + oy, second_condition)
 
     def __delete_stench_or_breeze(self, x, y, condition: TileCondition):
         if condition != TileCondition.STENCH and condition != TileCondition.BREEZE:
@@ -100,7 +105,7 @@ class Map:
             raise "Incorrect Map Initialization"
         delete = True
         for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-            if TileCondition.WUMPUS in self.map.filled_map[y+oy][x+ox]:
+            if TileCondition.WUMPUS in self.map.filled_map[y + oy][x + ox]:
                 delete = False
                 break
         if delete:
@@ -113,12 +118,18 @@ class Map:
         return self.info[TileCondition.SAFE]
 
     def print_map(self):
-        plt = EnvGenerator.printGrid(self.filled_map)
+        plt = printGrid(self.filled_map, self.height, self.width)
         position = dict()
         for a in self.agents.values():
             position[a.position] = f"{position.get(a.position, "")}{a.name} "
         for key in position.keys():
             print(key, position[key])
-        plt.show()
+        plt.add_trace(go.Scatter(
+            mode="markers"
+        ))
+        offline.plot(plt, filename='fig.html', auto_open=False)
+        #plt.show()
 
 
+a = Map(120, 120)
+a.print_map()

@@ -3,8 +3,9 @@ from Project.Knowledge.KnowledgeBase import TileCondition
 import random
 
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import colors
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 import datetime
 
@@ -37,7 +38,8 @@ class EnvGenerator:
             for yj in [-1, 0, 1]:
                 if abs(xi) == abs(yj):
                     continue
-                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL in self.grid[y + yj][x + xi]:
+                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL not in self.grid[y + yj][
+                    x + xi]:
                     neighbors.append((x + xi, y + yj))
         return neighbors
 
@@ -368,46 +370,6 @@ class EnvGenerator:
 
     """
     @author: Lucas K
-    @:return void
-    Zum speichern des Grid als png
-    """
-
-    def printGrid(self):
-
-        def convertToInt(grid):
-            g = np.ndarray((self.height, self.width), int)
-
-            for y in range(0, self.height):
-                for x in range(0, self.width):
-                    # Wall
-                    if TileCondition.WALL in grid[y][x]:
-                        g[y][x] = 0
-                    # Wumpus
-                    elif TileCondition.WUMPUS in grid[y][x]:
-                        g[y][x] = 40
-                    # Gold
-                    elif TileCondition.SHINY in grid[y][x]:
-                        g[y][x] = 20
-                    # Pit
-                    elif TileCondition.PIT in grid[y][x]:
-                        g[y][x] = 30
-                    # Path
-                    else:
-                        g[y][x] = 10
-            return g
-
-        data = convertToInt(self.grid)
-        print("PRINTING!", datetime.datetime.now())
-        cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
-        bounds = [0, 10, 20, 30, 40, 50]
-        norm = colors.BoundaryNorm(bounds, cmap.N)
-        plt.figure(figsize=(self.width, self.height))
-        plt.pcolor(data[::-1], cmap=cmap, norm=norm, edgecolors='k', linewidths=3)
-        print("PRINTED", datetime.datetime.now())
-        return plt
-
-    """
-    @author: Lucas K
     @:param Grid
     @:return void
     Zum Platzieren von Wumpus, Pit und Gold
@@ -449,3 +411,46 @@ class EnvGenerator:
             grid[py + y][px + x].append(TileCondition.PIT)
             for bx, by in self.getNeighbors(px + x, py + y):
                 grid[by][bx].append(TileCondition.BREEZE)
+
+
+"""
+    @author: Lucas K
+    @:return void
+    Zum speichern des Grid als png
+    """
+
+
+def printGrid(grid, height, width):
+    def convertToInt(grid):
+        g = np.ndarray((height, width), float)
+
+        for y in range(0, height):
+            for x in range(0, width):
+                # Wall
+                if TileCondition.WALL in grid[y][x]:
+                    g[y][x] = 0.1
+                # Wumpus
+                elif TileCondition.WUMPUS in grid[y][x]:
+                    g[y][x] = 0.9
+                # Gold
+                elif TileCondition.SHINY in grid[y][x]:
+                    g[y][x] = 0.5
+                # Pit
+                elif TileCondition.PIT in grid[y][x]:
+                    g[y][x] = 0.7
+                # Path
+                else:
+                    g[y][x] = 0.3
+        return g
+
+    data = convertToInt(grid)
+    print("PRINTING!", datetime.datetime.now())
+
+    plt = make_subplots(specs=[[{"secondary_y": True}]])
+
+    #cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
+    cmap = [[0, 'black'], [0.2, 'black'], [0.2, 'white'], [0.4, 'white'], [0.4, 'yellow'], [0.6, 'yellow'], [0.6, 'blue'], [0.8, 'blue'], [0.8, 'red'], [1., 'red']]
+    plt.add_trace(go.Heatmap(z=data, colorscale=cmap, showlegend=False))
+
+    print("PRINTED", datetime.datetime.now())
+    return plt
