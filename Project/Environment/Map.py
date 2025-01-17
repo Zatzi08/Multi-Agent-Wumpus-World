@@ -1,6 +1,6 @@
 from Project.Environment.env import EnvGenerator, printGrid
 from Project.Knowledge.KnowledgeBase import TileCondition
-from Project.SimulatedAgent import SimulatedAgent
+#from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
@@ -25,15 +25,15 @@ class Map:
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
-        self.agents: dict[int, SimulatedAgent] = {}
+        #        self.agents: dict[int, SimulatedAgent] = {}
         self.numDeadEnds = gen.getNumDeadEnds()
         self.info = gen.info
 
-    def add_agents(self, agents: dict[int, SimulatedAgent]):
-        self.agents = agents.copy()
+    #    def add_agents(self, agents: dict[int, SimulatedAgent]):
+    #        self.agents = agents.copy()
 
-    def get_agents(self) -> dict[int, SimulatedAgent]:
-        return self.agents
+    #    def get_agents(self) -> dict[int, SimulatedAgent]:
+    #        return self.agents
 
     def get_number_of_dead_ends(self):
         return self.numDeadEnds
@@ -120,13 +120,22 @@ class Map:
     def print_map(self):
         plt = printGrid(self.filled_map, self.height, self.width)
         position = dict()
-        for a in self.agents.values():
+        """for a in self.agents.values():
             position[a.position] = f"{position.get(a.position, "")}{a.name} "
         for key in position.keys():
-            print(key, position[key])
+            print(key, position[key])"""
         plt.add_trace(go.Scatter(
-            mode="markers"
+            mode="markers",
+            x=[1],
+            y=[1],
+            text=["Name <br> Profession"],
+            hovertemplate="<br> %{text}",
+            name=""
         ))
+
+        plt.update_xaxes(dict(fixedrange=True, showgrid=False))
+        plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
+
         offline.plot(plt, filename='fig.html', auto_open=False)
         #plt.show()
 
