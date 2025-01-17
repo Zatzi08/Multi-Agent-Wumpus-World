@@ -30,7 +30,7 @@ class AgentGoal(Enum):
     WUMPUS: int = 1
     MAP_PROGRESS: int = 2
 
-class Agent: # TODO: fieldUtility Funktion
+class Agent:  # TODO: fieldUtility Funktion
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], gold_visibility_range: int,
                  spawn_position: tuple[int, int], map_width: int, map_height: int):
         # set a single time
@@ -49,7 +49,8 @@ class Agent: # TODO: fieldUtility Funktion
         self.__available_item_space: int = 0
         self.__time = 0
 
-    def start_communication(self, agents: list[tuple[int, AgentRole]]) -> (list[int], OfferedObjects):
+    def start_communication(self, agents: list[tuple[int, AgentRole]])\
+            -> tuple[list[int], tuple[OfferedObjects, RequestedObjects]]:
         """choose agents to communicate with and offer to make"""
         # TODO decision making for choosing agents to communicate with
         agents_to_communicate_with: list[int] = []
@@ -103,6 +104,9 @@ class Agent: # TODO: fieldUtility Funktion
 
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
+
+    def receive_bump_information(self, x: int, y: int):
+        self.__knowledge.update_tile(x, y, [TileCondition.WALL])
 
 class Hunter(Agent):
     def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):

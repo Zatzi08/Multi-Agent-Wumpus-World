@@ -38,6 +38,7 @@ communication_channel: CommunicationChannel = CommunicationChannel(agents)
 # simulate
 def agent_move_action(agent: SimulatedAgent, x: int, y: int):
     if TileCondition.WALL in grid.get_tile_conditions(x, y):
+        agent.agent.receive_bump_information(x, y)
         return
     elif TileCondition.WUMPUS in grid.get_tile_conditions(x, y):
         if agent.role == AgentRole.KNIGHT:
@@ -60,6 +61,8 @@ def agent_shoot_action(agent: SimulatedAgent, x: int, y: int):
     if TileCondition.WUMPUS in grid.get_tile_conditions(x, y):
         grid.delete_condition(x, y, TileCondition.WUMPUS)
 
+
+# TODO: track goal progress for agents
 
 for i in range(1, number_of_simulation_steps + 1, 1):
     # replenish
