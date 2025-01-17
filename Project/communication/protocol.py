@@ -39,7 +39,6 @@ class Offer:
         # TODO create offer from OfferedObjects and RequestedObjects
         pass
 
-# TODO: warum nicht obj in Message init? Wahrscheinlich useless
 class Message:
     def __init__(self,
                  performative: Performative,
@@ -70,6 +69,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[sender].agent.start_communication(potential_receivers)
         receivers: list[int] = answer[0]
         offered_objects: OfferedObjects = answer[1][0]
+        requested_objects: RequestedObjects = answer[1][1]
 
         # check if communication should take place
         if not receivers:
@@ -82,20 +82,49 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         self.initiator = sender
         self.participants = receivers
 
-        # set requested objects
-        requested_objects: RequestedObjects = answer[1][1]
-
 
         # TODO create offer from offered_objects and requested_objects
+
         offer: Offer = Offer(offered_objects, requested_objects)
 
-        # for each participant: get answer to offer
+        offer: Offer = None
+        request: RequestObject = None
+
+        receiver_answers = List
+
+        # for each participant: get answer to offer, answer = tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
-            self.agents[participant].agent.answer_to_offer(self.initiator, offer)
+            receiver_answers: dict[int, tuple]
+            receiver_answers.update({str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, offer)})
 
         # TODO evaluate answers
+        #if receiver_answers == None:
+            #return error
+        # put all accepting answers into a new Dict
+        accepted_requests = dict[int, tuple]
+        for participant, answer in receiver_answers.items():
+            if answer[0] == ResponseType.ACCEPT:
+                accepted_requests.update({participant:answer})
+
+        # if multiple accepts choose the highest offer, if you dont want to deal with counteroffer
+        if len(accepted_requests) > 1:
+            for participant, answer in accepted_requests.items():
+                best_offer = -1
+                if answer[2][1].amount > best_offer:
+                    offer_object = {participant: answer}
+
+        else:
+            offer_object = accepted_requests
+
+        receiver = offer_object.keys()[0]
 
         # TODO finish communication (distribute offered objects)
+
+        self.agents[receiver].agent.apply_changes(sender,receiver, offer_object[participant])
+
+
+
+
 
 # TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
 # Eventueller Ablauf von kommunikation:
@@ -116,44 +145,6 @@ def verify_offered_objects(offer_objects: OfferedObjects) -> bool:
 
 
 #simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
-def handle_request(sender, receiver, request_type: RequestObject, offer):
-    response = utility.calcResponse(sender,receiver, request_type, offer) #response (Status, Objekt) oderso TODO: utility über Agent aufrufen
-    if response[0] == Status.ACCEPT:
-        print(f"[Request] {receiver.name} accepted the request.")
-        
-        #ist das Angebot Gold, Position oder Help? TODO: offer Objekt nutzen
-        if offer[0] = "gold":
-            #remove gold
-            return [position]
-
-        elif offer[0] = "position":
-            #schicke dem anderen irgendwie position idk
-            return [position]
-
-        return [position]
-    
-    elif response[0] == COUNTEROFFER:
-        negotiation(sender, receiver, request_type, offer, counteroffer: response[1])
-    
-    else:
-        print(f"[Request] {receiver.name} denied the request.")
-        return None
-
-#TODO: das dann in utility
-#def calcResponse(sender, receiver, request_type: RequestTypeObj, offer):
-    #return (status, object)
-
-def handle_request(sender, receiver, request_type: RequestTypeObj, counteroffer):
-    print(f"[Request] {sender.name} sent request to {receiver.name}: {request_type}, Counteroffer: {counteroffer}")
-    response = receiver.respond_to_request(request_type, counteroffer)
-    print(f"[Request] {receiver.name} responded with: {response}")
-
-    if response.get(RequestTypeObj.STATUS) == ResponseType.ACCEPT:
-        print(f"[Request] {receiver.name} accepted the request.")
-        sender.fulfill_request(receiver, request_type)
-        receiver.fulfill_request(sender, counteroffer)
-    else:
-        print(f"[Request] {receiver.name} denied the request.")
 
 
 def handle_cfp(sender, participants, cfp_type: RequestTypeObj):
