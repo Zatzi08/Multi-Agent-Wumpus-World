@@ -23,7 +23,7 @@ class ResponseType(Enum):
 
 
 class OfferedObjects:
-    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]], wumpus_positions: [tuple[int, int]]):
+    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]], wumpus_positions: List[tuple[int, int]]):
         self.gold_amount = gold_amount
         self.tile_information = tile_information
         self.wumpus_positions = wumpus_positions
@@ -35,9 +35,22 @@ class RequestedObjects:
         self.wumpus_positions: int = wumpus_positions
 
 class Offer:
-    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects):
+    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role: AgentRole):
         # TODO create offer from OfferedObjects and RequestedObjects
-        pass
+        self.off_gold: int = offered_objects.gold_amount
+        self.off_tiles: set[(int,int)] = set()
+        self.off_wumpus_positions: set[(int, int)] = offered_objects.wumpus_positions
+        self.off_role: AgentRole = offer_role
+
+        self.req_gold: int = requested_objects.gold
+        self.req_tiles: list[tuple[int, int]] = requested_objects.tiles
+        self.req_wumpus_positions: int = requested_objects.wumpus_positions
+
+
+        #put all offered tiles positions into offered Tiles set
+        for tile in offered_objects.tile_information:
+            self.off_tiles.update((tile[0], tile[1]))
+
 
 class Message:
     def __init__(self,
@@ -65,7 +78,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
     def set_agents(self, agents: dict[int, SimulatedAgent]):
         self.agents = agents
 
-    def communicate(self, sender: int, potential_receivers: [int, AgentRole]) -> None:
+    def communicate(self, sender: (int,AgentRole), potential_receivers: [int, AgentRole]) -> None:
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[sender].agent.start_communication(potential_receivers)
         receivers: list[int] = answer[0]
         offered_objects: OfferedObjects = answer[1][0]
@@ -85,21 +98,21 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         # TODO create offer from offered_objects and requested_objects
 
-        offer: Offer = Offer(offered_objects, requested_objects)
+        offer: Offer = Offer(offered_objects, requested_objects, sender[1])
 
         offer: Offer = None
         request: RequestObject = None
 
         receiver_answers = List
 
-        # for each participant: get answer to offer, answer = tuple[ResponseType, OfferedObjects, RequestedObjects]
+        # for each participant: get answer to offer, offer_answer = tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
             receiver_answers: dict[int, tuple]
             receiver_answers.update({str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, offer)})
 
         # TODO evaluate answers
-        #if receiver_answers == None:
-            #return error
+        if not receiver_answers:
+            return None
         # put all accepting answers into a new Dict
         accepted_requests = dict[int, tuple]
         for participant, answer in receiver_answers.items():
@@ -115,12 +128,14 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         else:
             offer_object = accepted_requests
+        print(f"[CFP] {offer_object.keys()[0]} offers: {offer_object.items()[1][1]} for the request {offer_object.items()[1][2]}")
 
         receiver = offer_object.keys()[0]
+        offer_answer = offer_object.items()[1]
 
         # TODO finish communication (distribute offered objects)
 
-        self.agents[receiver].agent.apply_changes(sender,receiver, offer_object[participant])
+        self.agents[receiver].agent.apply_changes(sender[0], receiver, offer_answer[2], offer_answer[1])
 
 
 
