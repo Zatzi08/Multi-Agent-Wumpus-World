@@ -82,7 +82,7 @@ class Agent:  # TODO: fieldUtility Funktion
         # TODO decision making for creating counter offers
         pass
 
-    def answer_offer(self, sender: tuple[int, AgentRole], offer: Offer) -> tuple[ResponseType, OfferedObjects, RequestedObjects]:
+    def answer_to_offer(self, sender: tuple[int, AgentRole], offer: Offer) -> tuple[ResponseType, OfferedObjects, RequestedObjects]:
         # TODO analyse offer
         # TODO: decision making for offers
 
@@ -100,6 +100,11 @@ class Agent:  # TODO: fieldUtility Funktion
 
     def get_next_action(self) -> AgentAction:
         # TODO: implementation
+        pass
+
+
+    def apply_changes(self, sender, receiver, request, offer):
+        #match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
     def receive_shout_action_information(self, x: int, y: int):
