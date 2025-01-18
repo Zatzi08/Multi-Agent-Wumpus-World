@@ -126,9 +126,9 @@ class Map:
             print(key, position[key])"""
         plt.add_trace(go.Scatter(
             mode="markers",
-            x=[1],
-            y=[1],
-            text=["Name <br> Profession"],
+            x=[1, 2],
+            y=[1, 2],
+            text=["Name <br> Profession", "Name <br> Profession"],
             hovertemplate="<br> %{text}",
             name=""
         ))
@@ -136,7 +136,9 @@ class Map:
         plt.update_xaxes(dict(fixedrange=True, showgrid=False))
         plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
 
-        offline.plot(plt, filename='fig.html', auto_open=False)
+        plt.update_layout(dict(autosize=False, width=self.width*10, height=self.height*10))
+
+        offline.plot(plt, filename='fig.html', auto_open=True)
         #plt.show()
 
 
