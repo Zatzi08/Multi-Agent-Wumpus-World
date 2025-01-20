@@ -4,6 +4,7 @@ from Project.Agent.Agent import *
 from Project.Environment import Map
 from Project.SimulatedAgent import SimulatedAgent
 
+
 class Performative(Enum):
     CFP = 1
     REQUEST = 2
@@ -16,6 +17,7 @@ class RequestObject(Enum):
     TILE_INFORMATION = 2
     KILL_WUMPUS = 3
 
+
 class ResponseType(Enum):
     ACCEPT = 1
     DENY = 2
@@ -23,10 +25,12 @@ class ResponseType(Enum):
 
 
 class OfferedObjects:
-    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]], wumpus_positions: [tuple[int, int]]):
+    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]],
+                 wumpus_positions: List[tuple[int, int]]):
         self.gold_amount = gold_amount
         self.tile_information = tile_information
         self.wumpus_positions = wumpus_positions
+
 
 class RequestedObjects:
     def __init__(self, gold: int, tiles: list[tuple[int, int]], wumpus_positions: int):
@@ -34,12 +38,27 @@ class RequestedObjects:
         self.tiles: list[tuple[int, int]] = tiles
         self.wumpus_positions: int = wumpus_positions
 
-class Offer:
-    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects):
-        # TODO create offer from OfferedObjects and RequestedObjects
-        pass
 
-# TODO: warum nicht obj in Message init? Wahrscheinlich useless
+class Offer:
+    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role: AgentRole):
+        # TODO create offer from OfferedObjects and RequestedObjects
+        self.off_gold: int = offered_objects.gold_amount
+        self.off_tiles: set[(int, int)] = set()
+        self.off_wumpus_positions: set[(int, int)] = set()
+        self.off_role: AgentRole = offer_role
+
+        self.req_gold: int = requested_objects.gold
+        self.req_tiles: list[tuple[int, int]] = requested_objects.tiles
+        self.req_wumpus_positions: int = requested_objects.wumpus_positions
+
+        #put all offered tiles positions into offered Tiles set
+        for tile in offered_objects.tile_information:
+            self.off_tiles.update((tile[0], tile[1]))
+
+        for position in offered_objects.wumpus_positions:
+            self.off_wumpus_positions.update((position[0], position[1]))
+
+
 class Message:
     def __init__(self,
                  performative: Performative,
@@ -57,19 +76,22 @@ class Message:
         return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \
                f"receiver={self.receiver}, content={self.content})"
 
+
 class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
     def __init__(self, agents: dict[int, SimulatedAgent]):
         self.agents = agents
-        self.initiator: int = 0 # set for each communication
-        self.participants: [int] = [] # set for each communication
+        self.initiator: int = 0  # set for each communication
+        self.participants: [int] = []  # set for each communication
 
     def set_agents(self, agents: dict[int, SimulatedAgent]):
         self.agents = agents
 
-    def communicate(self, sender: int, potential_receivers: [int, AgentRole]) -> None:
-        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[sender].agent.start_communication(potential_receivers)
+    def communicate(self, sender: (int, AgentRole), potential_receivers: [int, AgentRole]) -> None:
+        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[
+            sender].agent.start_communication(potential_receivers)
         receivers: list[int] = answer[0]
         offered_objects: OfferedObjects = answer[1][0]
+        requested_objects: RequestedObjects = answer[1][1]
 
         # check if communication should take place
         if not receivers:
@@ -82,20 +104,72 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         self.initiator = sender
         self.participants = receivers
 
-        # set requested objects
-        requested_objects: RequestedObjects = answer[1][1]
-
-
         # TODO create offer from offered_objects and requested_objects
-        offer: Offer = Offer(offered_objects, requested_objects)
+
+        offer: Offer = Offer(offered_objects, requested_objects, sender[1])
+
+        request: RequestedObjects = (offer.req_gold, offer.req_tiles, offer.req_wumpus_positions)
+
+        receiver_answers = []
 
         # for each participant: get answer to offer
         for participant in self.participants:
-            self.agents[participant].agent.answer_to_offer(self.initiator, offer)
+            receiver_answers: dict[int, tuple]
+            receiver_answers.update(
+                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, offer)})
 
         # TODO evaluate answers
+        if not receiver_answers:
+            return None
+        # put all accepting answers and counter-offers into new dicts
+        accepted_requests = dict[int, tuple]
+        counter_offers = dict[int, tuple]
+        for participant, p_answer in receiver_answers.items():
+            if p_answer[0] == ResponseType.ACCEPT:
+                accepted_requests.update({participant: answer})
+            elif p_answer[0] == ResponseType.COUNTEROFFER:
+                counter_offers.update({participant: answer})
+
+        # get best offer out of accepted and counter offers
+        if len(accepted_requests) > 1:
+            best_offer = utility(next(iter(accepted_requests.items())))
+            for participant, p_answer in accepted_requests.items():
+                if utility(p_answer[1]) > utility(best_offer):
+                    best_offer = {participant: answer}
+        elif len(accepted_requests) == 1:
+            best_offer = accepted_requests
+
+        else:
+            print(f"No one accepted offer from {sender}.")
+
+        if len(counter_offers) > 1:
+            for participant, p_answer in counter_offers.items(): #self?
+                if utility(p_answer[1]) > best_offer:
+                    best_offer = {participant: answer}
+
+        elif len(accepted_requests) == 1:
+            if utility(counter_offers) > utility(best_offer):
+                best_offer = counter_offers
+
+        else:
+            print(f"Everyone denied the offer from {sender}.")
+
+        print(
+            f"[CFP] {best_offer.keys()[0]} offers: {best_offer.items()[1][1]} for the request {best_offer.items()[1][2]}")
+
+        self.agents[sender].check_offer_satisfaction(best_offer,)
+    # if the best offer is not as good as needed, start a negotiation with the best offer agent until the expected_utility is reached
+        expected_utility = self.agents[sender].agent.check_offer_satisfaction(best_offer, request)
+        if not expected_utility[1]:
+            self.agents[sender].agent.start_negotiation(sender, next(iter(best_offer)), request, expected_utility)
 
         # TODO finish communication (distribute offered objects)
+        else:
+            receiver = next(iter(best_offer))
+            offer_answer = next(iter(best_offer.values()))
+            print(f"The request is completed, with {best_offer} as the accepted offer")
+            self.agents[receiver].agent.apply_changes(sender[0], receiver, offer_answer[2], offer_answer[1])
+
 
 # TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
 # Eventueller Ablauf von kommunikation:
@@ -109,51 +183,12 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 # bwler würde gold verlangen, um Position zu geben
 # knight würde für help gold verlangen
 
-def verify_offered_objects(offer_objects: OfferedObjects) -> bool:
+def verify_offered_objects(best_offers: OfferedObjects) -> bool:
     # TODO check if an offer is valid
     return False
 
 
-
 #simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
-def handle_request(sender, receiver, request_type: RequestObject, offer):
-    response = utility.calcResponse(sender,receiver, request_type, offer) #response (Status, Objekt) oderso TODO: utility über Agent aufrufen
-    if response[0] == Status.ACCEPT:
-        print(f"[Request] {receiver.name} accepted the request.")
-        
-        #ist das Angebot Gold, Position oder Help? TODO: offer Objekt nutzen
-        if offer[0] = "gold":
-            #remove gold
-            return [position]
-
-        elif offer[0] = "position":
-            #schicke dem anderen irgendwie position idk
-            return [position]
-
-        return [position]
-    
-    elif response[0] == COUNTEROFFER:
-        negotiation(sender, receiver, request_type, offer, counteroffer: response[1])
-    
-    else:
-        print(f"[Request] {receiver.name} denied the request.")
-        return None
-
-#TODO: das dann in utility
-#def calcResponse(sender, receiver, request_type: RequestTypeObj, offer):
-    #return (status, object)
-
-def handle_request(sender, receiver, request_type: RequestTypeObj, counteroffer):
-    print(f"[Request] {sender.name} sent request to {receiver.name}: {request_type}, Counteroffer: {counteroffer}")
-    response = receiver.respond_to_request(request_type, counteroffer)
-    print(f"[Request] {receiver.name} responded with: {response}")
-
-    if response.get(RequestTypeObj.STATUS) == ResponseType.ACCEPT:
-        print(f"[Request] {receiver.name} accepted the request.")
-        sender.fulfill_request(receiver, request_type)
-        receiver.fulfill_request(sender, counteroffer)
-    else:
-        print(f"[Request] {receiver.name} denied the request.")
 
 
 def handle_cfp(sender, participants, cfp_type: RequestTypeObj):
@@ -168,7 +203,8 @@ def handle_cfp(sender, participants, cfp_type: RequestTypeObj):
     best_offer = None
     for participant, response in responses:
         if response.get(RequestTypeObj.STATUS) == ResponseType.ACCEPT and \
-                (best_offer is None or response.get(RequestTypeObj.COUNTEROFFER < best_offer.get(RequestTypeObj.COUNTEROFFER))):
+                (best_offer is None or response.get(
+                    RequestTypeObj.COUNTEROFFER < best_offer.get(RequestTypeObj.COUNTEROFFER))):
             best_offer = response
             best_participant = participant
 
