@@ -1,3 +1,4 @@
+from Project.Agent import utility
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
 from enum import Enum
 from Project.communication.protocol import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
@@ -124,17 +125,37 @@ class Agent:
         # TODO: implementation
         pass
 
-    def apply_changes(self, sender, receiver, request, offer):
+    def apply_changes(self, sender, receiver, offer):
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
-    def start_negotiation(self, sender, receiver, best_offer, request, expected_utility):
-        #while current_utility < expected_utility && negotiation_round < limit:
-        #TODO: negotiate algorithmn
-        #if negotiation complete:
-        print(f"The request is completed, with {best_offer} as the accepted offer")
-        self.apply_changes(self, sender, receiver, request, best_offer)
-        pass
+    def start_negotiation(self:, receiver: Agent, best_offer):
+        # TODO: negotiation algorithmn: Concession Protocol Page 24
+        s_expected_utility = self.Utility.offer_utility(best_offer)
+        r_expected_utility =  receiver.Utility.offer_utility(best_offer)
+        negotiation_round = 0
+        limit = 5
+        conflict_deal = False
+        current_offer = best_offer
+        while negotiation_round < limit:
+            s_offer = self.create_counter_offer(self.__role, current_offer)
+            r_offer = receiver.create_counter_offer(receiver.__role, current_offer)
+
+            #if your offer is better or equal to his offer and the receivers utility expectation is also satisfied
+            if  s_expected_utility >=  self.Utility.offer_utility(r_offer):
+                if r_expected_utility >= self.Utility.offer_utility(s_offer):
+                    break
+
+            current_offer = s_offer #?
+
+        if not conflict_deal:
+            print(f"The negotiation is completed, with {current_offer} as the accepted offer")
+            self.apply_changes(self, receiver, current_offer)
+
+        else:
+            print(f"The negotiation has failed, conflict deal reached")
+
+
 
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
@@ -158,6 +179,8 @@ class Agent:
         return self.__items
     def can_fight(self):
         return self.__health > 1
+
+
 
 class Hunter(Agent):
     def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int,
@@ -391,6 +414,10 @@ class Utility:
                 next_move = move
                 max_utility = best_utility[move]
         return next_move, best_utility
+
+    def offer_utility(self, offer):
+        pass
+
 
     # probability for states:
     # wumpus: neben Gold und in Räumen (0.5)

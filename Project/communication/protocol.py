@@ -112,7 +112,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         receiver_answers = []
 
-        # for each participant: get answer to offer
+        # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
             receiver_answers: dict[int, tuple]
             receiver_answers.update(
@@ -126,11 +126,11 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         counter_offers = dict[int, tuple]
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
-                accepted_requests.update({participant: answer})
+                accepted_requests.update({participant: p_answer})
             elif p_answer[0] == ResponseType.COUNTEROFFER:
-                counter_offers.update({participant: answer})
+                counter_offers.update({participant: p_answer})
 
-        # get best offer out of accepted and counter offers
+        # get best offer out of accepted and counter offers, best_offer: tuple[ResponseType, OfferedObjects, RequestedObjects]
         if len(accepted_requests) > 1:
             best_offer = utility(next(iter(accepted_requests.items())))
             for participant, p_answer in accepted_requests.items():
@@ -145,7 +145,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         if len(counter_offers) > 1:
             for participant, p_answer in counter_offers.items(): #self?
                 if utility(p_answer[1]) > best_offer:
-                    best_offer = {participant: answer}
+                    best_offer = {participant: p_answer}
 
         elif len(accepted_requests) == 1:
             if utility(counter_offers) > utility(best_offer):
