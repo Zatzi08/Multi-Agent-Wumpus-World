@@ -12,6 +12,7 @@ def setLayout(plt):
             [
                 dbc.Col(html.Div(dcc.Graph(figure=plt, id="graph")), style={'width': 'auto'}),
                 dbc.Col(html.Div([
+                    html.Div(html.Label("text", id="log"), style={'width': 200, 'height': 500, 'margin-top': 150, 'overflow': 'auto'}),
                     html.Div(dcc.Dropdown(id='agent_choice', options=[
                         {'label': 'All', 'value': -1},
                         {'label': 'A', 'value': 1},
@@ -20,7 +21,7 @@ def setLayout(plt):
                     dbc.Input(id='count', value=1, type='number', style={'margin-right': 15}),
                     html.Button('Next', id='submit-next', n_clicks=0,
                                 style={'margin-right': 15, 'width': 150, 'margin-top': 15})
-                ], style={'display': 'inline-block'}), style={'width': 'auto', 'margin-top': 700})
+                ], style={'display': 'inline-block'}), style={'width': 'auto'})
             ], justify="evenly", style={'display': 'inline-flex', 'width': 'auto'}
         ), style={'display': 'inline-flex', 'width': 'auto'}
     )]
@@ -34,7 +35,7 @@ def setLayout(plt):
 )
 def update_graph(n_clicks, value):
     print("Update!", n_clicks, value)
-    return a.print_map(True)
+    return a.print_map()
 
 
 @callback(
@@ -45,12 +46,7 @@ def choiceAgent(value):
     print("Agent:", value)
     agent = value
 
-
-# TODO: print_map in Map
-# TODO: update print_map so das alle TileCond. hat als Farbe
-# TODO: print_agent_map vielleicht in print_map mit Pred Wumpus und so
 # TODO: Textfeld als secondary output mit Events
-# TODO: place_items ohne restriction
 
 setLayout(a.print_map())
 app.run(debug=True)

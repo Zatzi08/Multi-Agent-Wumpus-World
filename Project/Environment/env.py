@@ -9,17 +9,16 @@ import numpy as np
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
-                 'room_list', 'num_dead_end', 'info']
+                 'num_dead_end', 'info']
 
     def __init__(self, height, width, seed=42):
         self.height = height
         self.width = width
         self.start_pos = (1, 1)
-        self.wumpus_prob = 0.5
-        self.pit_prob = 0.3
-        self.treasure_prob = 0.3
+        self.wumpus_prob = 0.05
+        self.pit_prob = 0.03
+        self.treasure_prob = 0.03
         self.seed = seed
-        self.room_list = []
         self.num_dead_end: int = -1
         self.grid = []
         self.info = {}
@@ -35,8 +34,8 @@ class EnvGenerator:
             for yj in [-1, 0, 1]:
                 if abs(xi) == abs(yj):
                     continue
-                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL not in self.grid[y + yj][
-                    x + xi]:
+                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL not in \
+                        self.grid[y + yj][x + xi]:
                     neighbors.append((x + xi, y + yj))
         return neighbors
 
@@ -107,12 +106,15 @@ class EnvGenerator:
         g = np.ndarray((self.height, self.width), list)
 
         self.info[TileCondition.WALL.value] = []
+        self.info["Path"] = []
 
         # Path = [] Wall = [TileCondition.WALL]
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if grid[y][x] == ' ':
                     g[y][x] = []
+                    if x != 1 and y != 1:
+                        self.info["Path"] += [(x, y)]
                 else:
                     g[y][x] = [TileCondition.WALL]
                     self.info[TileCondition.WALL.value] += [(x, y)]
@@ -350,9 +352,6 @@ class EnvGenerator:
             else:
                 blank_count += 1
 
-            if t == 6:
-                self.room_list.append(pos)
-
             if t != -1:
                 setTile(t, o, pos)
                 x, y = pos
@@ -379,32 +378,25 @@ class EnvGenerator:
 
         grid = self.grid.copy()
 
-        dead = self.__findDeadEnd()
+        space = self.info["Path"]
 
-        treasure = random.sample(dead, k=int(self.getNumDeadEnds() * self.treasure_prob))
-        treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
-        pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
-        room_without_pit = list(set(self.room_list).difference(set(pit_room)))
-        wumpus_room = random.sample(room_without_pit, k=int(len(room_without_pit) * self.wumpus_prob))
+        treasure = random.sample(space, k=int(len(space) * self.treasure_prob))
+        wumpus = random.sample(space, k=int(len(space) * self.wumpus_prob))
+        pit = random.sample(space, k=int(len(space) * self.pit_prob))
 
         for tx, ty in treasure:
             grid[ty][tx].append(TileCondition.SHINY)
 
-        for tx, ty in treasure_Wumpus:
-            nei = self.getNeighbors(tx, ty)
-            x, y = random.choices(nei, k=1)[0]
-            grid[y][x].append(TileCondition.WUMPUS)
-            for sx, sy in self.getNeighbors(x, y):
+        for wx, wy in wumpus:
+            if set(grid[wy][wx]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.STENCH}):
+                continue
+            grid[wy][wx].append(TileCondition.WUMPUS)
+            for sx, sy in self.getNeighbors(wx, wy):
                 grid[sy][sx].append(TileCondition.STENCH)
 
-        for wx, wy in wumpus_room:
-            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[wy + y][wx + x].append(TileCondition.WUMPUS)
-            for sx, sy in self.getNeighbors(wx + x, wy + y):
-                grid[sy][sx].append(TileCondition.STENCH)
-
-        for px, py in pit_room:
-            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[py + y][px + x].append(TileCondition.PIT)
-            for bx, by in self.getNeighbors(px + x, py + y):
+        for px, py in pit:
+            if set(grid[py][px]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
+                continue
+            grid[py][px].append(TileCondition.PIT)
+            for bx, by in self.getNeighbors(px, py):
                 grid[by][bx].append(TileCondition.BREEZE)
