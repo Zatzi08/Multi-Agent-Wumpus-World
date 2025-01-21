@@ -1,10 +1,14 @@
-from Project.Environment.env import EnvGenerator, printGrid
+from dash import dcc
+
+from Project.Environment.env import EnvGenerator
 from Project.Knowledge.KnowledgeBase import TileCondition
 #from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from numpy.dtypes import StringDType
+import numpy as np
 
 
 class Map:
@@ -117,29 +121,89 @@ class Map:
     def get_safe_tiles(self):
         return self.info[TileCondition.SAFE]
 
-    def print_map(self):
-        plt = printGrid(self.filled_map, self.height, self.width)
+    """
+    @author: Lucas K
+    @:return plotly
+    """
+
+    def printGrid(self, grid):
+        def convertToInt(grid):
+            g = np.ndarray((self.height, self.width), float)
+            b = np.ndarray((self.height, self.width), dtype=StringDType())
+
+            for y in range(0, self.height):
+                for x in range(0, self.width):
+                    # Wall
+                    if TileCondition.WALL in list(grid[y][x]):
+                        g[y][x] = 0.1
+                        b[y][x] = "Wall"
+                    # Wumpus
+                    elif TileCondition.WUMPUS in list(grid[y][x]):
+                        g[y][x] = 0.9
+                        b[y][x] = "Wumpus"
+                    # Gold
+                    elif TileCondition.SHINY in list(grid[y][x]):
+                        g[y][x] = 0.5
+                        b[y][x] = "Gold"
+                    # Pit
+                    elif TileCondition.PIT in list(grid[y][x]):
+                        g[y][x] = 0.7
+                        b[y][x] = "Pit"
+                    # Path
+                    else:
+                        g[y][x] = 0.3
+                        b[y][x] = "Path"
+            return g, b
+
+        data, txt = convertToInt(grid)
+
+        plt = make_subplots(specs=[[{"secondary_y": True}]])
+
+        cmap = [[0., 'black'], [0.2, 'black'], [0.2, 'white'], [0.4, 'white'], [0.4, 'yellow'], [0.6, 'yellow'],
+                [0.6, 'blue'], [0.8, 'blue'], [0.8, 'red'], [1., 'red']]
+        plt.add_trace(go.Heatmap(name="",
+                                 z=data,
+                                 text=txt,
+                                 colorscale=cmap,
+                                 showscale=False,
+                                 hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"), )
+
+        return plt
+
+    def print_map(self, next=False):
+        SCALINGFACTOR = 7
+        plt = self.printGrid(self.filled_map)
         position = dict()
         """for a in self.agents.values():
             position[a.position] = f"{position.get(a.position, "")}{a.name} "
         for key in position.keys():
             print(key, position[key])"""
-        plt.add_trace(go.Scatter(
-            mode="markers",
-            x=[1, 2],
-            y=[1, 2],
-            text=["Name <br> Profession", "Name <br> Profession"],
-            hovertemplate="<br> %{text}",
-            name=""
-        ))
+
+        if next:
+            plt.add_trace(go.Scatter(
+                mode="markers",
+                x=[1, 2],
+                y=[1, 2],
+                text=["Name <br> Profession", "Name <br> Profession"],
+                hovertemplate="<br> %{text}",
+                name=""
+            ))
+        else:
+            plt.add_trace(go.Scatter(
+                mode="markers",
+                x=[1],
+                y=[1],
+                text=["Name <br> Profession"],
+                hovertemplate="<br> %{text}",
+                name=""
+            ))
 
         plt.update_xaxes(dict(fixedrange=True, showgrid=False))
         plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
 
-        plt.update_layout(dict(autosize=False, width=self.width*10, height=self.height*10))
+        plt.update_layout(dict(autosize=False, width=self.width * SCALINGFACTOR, height=self.height * SCALINGFACTOR))
 
-        offline.plot(plt, filename='fig.html', auto_open=True)
-        #plt.show()
+        return plt
 
 
 a = Map(120, 120)
