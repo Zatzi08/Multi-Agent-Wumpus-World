@@ -167,26 +167,7 @@ class Agent:
     def receive_bump_information(self, x: int, y: int):
         self.__knowledge.update_tile(x, y, [TileCondition.WALL])
 
-    def get_position(self):
-        return self.__position
 
-    def get_knowledge(self):
-        return self.__knowledge
-
-    def get_utility(self):
-        return self.__utility
-
-    def get_role(self):
-        return self.__role
-
-    def get_itemspace(self):
-        return self.__available_item_space
-    def get_items(self):
-        return self.__items
-    def can_fight(self):
-        return self.__health > 1
-
-    # TODO: falls keine Aktion gut ist --> shout
     # Funktion: shortes path berechnen
     # Ausgabe: (move: AgentAction, utility: float)
     def a_search(self, end):
@@ -313,13 +294,15 @@ class Agent:
             if max_utility is None or best_utility[move] > max_utility:
                 next_move = move
                 max_utility = best_utility[move]
+        if max_utility < 0:
+            next_move = AgentAction.SHOUT
         return next_move, best_utility
 
     # Funktion: Ermittle utility einer Menge von Feldern
     #  utility of unknown fields --> Erwartungswert
     # Wahrscheinlichkeiten basieren auf Wahrscheinlichkeiten in der map-generation
     # Ausgabe: utility: double
-    # TODO: Wahrscheinlichkeiten ändern, da Spwanregeln sich geändert haben
+    # TODO: Wahrscheinlichkeiten ändern, da Spawnregeln sich geändert haben
     def utility_information(self, fields):
         height, width = self.__utility.get_dimensions()
         deadend_prob = NUM_DEADENDS / (height * width)
@@ -378,17 +361,18 @@ class Agent:
 
     # Funktion: Ermittle, über welche tiles ein Agent Information haben möchte
     # Ausgabe: tiles: list[tuple(int,int)]
-    def offer_wanted_tiles(self):
+    def desired_tiles(self):
         if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
             pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)
             # keine PREDICTED_WUMPUS tiles in der Knowledgebase --> closest unvisited tiles
             if len(pred_wumpus_tiles) == 0:
-                return self.__knowledge.get_closest_unvisited_tiles()
+                return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles().intersection(self.__knowledge.get_closest_unvisited_tiles())
             # add pred_wumpus and unknown neighbours of pred_wumpus to wanted tiles
             wanted_tiles = pred_wumpus_tiles
+            height, width = self.__utility.get_dimensions()
             for tile in pred_wumpus_tiles:
                 pos_row, pos_col = tile
-                neighbours = [(row+pos_row,col+pos_col) for row,col in [(-1,0),(1,0),(0,-1),(0,1)] if 0 <= row+pos_row < self.__map_height and 0 <= col+pos_col < self.__map_width]
+                neighbours = [(row+pos_row,col+pos_col) for row,col in [(-1,0),(1,0),(0,-1),(0,1)] if 0 <= row+pos_row < height and 0 <= col+pos_col < width]
                 for new_tile in neighbours:
                     row, col = new_tile
                     # add unknown tile
@@ -398,6 +382,24 @@ class Agent:
 
         # BWL-Student und Cartograph übrig --> closest unvisited tiles
         return self.__knowledge.get_closest_unvisited_tiles()
+    # TODO: acceptable tiles ermitteln
+    # unknown tiles, die nicht an known/visited-tiles angrenzen
+    def acceptable_tiles(self):
+        height, width = self.__utility.get_dimensions()
+        all_tiles = [(row,col) for row in range(height) for col in range(width)]
+        if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER] and len(self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)) > 0:
+            non_acceptable_tiles = []
+        else:
+            non_acceptable_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles().intersection(self.__knowledge.get_closest_unvisited_tiles())
+        acceptable_tiles = []
+        for tile in all_tiles:
+            row, col = tile
+            if tile in non_acceptable_tiles:
+                continue
+            if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
+                acceptable_tiles.append(tile)
+        return acceptable_tiles
+
 
     # TODO: Geh durch, welche noch notwendigen Funktionen welche utility-methoden nutzen müssen
     # Funktion: Ermittle auf Basis eines offers ein neues counteroffer (für tiles und jegliches andere)
@@ -413,39 +415,47 @@ class Agent:
 
     # Funktion: Werte aus, ob ein Angebot eines Agentens annehmbar für den Agenten ist
     # Ausgabe: bool
-
-    # TODO: neue Negotiation Idee einbauen: Starter gibt prefferierende Felder, annehmbare Fleder nd ihm bekannte Felder ...
-    def evaluate_offer(self, get_type: RequestObject, get_content: Union[int, list[tuple[int,int]]], give_type: RequestObject, give_content: Union[int, list[tuple[int,int]]]):
+    # offer: anderer bietet mir ... | request: anderer möchte ...
+    def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
         # calculate give_utility
         give_utility = 0
-        match give_type:
-            case RequestObject.KILL_WUMPUS:
-                if self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
-                    return False
-                give_utility = self.utility_help_wumpus()* give_content
-            case RequestObject.GOLD:
-                if self.__items[AgentItem.GOLD.value] < give_content:
-                    return False
-                give_utility = self.utility_gold(give_content)
-            case RequestObject.TILE_INFORMATION:
-                # get amount of known fields in give content
-                known_tiles = give_content
-                for row,col in give_content:
-                    if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
-                        known_tiles.remove((row,col))
-                give_utility = self.utility_information(known_tiles)
+        if request.gold > 0:
+            if self.__items[AgentItem.GOLD.value] < request.gold:
+                return False
+            give_utility += self.utility_gold(request.gold)
+        if request.wumpus_positions > 0:
+            if request.wumpus_positions > len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
+                return False
+            if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
+                give_utility += self.utility_help_wumpus() * request.wumpus_positions
+            elif self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
+                # 20: Kosten die Information gesammelt zu haben
+                give_utility += 20 * request.wumpus_positions
+        if len(request.tiles) > 0:
+            # Durch negotiating-Konzept muss keine Überprüfung der tile-Menge geamcht werden
+            # TODO: soll die utility sein, die der andere Agent hat (aktuell nicht möglich, weil Agent kein Argument sein darf)
+            give_utility += self.utility_information(request.tiles)
+
         # calculate get_utility
         get_utility = 0
-        match get_type:
-            case RequestObject.KILL_WUMPUS:
-                # hunter und knight brauchen keine Hilfe zum killen von Wumpus
-                if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
-                    return False
-                get_utility = MAX_UTILITY/2* give_content
-            case RequestObject.GOLD:
-                get_utility = self.utility_gold(min(get_content, self.__available_item_space))
-            case RequestObject.TILE_INFORMATION:
-                give_utility = self.utility_information(get_content)
+        if offer.gold_amount > 0:
+            if self.__available_item_space < offer.gold_amount:
+                return False
+            get_utility += self.utility_gold(offer.gold_amount)
+        if len(offer.wumpus_positions) > 0:
+            if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
+                get_utility += self.utility_help_wumpus() * offer.wumpus_positions
+        if len(offer.tile_information)> 0:
+            desired_tiles = self.desired_tiles()
+            acceptable_tiles = self.acceptable_tiles()
+            desired_count = 0
+            # Annahme: tiles sind entweder in desired oder acceptable drin (wegen neuer negotiation)
+            for tile in offer.tile_information:
+                if tile in desired_tiles:
+                    desired_count += 1
+            acceptable_count = len(offer.tile_information) - desired_count
+            good_tile_probability = 0.2
+            get_utility += self.utility_information(desired_tiles) + self.utility_information(acceptable_tiles) * good_tile_probability
 
         return give_utility-get_utility <= 0
 
