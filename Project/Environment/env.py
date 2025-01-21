@@ -6,11 +6,6 @@ import random
 
 import numpy as np
 
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
-import datetime
-
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
@@ -413,57 +408,3 @@ class EnvGenerator:
             grid[py + y][px + x].append(TileCondition.PIT)
             for bx, by in self.getNeighbors(px + x, py + y):
                 grid[by][bx].append(TileCondition.BREEZE)
-
-
-"""
-    @author: Lucas K
-    @:return void
-    Zum speichern des Grid als png
-    """
-
-
-def printGrid(grid, height, width):
-    def convertToInt(grid):
-        g = np.ndarray((height, width), float)
-        b = np.ndarray((height, width), dtype=StringDType())
-
-        for y in range(0, height):
-            for x in range(0, width):
-                # Wall
-                if TileCondition.WALL in grid[y][x]:
-                    g[y][x] = 0.1
-                    b[y][x] = "Wall"
-                # Wumpus
-                elif TileCondition.WUMPUS in grid[y][x]:
-                    g[y][x] = 0.9
-                    b[y][x] = "Wumpus"
-                # Gold
-                elif TileCondition.SHINY in grid[y][x]:
-                    g[y][x] = 0.5
-                    b[y][x] = "Gold"
-                # Pit
-                elif TileCondition.PIT in grid[y][x]:
-                    g[y][x] = 0.7
-                    b[y][x] = "Pit"
-                # Path
-                else:
-                    g[y][x] = 0.3
-                    b[y][x] = "Path"
-        return g, b
-
-    data, txt = convertToInt(grid)
-    print("PRINTING!", datetime.datetime.now())
-
-    plt = make_subplots(specs=[[{"secondary_y": True}]])
-
-    #cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
-    cmap = [[0, 'black'], [0.2, 'black'], [0.2, 'white'], [0.4, 'white'], [0.4, 'yellow'], [0.6, 'yellow'], [0.6, 'blue'], [0.8, 'blue'], [0.8, 'red'], [1., 'red']]
-    plt.add_trace(go.Heatmap(name="",
-                             z=data,
-                             text=txt,
-                             colorscale=cmap,
-                             showscale=False,
-                             hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"),)
-
-    print("PRINTED", datetime.datetime.now())
-    return plt
