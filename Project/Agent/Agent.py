@@ -130,13 +130,36 @@ class Agent:
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
-    def start_negotiation(self, sender, receiver, best_offer, request, expected_utility):
-        #while current_utility < expected_utility && negotiation_round < limit:
-        #TODO: negotiate algorithmn
-        #if negotiation complete:
-        print(f"The request is completed, with {best_offer} as the accepted offer")
-        self.apply_changes(self, sender, receiver, request, best_offer)
-        pass
+    def start_negotiation(self:, receiver: Agent, best_offer):
+        # TODO: negotiation algorithmn: Concession Protocol Page 24
+        s_expected_utility = self.Utility.offer_utility(best_offer)
+        r_expected_utility =  receiver.Utility.offer_utility(best_offer)
+        negotiation_round = 0
+        limit = 5
+        conflict_deal = False
+        current_offer = best_offer
+        while negotiation_round < limit:
+            negotiation_round+=1
+            s_offer = self.create_counter_offer(self.__role, current_offer)
+            r_offer = receiver.create_counter_offer(receiver.__role, current_offer)
+
+            #if one Agent agrees to the others offer
+            if  s_expected_utility >=  self.Utility.offer_utility(r_offer):
+                current_offer = r_offer
+                break
+
+            elif  r_expected_utility >=  self.Utility.offer_utility(s_offer):
+                current_offer = s_offer
+                break
+                   
+    #else: die mit besser utility für beide ist current offer
+            current_offer = s_offer #?
+        if negotiation_round == limit:
+            print(f"The negotiation has failed, conflict deal reached")
+        else:
+            print(f"The negotiation is completed, with {current_offer} as the accepted offer")
+            self.apply_changes(self, receiver, current_offer)
+
 
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
