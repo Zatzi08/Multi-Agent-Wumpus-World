@@ -12,7 +12,7 @@ import heapq  # für a*-search
 
 MAX_UTILITY = 200
 NUM_DEADENDS = grid.numDeadEnds  #  notwendig zur Berechnung des Erwartungswert einer Menge von Feldern
-
+ACCEPTABLE_TILE_FACTOR = 0.2
 class AgentRole(Enum):
     HUNTER: int = 0
     CARTOGRAPHER: int = 1
@@ -729,9 +729,10 @@ class Utility:
         return self.__knowledge.get_closest_unvisited_tiles()
     # TODO: acceptable tiles ermitteln
     # unknown tiles, die nicht an known/visited-tiles angrenzen
-    def acceptable_tiles(self):
+    def acceptable_tiles(self, desired_tiles: set[tuple[int, int]]):
         height, width = self.__utility.get_dimensions()
         all_tiles = [(row,col) for row in range(height) for col in range(width)]
+        # Agent will neue Infos zu bekannten tiles
         if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER] and len(self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)) > 0:
             non_acceptable_tiles = []
         else:
@@ -743,14 +744,76 @@ class Utility:
                 continue
             if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
                 acceptable_tiles.append(tile)
-        return acceptable_tiles
+        # desired tiles und acceptable_tiles dürfen keine Schnittmenge haben, da Funktionen unter der Annahme arbeiten
+        return set(acceptable_tiles).difference(desired_tiles)
 
 
+    def get_first_offer(self, request_object: RequestObject, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]]):
     # TODO: Geh durch, welche noch notwendigen Funktionen welche utility-methoden nutzen müssen
     # Funktion: Ermittle auf Basis eines offers ein neues counteroffer (für tiles und jegliches andere)
-    # Ausgabe: offer ()
-    def counteroffer_wanted_tiles(self):
-        pass
+    # Ausgabe: counter_offer : OfferedObject
+    def get_counteroffer(self, offer: Offer, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_agent_gold_amount: int, other_agent_wumpus_amount: int):
+        new_offer = Offer(OfferedObjects(offer.off_gold, list(offer.off_tiles), ))
+        # Abbruchbedingung: kein besseres Angebot möglich, ohne selber negative utility zu erhalten
+        give_utility = self.utility_information(offer.off_tiles) + self.utility_gold(offer.off_gold) + 20 * len(offer.off_wumpus_positions)
+        get_utility = self.utility_information(offer.req_tiles) + self.utility_gold(offer.req_gold) + self.utility_help_wumpus() * offer.req_wumpus_positions
+        # wenn sie zu nah beieinander sind, ist kein besseres offer möglich ohne selber eine negative utility zu haben
+        # TODO: ist 5 ein guter Wert?
+        if give_utility >= get_utility + 5:
+            return None
+        diff_utility = get_utility - give_utility
+        # Ziel: added_utility = diff_utility / 2 (immer näher an Gleichheit rangehen)
+
+        # Prüfe ob aktuelles Offer/Request das maximum sind
+        max_off_gold, max_off_wumpus, max_off_tile, max_req_gold, max_req_wumpus, max_req_tile = [True] * 6
+        # Agent will Gold als tradegut nutzen
+        if self.__role in [AgentRole.HUNTER, AgentRole.CARTOGRAPHER]:
+            if offer.req_gold < self.__items[AgentItem.GOLD.value]:
+                max_off_gold = False
+
+        # Hunter und Knight wollen keine Wumpus_info preis geben (nicht das ihnen der kill geklaut wird)
+        if self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
+            if len(offer.off_wumpus_positions) < len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
+                max_off_wumpus = False
+
+        # off_tiles is empty --> keine Schnittmenge mit geforderten tiles oder anderer Agent will keine tileInfo
+        # --> TileInfo nicht tradebar
+        available_acceptable_tiles, available_desired_tiles = [],[]
+        if len(offer.off_tiles) > 0:
+            # kann der Agent noch mehr tiles anbieten?
+            available_acceptable_tiles = set([(row,col) for row,col in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0])
+            available_desired_tiles = set([(row,col) for row,col in desired_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0])
+            if len(offer.off_tiles) < len(available_desired_tiles.union(available_acceptable_tiles)):
+                max_off_tile = False
+
+        # nur diese Rollen, weil anderer Agent sonst eine höhere utility dem Gol zuordent und somit das angebot sehr wahrscheinlich abgelehnt wird
+        if self.__role in [AgentRole.KNIGHT, AgentRole.BWL_STUDENT]:
+            if offer.req_gold < self.__available_item_space:
+                max_req_gold = False
+        if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
+            if offer.req_wumpus_positions < other_agent_wumpus_amount:
+                max_req_wumpus = False
+        # Agent möchte Tileinfo und anderer Agent hat nutzbare Infos
+        my_desired_tiles, my_acceptable_tiles = [], []
+        if len(offer.req_tiles) > 0:
+            my_desired_tiles = self.desired_tiles().intersection(knowledge_tiles)
+            my_acceptable_tiles = self.acceptable_tiles(self.desired_tiles()).intersection(knowledge_tiles)
+            if len(offer.req_tiles) < len(my_desired_tiles.union(my_acceptable_tiles)):
+                max_req_tile = False
+
+        current_diff_utility = diff_utility
+        if max_off_gold and max_off_wumpus and max_off_tile:
+            # reduce request
+            if offer.req_gold > 0 and 0 < current_diff_utility - self.utility_gold(1) <= diff_utility/2:
+
+
+
+
+
+
+
+
+
 
     # get: Agent der Funktion ausführt bekommt (give trivial)
     # Überlegung:
@@ -761,6 +824,7 @@ class Utility:
     # Funktion: Werte aus, ob ein Angebot eines Agentens annehmbar für den Agenten ist
     # Ausgabe: bool
     # offer: anderer bietet mir ... | request: anderer möchte ...
+    # TODO: Ausgabe zur utility_differenz ausgeben mit default-fail value bei schlechtem Angebot + Argumente zu type Offer umformulieren
     def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
         # calculate give_utility
         give_utility = 0
@@ -798,9 +862,7 @@ class Utility:
             for tile in offer.tile_information:
                 if tile in desired_tiles:
                     desired_count += 1
-            acceptable_count = len(offer.tile_information) - desired_count
-            good_tile_probability = 0.2
-            get_utility += self.utility_information(desired_tiles) + self.utility_information(acceptable_tiles) * good_tile_probability
+            get_utility += self.utility_information(desired_tiles) + self.utility_information(acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
 
         return give_utility-get_utility <= 0
 
