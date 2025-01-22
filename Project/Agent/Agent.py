@@ -1,9 +1,9 @@
-<<<<<<< HEAD
+
 from typing import Union
 
-=======
+
 from Project.Agent import utility
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
 from enum import Enum
 from Project.communication.protocol import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
@@ -45,22 +45,19 @@ class AgentGoal(Enum):
 
 
 class Agent:
-<<<<<<< HEAD
+
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], spawn_position: tuple[int, int],
                  map_width: int, map_height: int):
-=======
-    def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], gold_visibility_range: int,
-                 spawn_position: tuple[int, int], map_width: int, map_height: int):
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
         # set a single time
         self.__name: int = name
         self.__role: AgentRole = role
         self.__goals: set[AgentGoal] = goals
         self.__utility = Utility(goals, map_height, map_width)
-<<<<<<< HEAD
-=======
+
+
         self.__gold_visibility_range: int = gold_visibility_range
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
 
         # knowledge
         self.__knowledge: KnowledgeBase = KnowledgeBase(spawn_position, map_width, map_height)
@@ -72,7 +69,6 @@ class Agent:
         self.__available_item_space: int = 0
         self.__time = 0
 
-<<<<<<< HEAD
     #
     # next agent move
     #
@@ -115,8 +111,6 @@ class Agent:
     # communication
     #
 
-=======
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
     def start_communication(self, agents: list[tuple[int, AgentRole]]) \
             -> tuple[list[int], tuple[OfferedObjects, RequestedObjects]]:
         """choose agents to communicate with and offer to make"""
@@ -168,9 +162,9 @@ class Agent:
         #else:
             #return (expected_offer_utility, False)
 
-<<<<<<< HEAD
+
     def apply_changes(self, sender, receiver, request, offer):
-=======
+
 
     def receive_tile_information(self, position: tuple[int, int], tile_conditions: [TileCondition], health: int,
                                  items: list[int], available_item_space: int, time: int):
@@ -187,7 +181,7 @@ class Agent:
         pass
 
     def apply_changes(self, sender, receiver, offer):
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
@@ -200,7 +194,7 @@ class Agent:
         conflict_deal = False
         current_offer = best_offer
         while negotiation_round < limit:
-<<<<<<< HEAD
+
             negotiation_round+=1
             s_offer = self.create_counter_offer(self.__role, current_offer)
             r_offer = receiver.create_counter_offer(receiver.__role, current_offer)
@@ -229,24 +223,6 @@ class Agent:
     # Funktion: shortes path berechnen
     # Ausgabe: (move: AgentAction, utility: float)
     def a_search(self, end):
-=======
-            s_offer = self.create_counter_offer(self.__role, current_offer)
-            r_offer = receiver.create_counter_offer(receiver.__role, current_offer)
-
-            #if your offer is better or equal to his offer and the receivers utility expectation is also satisfied
-            if  s_expected_utility >=  self.Utility.offer_utility(r_offer):
-                if r_expected_utility >= self.Utility.offer_utility(s_offer):
-                    break
-
-            current_offer = s_offer #?
-
-        if not conflict_deal:
-            print(f"The negotiation is completed, with {current_offer} as the accepted offer")
-            self.apply_changes(self, receiver, current_offer)
-
-        else:
-            print(f"The negotiation has failed, conflict deal reached")
-
 
 
     def receive_shout_action_information(self, x: int, y: int):
@@ -379,7 +355,7 @@ class Utility:
 
     # Ausgabe: (move: String, utility: float)
     def a_search(self, end, agent: Agent):
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
 
         def heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
             end_row, end_col = end
@@ -388,7 +364,7 @@ class Utility:
                 return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
 
-<<<<<<< HEAD
+
         pos_row, pos_col = self.__position
 
         # Abbruchbedingung: already on end-field
@@ -407,7 +383,7 @@ class Utility:
             avoid_tiles.remove(TileCondition.WUMPUS)
         for row, col, move in neighbours:
             if risky_tile(row, col, self.__knowledge, avoid_tiles):
-=======
+
         map_knowledge = agent.get_knowledge()
         pos_row, pos_col = agent.get_position()
         # Abbruchbedingung: already on end-field
@@ -426,18 +402,18 @@ class Utility:
             avoid_tiles.remove(TileCondition.WUMPUS)
         for row, col, move in neighbours:
             if self.risky_tile(row, col, map_knowledge, avoid_tiles):
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
                 neighbours.remove([row, col, move])
 
         # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
         if len(neighbours) == 0:
             return "", -1
 
-<<<<<<< HEAD
+
         queue = [[heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
-=======
+
         queue = [[heuristik(row, col, end, steps, map_knowledge), row, col, move] for row, col, move in neighbours]
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
         steps += 1
@@ -446,16 +422,16 @@ class Utility:
         while (pos[1], pos[2]) != end:
             #get neighbours of pos
             neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]]]
-<<<<<<< HEAD
+
             new_field = [[heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
-=======
+
             new_field = [[heuristik(row, col, end, steps, map_knowledge), row, col, move] for row, col, move in neighbours]
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
 
             # remove fields with "game over" tile states
-<<<<<<< HEAD
+
             # different avoid tiles as soon as it's not a direct neighbour of position
             if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME): # TODO: steps > REPLENISH_TIME - turn % REPLENISH_TIME
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
@@ -466,7 +442,7 @@ class Utility:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
                     new_field.remove([heuristik, row, col, move])
 
-=======
+
             # different avoid tiles as soon as it's not a direct neighbor of position
             if agent.get_role() == AgentRole.KNIGHT and (agent.can_fight() or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
@@ -476,7 +452,7 @@ class Utility:
             for heuristik, row, col, move in new_field:
                 if self.risky_tile(row, col, map_knowledge, avoid_tiles):
                     new_field.remove([heuristik, row, col, move])
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             # add non "game over" fields
             for tile in new_field:
                 heapq.heappush(queue, tile)
@@ -489,7 +465,7 @@ class Utility:
             steps += 1
 
         next_move = pos[3]
-<<<<<<< HEAD
+
         states = self.__knowledge.get_conditions_of_tile(pos[1], pos[2])
         if len(states) == 0:  # unknown tile
             max_utility = self.__utility.get_utility_of_condition(-1)
@@ -501,7 +477,7 @@ class Utility:
 
         # reduziere Utility von Felder, auf denen Agenten kürzlich waren (reduziert Loopgefahr)
         if (pos[1], pos[2]) in self.__knowledge.get_path()[-5:]:
-=======
+
         states = map_knowledge.get_conditions_of_tile(pos[1], pos[2])
         if len(states) == 0:  # unknown tile
             max_utility = self.utility_of_condition(-1)
@@ -512,12 +488,12 @@ class Utility:
                     max_utility = self.utility_of_condition(state)
         # reduziere Utility vom Felder, auf denen Agenten kürzlich waren (reduziert Loopgefahr)
         if (pos[1], pos[2]) in map_knowledge.get_path()[-5:]:
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             max_utility = 1
         utility = max_utility / pos[0]  # Utility des Feldes dividiert durch Anzahl an Schritte bis zum Feld
         return next_move, utility
 
-<<<<<<< HEAD
+
     # Funktion: Ermittle Rangordnung der nächstmöglichen moves
     # Ausgabe: (next_move: Agent_Action, best_utility: dict)
     def utility_movement(self):
@@ -550,7 +526,7 @@ class Utility:
             if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
             move, utility = self.a_search((row, col))
-=======
+
     # Ausgabe: (next_move: String, best_utility: dict)
     def utility_movement(self, agent: Agent):
         map_knowledge = agent.get_knowledge()
@@ -588,7 +564,7 @@ class Utility:
             if map_knowledge.visited(row, col) and not map_knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
             move, utility = self.a_search((row, col), agent)
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             if utility > best_utility[move]:
                 best_utility[move] = utility
 
@@ -597,7 +573,7 @@ class Utility:
             if max_utility is None or best_utility[move] > max_utility:
                 next_move = move
                 max_utility = best_utility[move]
-<<<<<<< HEAD
+
         if max_utility < 0:
             next_move = AgentAction.SHOUT
         return next_move, best_utility
@@ -609,7 +585,7 @@ class Utility:
     # TODO: Wahrscheinlichkeiten ändern, da Spawnregeln sich geändert haben
     def utility_information(self, fields):
         height, width = self.__utility.get_dimensions()
-=======
+
         return next_move, best_utility
 
     def offer_utility(self, offer):
@@ -630,16 +606,16 @@ class Utility:
     def utility_information(self, fields, agent, map_knowledge: KnowledgeBase):
         # expected utiltiy of area based on probabilities for map generation
         height, width = agent.get_dimensions()
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
         deadend_prob = NUM_DEADENDS / (height * width)
         gold_prob = deadend_prob * 0.3
         wumpus_prob = (gold_prob + 0.7 * 1 / 6) * 0.5
         amount = len(fields)
-<<<<<<< HEAD
+
         match self.__role:
-=======
+
         match agent.get_role():
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             case AgentRole.KNIGHT:
                 return (gold_prob + wumpus_prob) * amount
             case AgentRole.HUNTER:
@@ -649,7 +625,7 @@ class Utility:
             case AgentRole.BWL_STUDENT:
                 return gold_prob * amount
 
-<<<<<<< HEAD
+
     # Ausgabe: utility: double
     # TODO: weiteren Multiplier auf gold_utility setzen
     def utility_gold(self, gold_amount):
@@ -663,7 +639,7 @@ class Utility:
                 return self.__utility.get_utility_of_condition(TileCondition.WUMPUS) / 4
             case AgentRole.HUNTER:
                 return self.__utility.get_utility_of_condition(TileCondition.WUMPUS)
-=======
+
     def utility_gold(self, agent, gold_amount):
         # TODO: anderen value für echten Wert von Gold erstellen?
         return gold_amount * agent.get_utility().utility_of_condtition(TileCondition.SHINY)
@@ -675,7 +651,7 @@ class Utility:
                 return agent.get_utility().utility_of_condtition(TileCondition.WUMPUS) / 2
             case AgentRole.HUNTER:
                 return agent.get_utility().utility_of_condtition(TileCondition.WUMPUS)
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
             case _:  # rest cant kill wumpus
                 return 0
 
@@ -683,7 +659,7 @@ class Utility:
     # Voraussetzung: Vor Methodenaufruf wurde festgestellt, dass der Agent eine Kommunikation starten möchte
     # Überlegung:
     # - help_request Liste nicht leer --> Cfp/Request kill wumpus
-<<<<<<< HEAD
+
     # - rest: request/cfp tile_information
     # Ausgabe: RequestObject
     # performativ hängt von Agenten in der Umgebung ab --> nicht für die Funktion relevant
@@ -890,7 +866,7 @@ class Utility:
                     return True
                 goal_states = []
                 match self.__role:
-=======
+
     # - not hunter/knight: Knowledge of Wumpus(sies) --> Request  gold für TileInfo
     # - rest: request/cfp tile_information
     def get_offer_type(self):
@@ -928,7 +904,7 @@ class Utility:
                 match agent.get_role():
                     case AgentRole.CARTOGRAPHER:
                         return True
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
                     case AgentRole.KNIGHT:
                         goal_states = [TileCondition.WUMPUS, TileCondition.SHINY]
                     case AgentRole.HUNTER:
@@ -936,7 +912,7 @@ class Utility:
                     case AgentRole.BWL_STUDENT:
                         goal_states = [TileCondition.SHINY]
                 for condition in goal_states:
-<<<<<<< HEAD
+
                     if len(self.__knowledge.get_tiles_by_condition(condition)) > 0:
                         return False
                 return True
@@ -1041,8 +1017,8 @@ class Utility:
     def get_dimensions(self):
         return self.__map_height, self.__map_width
 
-=======
+
                     if len(agent.get_knowledge().get_tiles_by_condition(condition)) > 0:
                         return False
                 return True
->>>>>>> parent of 02e5a49 (Merge remote-tracking branch 'refs/remotes/origin/main')
+
