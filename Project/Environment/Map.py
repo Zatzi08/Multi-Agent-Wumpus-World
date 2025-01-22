@@ -12,7 +12,7 @@ import numpy as np
 
 
 class Map:
-    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds', 'info']
+    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'info']
 
     def __init__(self, width, height):
         # extend grid to fit full tiles
@@ -30,7 +30,6 @@ class Map:
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
         #        self.agents: dict[int, SimulatedAgent] = {}
-        self.numDeadEnds = gen.getNumDeadEnds()
         self.info = gen.info
 
     #    def add_agents(self, agents: dict[int, SimulatedAgent]):
@@ -38,9 +37,6 @@ class Map:
 
     #    def get_agents(self) -> dict[int, SimulatedAgent]:
     #        return self.agents
-
-    def get_number_of_dead_ends(self):
-        return self.numDeadEnds
 
     def get_tile_conditions(self, x, y):
         return self.filled_map[y][x]
@@ -120,8 +116,6 @@ class Map:
 
     def get_safe_tiles(self):
         return self.info[TileCondition.SAFE]
-
-    # TODO: update print_map so das alle TileCond. hat als Farbe
 
     def __print_base(self, grid):
         def convertGrid(grid):

@@ -39,24 +39,6 @@ class EnvGenerator:
                     neighbors.append((x + xi, y + yj))
         return neighbors
 
-    def __findDeadEnd(self) -> list[tuple[int, int]]:
-        ends = []
-        sx, sy = self.start_pos
-        visit = [self.start_pos]
-        visited = np.ndarray((self.width, self.height)).astype(bool)
-        visited.fill(False)
-        while visit:
-            x, y = visit.pop()
-            visited[y][x] = True
-            n = self.getNeighbors(x, y)
-            if len(n) == 1 and abs(x - sx) + abs(y - sy) > 1:
-                ends.append((x, y))
-            for xi, yi in n:
-                if not visited[yi][xi]:
-                    visit.append((xi, yi))
-        self.num_dead_end = len(ends)
-        return ends
-
     def __analyseMap(self):
         safe = []
         wumpus = []
@@ -89,20 +71,15 @@ class EnvGenerator:
         self.info[TileCondition.SHINY.value] = gold
         self.info[TileCondition.PIT.value] = pit
 
-    def getNumDeadEnds(self):
-        if self.num_dead_end == -1:
-            if TileCondition.WALL not in self.grid and type(self.grid[1][1]) is list:
-                self.num_dead_end = len(self.__findDeadEnd())
-        return self.num_dead_end
-
-    """
-    @author: Lucas K
-    @:param Array
-    @:return Array.astype(int)
-    [TileCondition.WALL] für Wand, [] für Weg Umwandlung zu Array
-    """
-
     def __convertToArray(self, grid):
+
+        """
+        @author: Lucas K
+        @:param Array
+        @:return Array.astype(int)
+        [TileCondition.WALL] für Wand, [TileCondition.SAFE] für Weg Umwandlung zu Array
+        """
+
         g = np.ndarray((self.height, self.width), list)
 
         self.info[TileCondition.WALL.value] = []
@@ -131,15 +108,16 @@ class EnvGenerator:
                  np.array([["W", " ", "W"], [" ", " ", " "], ["W", " ", "W"]]),
                  np.array([[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]])]
 
-        """
-        @author: Lucas K
-        @:param x, y Koordinaten in Grid
-        @:return Liste an Positionen
-        Gibt für eine Position alle Folgepositionen für alle Tiles und orientations aus 
-        Tripel (rotation tile Exit) <- rotation counterclockwise
-        """
+        def __directions(hor: int, ver: int):
 
-        def directions(hor: int, ver: int):
+            """
+            @author: Lucas K
+            @:param x, y Koordinaten in Grid
+            @:return Liste an Positionen
+            Gibt für eine Position alle Folgepositionen für alle Tiles und orientations aus
+            Tripel (rotation tile Exit) <- rotation counterclockwise
+            """
+
             return [
                 [
                     [],
@@ -191,66 +169,51 @@ class EnvGenerator:
         for y_con in range(1, self.height, 3):
             for x_con in range(1, self.width, 3):
                 tile_con[(x_con, y_con)] = []
-                for xo, yo in directions(x_con, y_con)[0][6]:
+                for xo, yo in __directions(x_con, y_con)[0][6]:
                     if 0 < xo < self.width and 0 < yo < self.height:
                         tile_con[(x_con, y_con)].append((xo, yo))
 
-        """
-        @author: Lucas K
-        @:param [TileCondition.WALL]
-        @:return Leeres Array.astype(str)
-        Erweitert die gegebene Höhe und Breite auf ein vielfaches von 3 
-
-        @ Explanation
-        Wall = [TileCondition.WALL]
-        Path = [...]
-        Events:
-            Shine   = [..., 3, ...] = Gold
-            Breeze  = [..., 9, ...]
-            Stench   = [..., 6, ...]
-            Pit     = [..., 7, ...]
-            Wumpus  = [..., 4, ...]
-        """
-
-        def getGrid() -> np.ndarray:
+        def __getGrid() -> np.ndarray:
             # Return Grid
             return np.ndarray((self.height, self.width)).astype(str)
 
-        """
-        @author: Lucas K
-        @:param Tile_id (siehe Tiles-Liste), orientation = rotation, position (Tupel (x,y))
-        @:return void
-        Zum Einfügen ausgewählten Tiles in Grid 
-        """
-
         def setTile(tile_id: int, orientation: int, pos: tuple[int, int]):
+
+            """
+            @author: Lucas K
+            @:param Tile_id (siehe Tiles-Liste), orientation = rotation, position (Tupel (x,y))
+            @:return void
+            Zum Einfügen ausgewählten Tiles in Grid
+            """
+
             x1, y1 = pos
             tile = np.rot90(tiles[tile_id], orientation)
             for y2 in [-1, 0, 1]:
                 for x2 in [-1, 0, 1]:
                     grid[y1 + y2][x1 + x2] = tile[y2 + 1][x2 + 1]
 
-        """
-        @author: Lucas K
-        @:param Position
-        @:return Tile_id, orientation
-        Berechnet Tile an gegebener Position und seine Position
-        """
-
         def getPossibleTile(pos: tuple[int, int]):
 
             """
             @author: Lucas K
-            @:param Position (x,y), connected, tile_id (siehe Tiles-List)
-            @:return int rotation
-            Berechnet orientation/rotation für Tile on position
+            @:param Position (x, y)
+            @:return Tile_id, orientation
+            Berechnet Tile an gegebener Position und seine Position
             """
 
             def comOrientation(pos: tuple[int, int], con: list, tile_id: int):
+
+                """
+                @author: Lucas K
+                @:param Position (x,y), connected, tile_id (siehe Tiles-List)
+                @:return int rotation
+                Berechnet orientation/rotation für Tile on position
+                """
+
                 x, y = pos
                 for o in range(0, 4):
                     ok = True
-                    possible = directions(x, y)[o][tile_id]
+                    possible = __directions(x, y)[o][tile_id]
                     for xo, yo in possible:
                         ok = ok and (0 < xo < self.width and 0 < yo < self.height)
                         if not ok:
@@ -320,19 +283,18 @@ class EnvGenerator:
 
             return tile, orientation
 
-        """
-        @author: Lucas K
-        @:param Grid
-        @:return void
-        Zum debugen; füllt Grid mit den Positionen (x,y)
-        """
-
         def fillWithPos(grid: np.ndarray):
+            """
+            @author: Lucas K
+            @:param ndarray
+            @:return void
+            Zum debugen; füllt Grid mit den Positionen (x,y)
+            """
             for y in range(0, self.height):
                 for x in range(0, self.width):
                     grid[y][x] = f"({x}, {y})"
 
-        grid = getGrid()
+        grid = __getGrid()
         # fillWithPos(grid)
 
         toSet = set()
@@ -356,7 +318,7 @@ class EnvGenerator:
                 setTile(t, o, pos)
                 x, y = pos
                 tile_con_pos = []
-                for xo, yo in directions(x, y)[o][t]:
+                for xo, yo in __directions(x, y)[o][t]:
                     if 0 < xo < self.width - 1 and 0 < yo < self.height - 1:
                         toSet.add((xo, yo))
                         tile_con_pos.append((xo, yo))
@@ -364,14 +326,14 @@ class EnvGenerator:
                     tile_con[(xo, yo)].remove(pos)
         self.grid = self.__convertToArray(grid)
 
-    """
-    @author: Lucas K
-    @:param Grid
-    @:return void
-    Zum Platzieren von Wumpus, Pit und Gold
-    """
-
     def placeWorldItems(self):
+
+        """
+        @author: Lucas K
+        @:return void
+        Zum Platzieren von Wumpus, Pit und Gold
+        """
+
         if self.grid is None:
             raise Exception("No Grid defined")
         random.seed(self.seed)
