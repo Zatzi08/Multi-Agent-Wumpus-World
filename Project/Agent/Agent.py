@@ -41,14 +41,13 @@ class AgentGoal(Enum):
 
 
 class Agent:
-    def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], gold_visibility_range: int,
-                 spawn_position: tuple[int, int], map_width: int, map_height: int):
+    def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], spawn_position: tuple[int, int],
+                 map_width: int, map_height: int):
         # set a single time
         self.__name: int = name
         self.__role: AgentRole = role
         self.__goals: set[AgentGoal] = goals
         self.__utility = Utility(goals, map_height, map_width)
-        self.__gold_visibility_range: int = gold_visibility_range
 
         # knowledge
         self.__knowledge: KnowledgeBase = KnowledgeBase(spawn_position, map_width, map_height)
@@ -59,6 +58,48 @@ class Agent:
         self.__items: list[int] = []
         self.__available_item_space: int = 0
         self.__time = 0
+
+    #
+    # next agent move
+    #
+
+    def get_next_action(self) -> AgentAction:
+        # TODO: implementation HENRY
+        pass
+
+    #
+    # agent knowledge
+    #
+
+    def receive_tile_information(self, position: tuple[int, int], tile_conditions: list[TileCondition], health: int,
+                                 items: list[int], available_item_space: int, time: int):
+        self.__position: tuple[int, int] = position
+        self.__knowledge.update_position(self.__position)
+        self.__knowledge.update_tile(position[0], position[1], tile_conditions)
+        self.__health = health
+        self.__items = items
+        self.__available_item_space = available_item_space
+        self.__time = time
+
+    def receive_shout_action_information(self, x: int, y: int):
+        self.__knowledge.add_shout(x, y, self.__time)
+
+    def receive_bump_information(self, x: int, y: int):
+        self.__knowledge.update_tile(x, y, [TileCondition.WALL])
+
+    def receive_gold_position(self, x: int, y: int):
+        self.__knowledge.update_tile(x, y, [TileCondition.SHINY])
+
+    def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: TileCondition) -> None:
+        for tile in tiles:
+            self.__knowledge.update_tile(tile[0], tile[1], [condition])
+
+    def get_map(self) -> list[list[set[TileCondition]]]:
+        return self.__knowledge.return_map()
+
+    #
+    # communication
+    #
 
     def start_communication(self, agents: list[tuple[int, AgentRole]]) \
             -> tuple[list[int], tuple[OfferedObjects, RequestedObjects]]:
@@ -111,21 +152,6 @@ class Agent:
         #else:
             #return (expected_offer_utility, False)
 
-
-    def receive_tile_information(self, position: tuple[int, int], tile_conditions: [TileCondition], health: int,
-                                 items: list[int], available_item_space: int, time: int):
-        self.__position: tuple[int, int] = position
-        self.__knowledge.update_position(self.__position)
-        self.__knowledge.update_tile(position[0], position[1], tile_conditions)
-        self.__health = health
-        self.__items = items
-        self.__available_item_space = available_item_space
-        self.__time = time
-
-    def get_next_action(self) -> AgentAction:
-        # TODO: implementation HENRY
-        pass
-
     def apply_changes(self, sender, receiver, request, offer):
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
@@ -160,13 +186,9 @@ class Agent:
             print(f"The negotiation is completed, with {current_offer} as the accepted offer")
             self.apply_changes(self, receiver, current_offer)
 
-
-    def receive_shout_action_information(self, x: int, y: int):
-        self.__knowledge.add_shout(x, y, self.__time)
-
-    def receive_bump_information(self, x: int, y: int):
-        self.__knowledge.update_tile(x, y, [TileCondition.WALL])
-
+    #
+    # utility
+    #
 
     # Funktion: shortes path berechnen
     # Ausgabe: (move: AgentAction, utility: float)
@@ -495,30 +517,26 @@ class Agent:
                 return True
 
 class Hunter(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int,
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int,
                  map_height: int):
-        super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, gold_visibility,
-                         spawn_position, map_width, map_height)
+        super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, spawn_position, map_width, map_height)
 
 
 class Cartographer(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int,
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int,
                  map_height: int):
-        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, gold_visibility, spawn_position,
-                         map_width, map_height)
+        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, spawn_position, map_width, map_height)
 
 
 class Knight(Agent):
-    def __init__(self, name, gold_visibility: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
-        super().__init__(name, AgentRole.KNIGHT, {AgentGoal.WUMPUS, AgentGoal.GOLD}, gold_visibility, spawn_position,
-                         map_width, map_height)
+    def __init__(self, name, spawn_position: tuple[int, int], map_width: int, map_height: int):
+        super().__init__(name, AgentRole.KNIGHT, {AgentGoal.WUMPUS, AgentGoal.GOLD}, spawn_position, map_width,
+                         map_height)
 
 
 class BWLStudent(Agent):
-    def __init__(self, name: int, gold_visibility: int, spawn_position: tuple[int, int], map_width: int,
-                 map_height: int):
-        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, gold_visibility, spawn_position, map_width,
-                         map_height)
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
+        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, spawn_position, map_width, map_height)
 
 def goals_to_field_value(goals: set[AgentGoal]):
     field_utility: dict = {}

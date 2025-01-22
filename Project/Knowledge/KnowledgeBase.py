@@ -79,6 +79,9 @@ class _Map:
     def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
         return self.__closest_unknown_tiles_to_any_known_tiles
 
+    def return_map(self) -> list[list[set[TileCondition]]]:
+        return self.__map
+
 
 class KnowledgeBase:
     def __init__(self, position: tuple[int, int], map_width: int, map_height: int):
@@ -100,7 +103,7 @@ class KnowledgeBase:
         #
 
         self.__shouts: dict[tuple[int, int], int] = {}
-        # TODO: store accepted task
+        self.__kill_wumpus_tasks: list[tuple[int, int]] = []
 
     #
     # POSITION
@@ -116,6 +119,9 @@ class KnowledgeBase:
     #
     # MAP
     #
+
+    def return_map(self) -> list[list[set[TileCondition]]]:
+        return self.__map.return_map()
 
     def __add_condition_if_all_surrounding_tiles_allow(self, x: int, y: int, tile_condition: TileCondition) -> bool:
         """adds (predicted) dangers if no adjacent tile disallows it"""
@@ -361,3 +367,12 @@ class KnowledgeBase:
 
     def remove_shout(self, x: int, y: int) -> None:
         self.__shouts.pop((x, y))
+
+    def add_kill_wumpus_task(self, x: int, y: int) -> None:
+        self.__kill_wumpus_tasks.append((x, y))
+
+    def get_kill_wumpus_tasks(self) -> list[tuple[int, int]]:
+        return self.__kill_wumpus_tasks
+
+    def remove_kill_wumpus_task(self, x: int, y: int) -> None:
+        self.__kill_wumpus_tasks.remove((x, y))
