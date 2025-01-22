@@ -2,7 +2,7 @@ from dash import dcc
 
 from Project.Environment.env import EnvGenerator
 from Project.Knowledge.KnowledgeBase import TileCondition
-#from Project.SimulatedAgent import SimulatedAgent
+from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
@@ -29,14 +29,14 @@ class Map:
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
-        #        self.agents: dict[int, SimulatedAgent] = {}
+        self.agents: dict[int, SimulatedAgent] = {}
         self.info = gen.info
 
-    #    def add_agents(self, agents: dict[int, SimulatedAgent]):
-    #        self.agents = agents.copy()
+    def add_agents(self, agents: dict[int, SimulatedAgent]):
+        self.agents = agents.copy()
 
-    #    def get_agents(self) -> dict[int, SimulatedAgent]:
-    #        return self.agents
+    def get_agents(self) -> dict[int, SimulatedAgent]:
+        return self.agents
 
     def get_tile_conditions(self, x, y):
         return self.filled_map[y][x]
