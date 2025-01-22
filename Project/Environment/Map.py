@@ -130,11 +130,6 @@ class Map:
 
             for y in range(0, self.height):
                 for x in range(0, self.width):
-
-                    """elif TileCondition.UNKNOWN in list(grid[y][x]):
-                        g[y][x] = 0.1
-                        b[y][x] = 'Unknown'"""
-
                     if TileCondition.WALL in list(grid[y][x]):
                         g[y][x] = 0.05
                         b[y][x] = "Wall"
@@ -162,9 +157,12 @@ class Map:
                     elif TileCondition.STENCH in list(grid[y][x]):
                         g[y][x] = 0.9
                         b[y][x] = "Stench"
-                    else:
+                    elif TileCondition.SAFE in list(grid[y][x]):
                         g[y][x] = 1.0
                         b[y][x] = "Path"
+                    else:
+                        g[y][x] = 0.1
+                        b[y][x] = 'Unknown'
 
             return g, b
 

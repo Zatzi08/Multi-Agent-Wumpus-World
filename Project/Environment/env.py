@@ -106,15 +106,15 @@ class EnvGenerator:
         g = np.ndarray((self.height, self.width), list)
 
         self.info[TileCondition.WALL.value] = []
-        self.info["Path"] = []
+        self.info["locations"] = []
 
         # Path = [] Wall = [TileCondition.WALL]
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if grid[y][x] == ' ':
-                    g[y][x] = []
+                    g[y][x] = [TileCondition.SAFE]
                     if x != 1 and y != 1:
-                        self.info["Path"] += [(x, y)]
+                        self.info["locations"] += [(x, y)]
                 else:
                     g[y][x] = [TileCondition.WALL]
                     self.info[TileCondition.WALL.value] += [(x, y)]
@@ -378,7 +378,7 @@ class EnvGenerator:
 
         grid = self.grid.copy()
 
-        space = self.info["Path"]
+        space = self.info["locations"]
 
         treasure = random.sample(space, k=int(len(space) * self.treasure_prob))
         wumpus = random.sample(space, k=int(len(space) * self.wumpus_prob))
@@ -390,13 +390,16 @@ class EnvGenerator:
         for wx, wy in wumpus:
             if set(grid[wy][wx]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.STENCH}):
                 continue
+            grid[wy][wx].remove(TileCondition.SAFE)
             grid[wy][wx].append(TileCondition.WUMPUS)
             for sx, sy in self.getNeighbors(wx, wy):
-                grid[sy][sx].append(TileCondition.STENCH)
+                if TileCondition.PIT not in grid[sy][sx]:
+                    grid[sy][sx].append(TileCondition.STENCH)
 
         for px, py in pit:
             if set(grid[py][px]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
                 continue
+            grid[py][px].remove(TileCondition.SAFE)
             grid[py][px].append(TileCondition.PIT)
             for bx, by in self.getNeighbors(px, py):
                 grid[by][bx].append(TileCondition.BREEZE)
