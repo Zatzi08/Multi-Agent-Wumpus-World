@@ -6,25 +6,19 @@ import random
 
 import numpy as np
 
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
-import datetime
-
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
-                 'room_list', 'num_dead_end', 'info']
+                 'num_dead_end', 'info']
 
     def __init__(self, height, width, seed=42):
         self.height = height
         self.width = width
         self.start_pos = (1, 1)
-        self.wumpus_prob = 0.5
-        self.pit_prob = 0.3
-        self.treasure_prob = 0.3
+        self.wumpus_prob = 0.05
+        self.pit_prob = 0.03
+        self.treasure_prob = 0.03
         self.seed = seed
-        self.room_list = []
         self.num_dead_end: int = -1
         self.grid = []
         self.info = {}
@@ -40,8 +34,8 @@ class EnvGenerator:
             for yj in [-1, 0, 1]:
                 if abs(xi) == abs(yj):
                     continue
-                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL not in self.grid[y + yj][
-                    x + xi]:
+                elif 0 < x + xi < self.width and 0 < y + yj < self.height and TileCondition.WALL not in \
+                        self.grid[y + yj][x + xi]:
                     neighbors.append((x + xi, y + yj))
         return neighbors
 
@@ -112,12 +106,15 @@ class EnvGenerator:
         g = np.ndarray((self.height, self.width), list)
 
         self.info[TileCondition.WALL.value] = []
+        self.info["locations"] = []
 
         # Path = [] Wall = [TileCondition.WALL]
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if grid[y][x] == ' ':
-                    g[y][x] = []
+                    g[y][x] = [TileCondition.SAFE]
+                    if x != 1 and y != 1:
+                        self.info["locations"] += [(x, y)]
                 else:
                     g[y][x] = [TileCondition.WALL]
                     self.info[TileCondition.WALL.value] += [(x, y)]
@@ -355,9 +352,6 @@ class EnvGenerator:
             else:
                 blank_count += 1
 
-            if t == 6:
-                self.room_list.append(pos)
-
             if t != -1:
                 setTile(t, o, pos)
                 x, y = pos
@@ -384,86 +378,28 @@ class EnvGenerator:
 
         grid = self.grid.copy()
 
-        dead = self.__findDeadEnd()
+        space = self.info["locations"]
 
-        treasure = random.sample(dead, k=int(self.getNumDeadEnds() * self.treasure_prob))
-        treasure_Wumpus = random.sample(treasure, k=int(len(treasure) * self.wumpus_prob))
-        pit_room = random.sample(self.room_list, k=int(len(self.room_list) * self.pit_prob))
-        room_without_pit = list(set(self.room_list).difference(set(pit_room)))
-        wumpus_room = random.sample(room_without_pit, k=int(len(room_without_pit) * self.wumpus_prob))
+        treasure = random.sample(space, k=int(len(space) * self.treasure_prob))
+        wumpus = random.sample(space, k=int(len(space) * self.wumpus_prob))
+        pit = random.sample(space, k=int(len(space) * self.pit_prob))
 
         for tx, ty in treasure:
             grid[ty][tx].append(TileCondition.SHINY)
 
-        for tx, ty in treasure_Wumpus:
-            nei = self.getNeighbors(tx, ty)
-            x, y = random.choices(nei, k=1)[0]
-            grid[y][x].append(TileCondition.WUMPUS)
-            for sx, sy in self.getNeighbors(x, y):
-                grid[sy][sx].append(TileCondition.STENCH)
+        for wx, wy in wumpus:
+            if set(grid[wy][wx]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.STENCH}):
+                continue
+            grid[wy][wx].remove(TileCondition.SAFE)
+            grid[wy][wx].append(TileCondition.WUMPUS)
+            for sx, sy in self.getNeighbors(wx, wy):
+                if TileCondition.PIT not in grid[sy][sx]:
+                    grid[sy][sx].append(TileCondition.STENCH)
 
-        for wx, wy in wumpus_room:
-            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[wy + y][wx + x].append(TileCondition.WUMPUS)
-            for sx, sy in self.getNeighbors(wx + x, wy + y):
-                grid[sy][sx].append(TileCondition.STENCH)
-
-        for px, py in pit_room:
-            x, y = random.choice([(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 0)])
-            grid[py + y][px + x].append(TileCondition.PIT)
-            for bx, by in self.getNeighbors(px + x, py + y):
+        for px, py in pit:
+            if set(grid[py][px]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
+                continue
+            grid[py][px].remove(TileCondition.SAFE)
+            grid[py][px].append(TileCondition.PIT)
+            for bx, by in self.getNeighbors(px, py):
                 grid[by][bx].append(TileCondition.BREEZE)
-
-
-"""
-    @author: Lucas K
-    @:return void
-    Zum speichern des Grid als png
-    """
-
-
-def printGrid(grid, height, width):
-    def convertToInt(grid):
-        g = np.ndarray((height, width), float)
-        b = np.ndarray((height, width), dtype=StringDType())
-
-        for y in range(0, height):
-            for x in range(0, width):
-                # Wall
-                if TileCondition.WALL in grid[y][x]:
-                    g[y][x] = 0.1
-                    b[y][x] = "Wall"
-                # Wumpus
-                elif TileCondition.WUMPUS in grid[y][x]:
-                    g[y][x] = 0.9
-                    b[y][x] = "Wumpus"
-                # Gold
-                elif TileCondition.SHINY in grid[y][x]:
-                    g[y][x] = 0.5
-                    b[y][x] = "Gold"
-                # Pit
-                elif TileCondition.PIT in grid[y][x]:
-                    g[y][x] = 0.7
-                    b[y][x] = "Pit"
-                # Path
-                else:
-                    g[y][x] = 0.3
-                    b[y][x] = "Path"
-        return g, b
-
-    data, txt = convertToInt(grid)
-    print("PRINTING!", datetime.datetime.now())
-
-    plt = make_subplots(specs=[[{"secondary_y": True}]])
-
-    #cmap = colors.ListedColormap(['black', 'white', 'yellow', 'blue', 'red'])
-    cmap = [[0, 'black'], [0.2, 'black'], [0.2, 'white'], [0.4, 'white'], [0.4, 'yellow'], [0.6, 'yellow'], [0.6, 'blue'], [0.8, 'blue'], [0.8, 'red'], [1., 'red']]
-    plt.add_trace(go.Heatmap(name="",
-                             z=data,
-                             text=txt,
-                             colorscale=cmap,
-                             showscale=False,
-                             hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"),)
-
-    print("PRINTED", datetime.datetime.now())
-    return plt
