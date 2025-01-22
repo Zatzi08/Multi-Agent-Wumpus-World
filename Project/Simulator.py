@@ -108,9 +108,8 @@ class Simulator:
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")
 
+        # return simulation view
         if view < 0 or view >= len(self.__agents):
-            self.__grid.print_map()
+            return self.__grid.print_map()
         else:
-            agent: SimulatedAgent = self.__agents[view]
-            to_be_printed_map: Map = agent.agent.get_map()
-            to_be_printed_map.print_map()
+            return self.__agents[view].agent.get_map().print_map()
