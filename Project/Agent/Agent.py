@@ -4,7 +4,6 @@ from typing import Union
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
 from enum import Enum
 from Project.communication.protocol import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
-from Project.Simulator import REPLENISH_TIME, grid
 import heapq  # für a*-search
 
 MAX_UTILITY = 200
@@ -43,12 +42,13 @@ class AgentGoal(Enum):
 
 class Agent:
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], spawn_position: tuple[int, int],
-                 map_width: int, map_height: int):
+                 map_width: int, map_height: int, replenish_time: int):
         # set a single time
         self.__name: int = name
         self.__role: AgentRole = role
         self.__goals: set[AgentGoal] = goals
         self.__utility = Utility(goals, map_height, map_width)
+        self.__replenish_time: int = replenish_time
 
         # knowledge
         self.__knowledge: KnowledgeBase = KnowledgeBase(spawn_position, map_width, map_height)
@@ -518,26 +518,28 @@ class Agent:
                 return True
 
 class Hunter(Agent):
-    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int,
-                 map_height: int):
-        super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, spawn_position, map_width, map_height)
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int, map_height: int,
+                 replenish_time: int):
+        super().__init__(name, AgentRole.HUNTER, {AgentGoal.WUMPUS}, spawn_position, map_width, map_height,
+                         replenish_time)
 
 
 class Cartographer(Agent):
-    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int,
-                 map_height: int):
-        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, spawn_position, map_width, map_height)
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int, map_height: int, replenish_time: int):
+        super().__init__(name, AgentRole.CARTOGRAPHER, {AgentGoal.MAP_PROGRESS}, spawn_position, map_width, map_height,
+                         replenish_time)
 
 
 class Knight(Agent):
-    def __init__(self, name, spawn_position: tuple[int, int], map_width: int, map_height: int):
+    def __init__(self, name, spawn_position: tuple[int, int], map_width: int, map_height: int, replenish_time: int):
         super().__init__(name, AgentRole.KNIGHT, {AgentGoal.WUMPUS, AgentGoal.GOLD}, spawn_position, map_width,
-                         map_height)
+                         map_height, replenish_time)
 
 
 class BWLStudent(Agent):
-    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int, map_height: int):
-        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, spawn_position, map_width, map_height)
+    def __init__(self, name: int, spawn_position: tuple[int, int], map_width: int, map_height: int, replenish_time: int):
+        super().__init__(name, AgentRole.BWL_STUDENT, {AgentGoal.GOLD}, spawn_position, map_width, map_height,
+                         replenish_time)
 
 def goals_to_field_value(goals: set[AgentGoal]):
     field_utility: dict = {}

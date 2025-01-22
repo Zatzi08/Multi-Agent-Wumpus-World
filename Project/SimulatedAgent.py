@@ -1,41 +1,43 @@
 from Project.Agent.Agent import AgentRole, AgentItem, Agent, Hunter, Cartographer, Knight, BWLStudent
 from Knowledge.KnowledgeBase import TileCondition
-from Simulator import grid
 import random
+from Environment.Map import Map
 
 class SimulatedAgent:
-    def __init__(self, name: int, role: AgentRole, spawn_position: tuple[int, int], map_width: int, map_height: int):
+    def __init__(self, name: int, role: AgentRole, spawn_position: tuple[int, int], map_width: int, map_height: int,
+                 replenish_time: int, grid: Map):
         self.name: int = name
         self.role: AgentRole = role
         self.position: tuple[int, int] = spawn_position
 
+        self.grid = grid
         self.agent: Agent
         self.health: int
         self.items: list[int]
         self.available_item_space: int
         match role:
             case AgentRole.HUNTER:
-                self.agent = Hunter(name, spawn_position, map_width, map_height)
+                self.agent = Hunter(name, spawn_position, map_width, map_height, replenish_time)
                 self.health = HunterValue.HEALTH
                 self.items = HunterValue.ITEMS
                 self.available_item_space = HunterValue.ITEM_CAPACITY
             case AgentRole.CARTOGRAPHER:
-                self.agent = Cartographer(name, spawn_position, map_width, map_height)
+                self.agent = Cartographer(name, spawn_position, map_width, map_height, replenish_time)
                 self.health = CartographerValue.HEALTH
                 self.items = CartographerValue.ITEMS
                 self.available_item_space = CartographerValue.ITEM_CAPACITY
-                # receive all walls
-                self.agent.receive_tiles_with_condition(grid.info[TileCondition.WALL], TileCondition.WALL)
+                self.agent.receive_tiles_with_condition(self.grid.info[TileCondition.WALL], TileCondition.WALL)
             case AgentRole.KNIGHT:
-                self.agent = Knight(name, spawn_position, map_width, map_height)
+                self.agent = Knight(name, spawn_position, map_width, map_height, replenish_time)
                 self.health = KnightValue.HEALTH
                 self.items = KnightValue.ITEMS
                 self.available_item_space = KnightValue.ITEM_CAPACITY
             case AgentRole.BWL_STUDENT:
-                self.agent = BWLStudent(name, spawn_position, map_width, map_height)
+                self.agent = BWLStudent(name, spawn_position, map_width, map_height, replenish_time)
                 self.health = BWLStudentValue.HEALTH
                 self.items = BWLStudentValue.ITEMS
                 self.available_item_space = BWLStudentValue.ITEM_CAPACITY
+
         if self.agent is None or self.health is None or self.items is None or self.available_item_space is None:
             raise "error creating agent - missing data"
 
@@ -62,7 +64,7 @@ class SimulatedAgent:
                 min_y: int = self.position[1] - BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE
                 for x in range(min_x, max_x + 1):
                     for y in range(min_y, max_y + 1):
-                        if TileCondition.SHINY in grid.get_tile_conditions(x, y):
+                        if TileCondition.SHINY in self.grid.get_tile_conditions(x, y):
                             gold_in_reach.append((x, y))
                 # randomly choose a gold position in reach
                 x, y = random.choice(gold_in_reach)
