@@ -286,6 +286,9 @@ class KnowledgeBase:
                 case TileCondition.SHINY:
                     # add
                     self.__map.add_condition_to_tile(x, y, TileCondition.SHINY)
+
+                    # Shiny[x][y] => Safe[x][y]
+                    self.update_tile(x, y, [TileCondition.SAFE])
                 case TileCondition.WUMPUS:
                     # if tile is safe already, wumpus is already gone
                     if self.__map.tile_has_condition(x, y, TileCondition.SAFE):
