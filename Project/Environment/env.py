@@ -200,7 +200,7 @@ class EnvGenerator:
         @:param [TileCondition.WALL]
         @:return Leeres Array.astype(str)
         Erweitert die gegebene Höhe und Breite auf ein vielfaches von 3 
-        
+
         @ Explanation
         Wall = [TileCondition.WALL]
         Path = [...]
@@ -333,7 +333,7 @@ class EnvGenerator:
                     grid[y][x] = f"({x}, {y})"
 
         grid = getGrid()
-        #fillWithPos(grid)
+        # fillWithPos(grid)
 
         toSet = set()
         toSet.add(self.start_pos)
@@ -388,7 +388,8 @@ class EnvGenerator:
             grid[ty][tx].append(TileCondition.SHINY)
 
         for wx, wy in wumpus:
-            if set(grid[wy][wx]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.STENCH}):
+            if set(grid[wy][wx]).intersection(
+                    {TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.STENCH}):
                 continue
             grid[wy][wx].remove(TileCondition.SAFE)
             grid[wy][wx].append(TileCondition.WUMPUS)
@@ -397,7 +398,8 @@ class EnvGenerator:
                     grid[sy][sx].append(TileCondition.STENCH)
 
         for px, py in pit:
-            if set(grid[py][px]).intersection({TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
+            if set(grid[py][px]).intersection(
+                    {TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
                 continue
             grid[py][px].remove(TileCondition.SAFE)
             grid[py][px].append(TileCondition.PIT)
