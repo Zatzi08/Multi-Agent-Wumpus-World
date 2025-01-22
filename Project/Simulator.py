@@ -116,12 +116,5 @@ for i in range(1, number_of_simulation_steps + 1, 1):
                 for name in names_of_agents_in_proximity:
                     agents[name].agent.receive_shout_action_information(x, y)
 
-    # TODO get parameters to choose map
-    map_is_grid: bool = True
-    map_of_agent: int = 0
-    if map_is_grid:
-        grid.print_map()
-    else:
-        agent: SimulatedAgent = agents[map_of_agent]
-        to_be_printed_map: Map = agent.agent.get_map()
-        to_be_printed_map.print_map()
+    # print map
+    grid.print_map()

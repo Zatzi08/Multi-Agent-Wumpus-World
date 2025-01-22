@@ -1,14 +1,10 @@
-from dash import dcc
-
-from Project.Environment.env import EnvGenerator
+from Project.Environment.env import EnvGenerator, printGrid
 from Project.Knowledge.KnowledgeBase import TileCondition
 #from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from numpy.dtypes import StringDType
-import numpy as np
 
 
 class Map:
@@ -25,7 +21,7 @@ class Map:
             self.height += 3 - (height % 3)
 
         self.start_pos = (1, 1)
-        gen = EnvGenerator(self.height, self.width, 123)
+        gen = EnvGenerator(self.height, self.width)
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
@@ -121,90 +117,18 @@ class Map:
     def get_safe_tiles(self):
         return self.info[TileCondition.SAFE]
 
-    # TODO: update print_map so das alle TileCond. hat als Farbe
-
-    def __print_base(self, grid):
-        def convertGrid(grid):
-            g = np.ndarray((self.height, self.width), float)
-            b = np.ndarray((self.height, self.width), dtype=StringDType())
-
-            for y in range(0, self.height):
-                for x in range(0, self.width):
-                    if TileCondition.WALL in list(grid[y][x]):
-                        g[y][x] = 0.05
-                        b[y][x] = "Wall"
-                    elif TileCondition.WUMPUS in list(grid[y][x]):
-                        g[y][x] = 0.2
-                        b[y][x] = "Wumpus"
-                    elif TileCondition.SHINY in list(grid[y][x]):
-                        g[y][x] = 0.3
-                        b[y][x] = "Gold"
-                    elif TileCondition.PIT in list(grid[y][x]):
-                        g[y][x] = 0.4
-                        b[y][x] = "Pit"
-                    elif TileCondition.PREDICTED_WUMPUS in list(grid[y][x]):
-                        g[y][x] = 0.5
-                        b[y][x] = "Predicted Wumpus"
-                    elif TileCondition.PREDICTED_PIT in list(grid[y][x]):
-                        g[y][x] = 0.6
-                        b[y][x] = "Predicted Pit"
-                    elif TileCondition.BREEZE in list(grid[y][x]) and TileCondition.STENCH in list(grid[y][x]):
-                        g[y][x] = 0.7
-                        b[y][x] = "Breeze and Stench"
-                    elif TileCondition.BREEZE in list(grid[y][x]):
-                        g[y][x] = 0.8
-                        b[y][x] = "Breeze"
-                    elif TileCondition.STENCH in list(grid[y][x]):
-                        g[y][x] = 0.9
-                        b[y][x] = "Stench"
-                    elif TileCondition.SAFE in list(grid[y][x]):
-                        g[y][x] = 1.0
-                        b[y][x] = "Path"
-                    else:
-                        g[y][x] = 0.1
-                        b[y][x] = 'Unknown'
-
-            return g, b
-
-        data, txt = convertGrid(grid)
-
-        plt = make_subplots(specs=[[{"secondary_y": True}]])
-
-        cmap = [[0., 'black'], [0.05, 'black'], [0.05, 'grey'], [0.1, 'grey'], [0.1, 'darkred'], [0.2, 'darkred'],
-                [0.2, 'yellow'], [0.3, 'yellow'], [0.3, 'blue'], [0.4, 'blue'], [0.4, 'red'], [0.5, 'red'],
-                [0.5, 'turquoise'], [0.6, 'turquoise'], [0.6, 'green'], [0.7, 'green'], [0.7, 'lightblue'], [0.8, 'lightblue'],
-                [0.8, 'lightgreen'], [0.9, 'lightgreen'], [0.9, 'white'], [1., 'white']]
-        plt.add_trace(go.Heatmap(name="",
-                                 z=data,
-                                 text=txt,
-                                 colorscale=cmap,
-                                 showscale=False,
-                                 hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"), )
-
-        return plt
-
-    # TODO: Unterscheidung zwischen Agent-Map und all Map
-
     def print_map(self):
-
-        """
-        @author: Lucas K
-        @:return plotly
-        """
-
-        SCALINGFACTOR = 7
-        plt = self.__print_base(self.filled_map)
+        plt = printGrid(self.filled_map, self.height, self.width)
         position = dict()
         """for a in self.agents.values():
             position[a.position] = f"{position.get(a.position, "")}{a.name} "
         for key in position.keys():
             print(key, position[key])"""
-
         plt.add_trace(go.Scatter(
             mode="markers",
-            x=[1],
-            y=[1],
-            text=["Name <br> Profession"],
+            x=[1, 2],
+            y=[1, 2],
+            text=["Name <br> Profession", "Name <br> Profession"],
             hovertemplate="<br> %{text}",
             name=""
         ))
@@ -212,9 +136,10 @@ class Map:
         plt.update_xaxes(dict(fixedrange=True, showgrid=False))
         plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
 
-        plt.update_layout(dict(autosize=False, width=self.width * SCALINGFACTOR, height=self.height * SCALINGFACTOR))
+        plt.update_layout(dict(autosize=False, width=self.width*10, height=self.height*10))
 
-        return plt
+        offline.plot(plt, filename='fig.html', auto_open=True)
+        #plt.show()
 
 
 a = Map(120, 120)
