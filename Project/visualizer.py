@@ -1,10 +1,10 @@
 from dash import dcc, Dash, html, Input, Output, State, callback
 import dash_bootstrap_components as dbc
-from Project.Environment.Map import a
+from Project.Simulator import Simulator
 
 app = Dash()
 agent = -1
-
+simulator = Simulator(120, 120, 12, 200)
 
 def setLayout(plt):
     app.layout = [html.Div(
@@ -35,7 +35,9 @@ def setLayout(plt):
 )
 def update_graph(n_clicks, value):
     print("Update!", n_clicks, value)
-    return a.print_map()
+    for _ in range(value):
+        plt = simulator.simulate_next_step(agent)
+    return plt
 
 
 @callback(

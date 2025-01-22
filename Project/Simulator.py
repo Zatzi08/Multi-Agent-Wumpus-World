@@ -4,7 +4,9 @@ from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
 from Project.Knowledge.KnowledgeBase import TileCondition
 from Project.communication.protocol import CommunicationChannel
 import random
+
 random.seed()
+
 
 class Simulator:
     def __init__(self, map_width: int, map_height: int, number_of_agents: int, number_of_simulation_steps: int):
