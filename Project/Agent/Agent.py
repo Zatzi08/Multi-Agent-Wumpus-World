@@ -134,7 +134,7 @@ class Agent:
                                                                                                        requested_tiles,
                                                                                                        requested_wumpus_positions)
 
-    def create_counter_offer(self, receiver: AgentRole, offer: Offer) -> tuple[OfferedObjects, RequestedObjects]:
+    def create_counter_offer(self, offer: Offer) -> tuple[OfferedObjects, RequestedObjects]:
         # TODO analyse offer
         # TODO decision making for creating counter offers
         pass
@@ -146,46 +146,45 @@ class Agent:
 
         return ResponseType.ACCEPT, None, None
 
-    def check_offer_satisfaction(self, best_offer: OfferedObjects, request: RequestedObjects) -> tuple[int, bool]:
-        #expected_offer_utility = utility(request)
-        #if utility(best_offer) >= expected_offer_utility:
-            #return (expected_offer_utility, True)
-        #else:
-            #return (expected_offer_utility, False)
 
     def apply_changes(self, sender, receiver, request, offer):
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
-    def start_negotiation(self:, receiver: Agent, best_offer):
-        # TODO: negotiation algorithmn: Concession Protocol Page 24
-        s_expected_utility = self.Utility.offer_utility(best_offer)
-        r_expected_utility =  receiver.Utility.offer_utility(best_offer)
+# TODO: participants zu int, AgentRole umschreiben, CounterOffer Pffer pder OfferedObjects als Eingabe?
+    def start_negotiation(self, receivers: list[int, AgentRole], receiver_offers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]]):
+        # the sender has constant request, the receivers are changing their offer to fit the sender
         negotiation_round = 0
-        limit = 5
-        conflict_deal = False
-        current_offer = best_offer
+        limit = 3
+        request = next(iter(receiver_offers.values()[2]))
+        good_offers: dict[tuple[int, AgentRole]:Offer] = {}
+        best_utility = -1
+        best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
+
+        print("A negotiation has started!")
         while negotiation_round < limit:
-            negotiation_round+=1
-            s_offer = self.create_counter_offer(self.__role, current_offer)
-            r_offer = receiver.create_counter_offer(receiver.__role, current_offer)
+            negotiation_round += 1
+            for participant, answer in receiver_offers:
+                offer_utility = Agent.evaluate_offer(self, answer[1], answer[2])
+                if offer_utility > -1:
+                    good_offers.update({participant: participant.create_counter_offer(Offer(request, receiver_offers[participant][2], participant[1]))})
 
-            #if one Agent agrees to the others offer
-            if  s_expected_utility >=  self.Utility.offer_utility(r_offer):
-                current_offer = r_offer
+            if len(good_offers) > 0:
+                print("Good offers are found, looking for the best")
+                for participant, p_answer in good_offers.items():
+                    offer_utility = Agent.evaluate_offer(self, p_answer[1], p_answer[2])
+                    if offer_utility > best_utility:
+                        best_utility = offer_utility
+                        best_offer = {participant: (p_answer[1], p_answer[2])}
+
                 break
 
-            elif  r_expected_utility >=  self.Utility.offer_utility(s_offer):
-                current_offer = s_offer
-                break
+        if best_offer:
+            print(f"The negotiation has reached an agreement with offer: {best_offer.values()} from {best_offer.keys()}")
 
-    #else: die mit besser utility für beide ist current offer
-            current_offer = s_offer #?
-        if negotiation_round == limit:
-            print(f"The negotiation has failed, conflict deal reached")
         else:
-            print(f"The negotiation is completed, with {current_offer} as the accepted offer")
-            self.apply_changes(self, receiver, current_offer)
+            print(f"The negotiation has failed")
+
 
     #
     # utility
