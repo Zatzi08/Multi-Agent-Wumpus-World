@@ -472,7 +472,7 @@ class Agent:
         return set(acceptable_tiles).difference(desired_tiles)
 
 
-    def get_first_offer(self):
+    def get_first_offer(self, request_object: RequestObject, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]]):
         pass
 
     # TODO: Methode um Tileinfo um gewisse Utility zu reduzieren

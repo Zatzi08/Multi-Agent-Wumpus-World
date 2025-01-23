@@ -19,9 +19,6 @@ class Simulator:
         self.__communication_channel: CommunicationChannel = CommunicationChannel(self.__agents)
         # TODO: track goal progress for agents
 
-    def print_Map(self):
-        return self.__grid.print_map()
-
     def __set_up_agents(self, map_width: int, map_height: int, number_of_agents: int):
         for i in range(0, number_of_agents, 1):
             spawn_position: tuple[int, int] = random.choice(self.__grid.get_safe_tiles())
@@ -54,6 +51,9 @@ class Simulator:
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
 
+    def print_map(self):
+        return self.__grid.print_map()
+
     def simulate_next_step(self, view: int):
         if self.__current_step == self.__number_of_simulation_steps:
             return
@@ -68,8 +68,8 @@ class Simulator:
         for agent in self.__agents.values():
             position: tuple[int, int] = agent.position
             conditions: list[TileCondition] = self.__grid.get_tile_conditions(position[0], position[1])
-            agent.agent.receive_tile_information(position, self.__current_step, conditions) # TODO: Hier fehlen Parameter
-
+            agent.agent.receive_tile_information(position, conditions, agent.health, agent.items,
+                                                 agent.available_item_space, self.__current_step)
         # give every agent the possibility to establish communication
         for agent in self.__agents.values():
             names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(agent.name, 1)
