@@ -25,9 +25,6 @@ class Simulator:
             role: AgentRole = random.choice(list(AgentRole))
             self.__agents[i] = SimulatedAgent(i, role, spawn_position, map_width, map_height, self.__replenish_time,
                                               self.__grid)
-            # TODO delete test line below
-            self.__agents[i].agent.receive_tiles_with_condition(self.__grid.info[TileCondition.SAFE.value],
-                                                                TileCondition.SAFE)
         self.__grid.add_agents(self.__agents)
 
     def __agent_move_action(self, agent: int, x: int, y: int):
