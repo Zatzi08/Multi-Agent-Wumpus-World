@@ -36,11 +36,11 @@ class Simulator:
                 self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
-                self.__grid.delete_agent(self.__agents[agent].name)
+                del self.__agents[agent]
             return
         elif TileCondition.PIT in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_agent(self.__agents[agent].name)
-            self.__agents.pop(self.__agents[agent].name)
+            del self.__agents[agent]
             return
         self.__agents[agent].position = (x, y + 1)
 
