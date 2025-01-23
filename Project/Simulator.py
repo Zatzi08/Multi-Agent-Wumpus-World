@@ -25,6 +25,9 @@ class Simulator:
             role: AgentRole = random.choice(list(AgentRole))
             self.__agents[i] = SimulatedAgent(i, role, spawn_position, map_width, map_height, self.__replenish_time,
                                               self.__grid)
+            # TODO delete test line below
+            self.__agents[i].agent.receive_tiles_with_condition(self.__grid.info[TileCondition.SAFE.value],
+                                                                TileCondition.SAFE)
         self.__grid.add_agents(self.__agents)
 
     def __agent_move_action(self, agent: int, x: int, y: int):
@@ -66,9 +69,9 @@ class Simulator:
 
         # give every agent knowledge about their status and the tile they are on
         for agent in self.__agents.values():
-            position: tuple[int, int] = self.__agents[agent.name].position
-            conditions: list[TileCondition] = self.__grid.get_tile_conditions(position[0], position[1])
-            self.__agents[agent.name].agent.receive_tile_information(position, conditions,
+            conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent.name].position[0],
+                                                                              self.__agents[agent.name].position[1])
+            self.__agents[agent.name].agent.receive_tile_information(self.__agents[agent.name].position, conditions,
                                                                      self.__agents[agent.name].health,
                                                                      self.__agents[agent.name].items,
                                                                      self.__agents[agent.name].available_item_space,
