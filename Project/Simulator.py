@@ -51,6 +51,13 @@ class Simulator:
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
 
+    def print_view(self, view: int):
+        # return simulation view
+        if view < 0 or view >= len(self.__agents):
+            return self.__grid.print_map()
+        else:
+            return self.__agents[view].agent.get_map().print_map()
+
     def simulate_next_step(self, view: int):
         if self.__current_step == self.__number_of_simulation_steps:
             return
@@ -111,7 +118,4 @@ class Simulator:
             print("Simulation done.")
 
         # return simulation view
-        if view < 0 or view >= len(self.__agents):
-            return self.__grid.print_map()
-        else:
-            return self.__agents[view].agent.get_map().print_map()
+        self.print_view(view)
