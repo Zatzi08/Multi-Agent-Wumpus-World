@@ -17,12 +17,12 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class _Map:
-    def __init__(self, map_width: int, map_height: int):
+    def __init__(self, position: tuple[int, int], map_width: int, map_height: int):
         self.__map: list[list[set[TileCondition]]] = [[set()] * map_height] * map_width
         self.__visited_map: list[list[bool]] = [[False] * map_height] * map_width
         self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set()] * len(TileCondition)
-        self.__closest_unvisited_tiles: set[tuple[int, int]] = set()
-        self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = set()
+        self.__closest_unvisited_tiles: set[tuple[int, int]] = {position}
+        self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = {position}
         self.__shouts: dict[tuple[int, int], int] = {}
         self.__kill_wumpus_tasks: set[tuple[int, int]] = set()
 
@@ -118,7 +118,7 @@ class KnowledgeBase:
         # MAP
         #
 
-        self.__map: _Map = _Map(map_width, map_height)
+        self.__map: _Map = _Map(position, map_width, map_height)
 
     #
     # POSITION
