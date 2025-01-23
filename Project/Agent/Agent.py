@@ -524,7 +524,6 @@ class Agent:
                 if offer.req_gold > 0 and 0 < current_diff_utility - self.utility_gold(1):
                     potential_req_gold = offer.req_gold - 1
                     current_diff_utility -= self.utility_gold(1)
-            if
 
 
 
