@@ -2,7 +2,7 @@ from dash import dcc
 
 from Project.Environment.env import EnvGenerator
 from Project.Knowledge.KnowledgeBase import TileCondition
-from Project.SimulatedAgent import SimulatedAgent
+#from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
@@ -29,13 +29,13 @@ class Map:
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
-        self.agents: dict[int, SimulatedAgent] = {}
+        self.agents = {}
         self.info = gen.info
 
-    def add_agents(self, agents: dict[int, SimulatedAgent]):
+    def add_agents(self, agents):
         self.agents = agents.copy()
 
-    def get_agents(self) -> dict[int, SimulatedAgent]:
+    def get_agents(self):
         return self.agents
 
     def get_tile_conditions(self, x, y):
@@ -50,7 +50,7 @@ class Map:
         return adjacent
 
     def get_agents_in_reach(self, name: int, distance: int) -> list[int]:
-        agent: SimulatedAgent = self.agents[name]
+        agent = self.agents[name]
 
         # find adjacent tiles (reachable in [distance] moves)
         x: int = agent.position[0]
@@ -115,7 +115,7 @@ class Map:
         self.agents.pop(name)
 
     def get_safe_tiles(self):
-        return self.info[TileCondition.SAFE]
+        return self.info[TileCondition.SAFE.value]
 
     def __print_base(self, grid):
         def convertGrid(grid):

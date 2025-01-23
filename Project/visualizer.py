@@ -6,13 +6,15 @@ app = Dash()
 agent = -1
 simulator = Simulator(120, 120, 12, 200)
 
-def setLayout(plt):
+
+def set_layout(plt):
     app.layout = [html.Div(
         dbc.Row(
             [
                 dbc.Col(html.Div(dcc.Graph(figure=plt, id="graph")), style={'width': 'auto'}),
                 dbc.Col(html.Div([
-                    html.Div(html.Label("text", id="log"), style={'width': 200, 'height': 500, 'margin-top': 150, 'overflow': 'auto'}),
+                    html.Div(html.Label("text", id="log"),
+                             style={'width': 200, 'height': 500, 'margin-top': 150, 'overflow': 'auto'}),
                     html.Div(dcc.Dropdown(id='agent_choice', options=[
                         {'label': 'All', 'value': -1},
                         {'label': 'A', 'value': 1},
@@ -44,11 +46,11 @@ def update_graph(n_clicks, value):
     Input('agent_choice', 'value'),
     prevent_initial_call=True
 )
-def choiceAgent(value):
+def choice_agent(value):
     print("Agent:", value)
     agent = value
 
-# TODO: Textfeld als secondary output mit Events
 
-setLayout(a.print_map())
+# TODO: Textfeld als secondary output mit Events
+set_layout(simulator.print_Map())
 app.run(debug=True)

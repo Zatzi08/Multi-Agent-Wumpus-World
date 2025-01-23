@@ -7,7 +7,6 @@ from Project.communication.protocol import Offer, OfferedObjects, RequestedObjec
 import heapq  # für a*-search
 
 MAX_UTILITY = 200
-NUM_DEADENDS = grid.numDeadEnds  #  notwendig zur Berechnung des Erwartungswert einer Menge von Feldern
 
 class AgentRole(Enum):
     HUNTER: int = 0

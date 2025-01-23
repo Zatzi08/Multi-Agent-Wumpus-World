@@ -53,14 +53,14 @@ class EnvGenerator:
             visited[y][x] = True
             n = self.getNeighbors(x, y)
             if TileCondition.WALL not in self.grid[y][x]:
-                if not self.grid[y][x]:
-                    safe.append((x, y))
                 if TileCondition.PIT in self.grid[y][x]:
                     pit.append((x, y))
-                if TileCondition.WUMPUS in self.grid[y][x]:
+                elif TileCondition.WUMPUS in self.grid[y][x]:
                     wumpus.append((x, y))
-                if TileCondition.SHINY in self.grid[y][x]:
+                elif TileCondition.SHINY in self.grid[y][x]:
                     gold.append((x, y))
+                else:
+                    safe.append((x, y))
 
             for xi, yi in n:
                 if not visited[yi][xi]:

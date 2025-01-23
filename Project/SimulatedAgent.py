@@ -26,7 +26,7 @@ class SimulatedAgent:
                 self.health = CartographerValue.HEALTH
                 self.items = CartographerValue.ITEMS
                 self.available_item_space = CartographerValue.ITEM_CAPACITY
-                self.agent.receive_tiles_with_condition(self.grid.info[TileCondition.WALL], TileCondition.WALL)
+                self.agent.receive_tiles_with_condition(self.grid.info[TileCondition.WALL.value], TileCondition.WALL)
             case AgentRole.KNIGHT:
                 self.agent = Knight(name, spawn_position, map_width, map_height, replenish_time)
                 self.health = KnightValue.HEALTH

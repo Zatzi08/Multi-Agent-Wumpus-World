@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import List, Union, Optional
-from Project.Agent.Agent import *
+#from Project.Agent.Agent import AgentRole, TileCondition
 from Project.Environment import Map
-from Project.SimulatedAgent import SimulatedAgent
+#from Project.SimulatedAgent import SimulatedAgent
 
 
 class Performative(Enum):
@@ -25,7 +25,7 @@ class ResponseType(Enum):
 
 
 class OfferedObjects:
-    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list[TileCondition]]],
+    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list]],
                  wumpus_positions: List[tuple[int, int]]):
         self.gold_amount = gold_amount
         self.tile_information = tile_information
@@ -40,7 +40,7 @@ class RequestedObjects:
 
 
 class Offer:
-    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role: AgentRole):
+    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role):
         # TODO create offer from OfferedObjects and RequestedObjects
         self.off_gold: int = offered_objects.gold_amount
         self.off_tiles: set[(int, int)] = set()
@@ -78,15 +78,15 @@ class Message:
 
 
 class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
-    def __init__(self, agents: dict[int, SimulatedAgent]):
+    def __init__(self, agents):
         self.agents = agents
         self.initiator: int = 0  # set for each communication
         self.participants: [int] = []  # set for each communication
 
-    def set_agents(self, agents: dict[int, SimulatedAgent]):
+    def set_agents(self, agents):
         self.agents = agents
 
-    def communicate(self, sender: (int, AgentRole), potential_receivers: [int, AgentRole]) -> None:
+    def communicate(self, sender, potential_receivers) -> None:
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[
             sender].agent.start_communication(potential_receivers)
         receivers: list[int] = answer[0]
@@ -167,7 +167,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 def get_best_offer(offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]], sender, best_offer, best_utility):
     if len(offer_list) >= 1:
         for participant, p_answer in offer_list.items():
-            offer_utility = Agent.evaluate_offer(sender, p_answer[1], p_answer[2])
+            offer_utility = sender.evaluate_offer(p_answer[1], p_answer[2])
             if offer_utility > best_utility:
                 best_utility = offer_utility
                 best_offer = {participant: (p_answer[1], p_answer[2])}
