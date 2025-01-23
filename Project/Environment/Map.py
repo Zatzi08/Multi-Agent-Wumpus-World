@@ -2,7 +2,7 @@ from dash import dcc
 
 from Project.Environment.env import EnvGenerator
 from Project.Knowledge.KnowledgeBase import TileCondition
-#from Project.SimulatedAgent import SimulatedAgent
+from Project.SimulatedAgent import SimulatedAgent
 
 from plotly import offline
 import plotly.graph_objects as go
@@ -12,7 +12,7 @@ import numpy as np
 
 
 class Map:
-    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'numDeadEnds', 'info']
+    __slots__ = ['height', 'width', 'start_pos', 'map', 'filled_map', 'agents', 'info']
 
     def __init__(self, width, height):
         # extend grid to fit full tiles
@@ -29,18 +29,14 @@ class Map:
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
-        #        self.agents: dict[int, SimulatedAgent] = {}
-        self.numDeadEnds = gen.getNumDeadEnds()
+        self.agents: dict[int, SimulatedAgent] = {}
         self.info = gen.info
 
-    #    def add_agents(self, agents: dict[int, SimulatedAgent]):
-    #        self.agents = agents.copy()
+    def add_agents(self, agents: dict[int, SimulatedAgent]):
+        self.agents = agents.copy()
 
-    #    def get_agents(self) -> dict[int, SimulatedAgent]:
-    #        return self.agents
-
-    def get_number_of_dead_ends(self):
-        return self.numDeadEnds
+    def get_agents(self) -> dict[int, SimulatedAgent]:
+        return self.agents
 
     def get_tile_conditions(self, x, y):
         return self.filled_map[y][x]
@@ -120,8 +116,6 @@ class Map:
 
     def get_safe_tiles(self):
         return self.info[TileCondition.SAFE]
-
-    # TODO: update print_map so das alle TileCond. hat als Farbe
 
     def __print_base(self, grid):
         def convertGrid(grid):

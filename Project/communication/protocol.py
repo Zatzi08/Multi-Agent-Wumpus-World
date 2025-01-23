@@ -96,9 +96,6 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         # check if communication should take place
         if not receivers:
             return
-        # TODO handle verification of offered objects/maybe keep the verified parts instead of breaking communication
-        if not verify_offered_objects(offered_objects):
-            return
 
         # set sender and receivers
         self.initiator = sender
@@ -108,9 +105,9 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         offer: Offer = Offer(offered_objects, requested_objects, sender[1])
 
-        request: RequestedObjects = (offer.req_gold, offer.req_tiles, offer.req_wumpus_positions)
+        request: RequestedObjects = RequestedObjects(offer.req_gold, offer.req_tiles, offer.req_wumpus_positions)
 
-        receiver_answers = []
+        receiver_answers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]] = {}
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
@@ -122,8 +119,8 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         if not receiver_answers:
             return None
         # put all accepting answers and counter-offers into new dicts
-        accepted_requests = dict[int, tuple]
-        counter_offers = dict[int, tuple]
+        accepted_requests = dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]]
+        counter_offers = dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]]
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
                 accepted_requests.update({participant: p_answer})
@@ -131,39 +128,20 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
                 counter_offers.update({participant: p_answer})
 
         # get best offer out of accepted and counter offers, best_offer: tuple[ResponseType, OfferedObjects, RequestedObjects]
-        if len(accepted_requests) > 1:
-            best_offer = utility(next(iter(accepted_requests.items())))
-            for participant, p_answer in accepted_requests.items():
-                if utility(p_answer[1]) > utility(best_offer):
-                    best_offer = {participant: answer}
-        elif len(accepted_requests) == 1:
-            best_offer = accepted_requests
-
-        else:
-            print(f"No one accepted offer from {sender}.")
-
-        if len(counter_offers) > 1:
-            for participant, p_answer in counter_offers.items(): #self?
-                if utility(p_answer[1]) > best_offer:
-                    best_offer = {participant: p_answer}
-
-        elif len(accepted_requests) == 1:
-            if utility(counter_offers) > utility(best_offer):
-                best_offer = counter_offers
-
-        else:
-            print(f"Everyone denied the offer from {sender}.")
+        best_utility = -1
+        best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
+        best_offer, best_utility = get_best_offer(accepted_requests, sender, best_offer, best_utility)
+        best_offer, best_utility = get_best_offer(accepted_requests, sender, best_utility, best_offer)
 
         print(
-            f"[CFP] {best_offer.keys()[0]} offers: {best_offer.items()[1][1]} for the request {best_offer.items()[1][2]}")
+            f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {next(iter(best_offer.values()))[2]}")
 
-        self.agents[sender].check_offer_satisfaction(best_offer,)
-    # if the best offer is not as good as needed, start a negotiation with the best offer agent until the expected_utility is reached
-        expected_utility = self.agents[sender].agent.check_offer_satisfaction(best_offer, request)
-        if not expected_utility[1]:
-            self.agents[sender].agent.start_negotiation(sender, next(iter(best_offer)), request, expected_utility)
+    # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
+        if best_utility == -1:
+            print(f"Sender received only bad offers. Starting negotiation!")
+            self.agents[sender].agent.start_negotiation(sender, potential_receivers, (accepted_requests | counter_offers))
 
-        # TODO finish communication (distribute offered objects)
+        #finish communication (distribute offered objects)
         else:
             receiver = next(iter(best_offer))
             offer_answer = next(iter(best_offer.values()))
@@ -183,33 +161,19 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 # bwler würde gold verlangen, um Position zu geben
 # knight würde für help gold verlangen
 
-def verify_offered_objects(best_offers: OfferedObjects) -> bool:
-    # TODO check if an offer is valid
-    return False
-
 
 #simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
 
+def get_best_offer(offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]], sender, best_offer, best_utility):
+    if len(offer_list) >= 1:
+        for participant, p_answer in offer_list.items():
+            offer_utility = Agent.evaluate_offer(sender, p_answer[1], p_answer[2])
+            if offer_utility > best_utility:
+                best_utility = offer_utility
+                best_offer = {participant: (p_answer[1], p_answer[2])}
 
-def handle_cfp(sender, participants, cfp_type: RequestTypeObj):
-    print(f"[CFP] {sender.name} broadcasted CFP for: {cfp_type}")
-    responses = []
 
-    for participant in participants:
-        response = participant.respond_to_cfp(cfp_type)
-        responses.append((participant, response))
-        print(f"[CFP] {participant.name} responded with: {response}")
-
-    best_offer = None
-    for participant, response in responses:
-        if response.get(RequestTypeObj.STATUS) == ResponseType.ACCEPT and \
-                (best_offer is None or response.get(
-                    RequestTypeObj.COUNTEROFFER < best_offer.get(RequestTypeObj.COUNTEROFFER))):
-            best_offer = response
-            best_participant = participant
-
-    if best_offer:
-        print(f"[CFP] {sender.name} accepted the offer from {best_participant.name}: {best_offer}")
-        #return fulfill request oderso [bestp, sender_price, receiver_price]
     else:
-        print("[CFP] No acceptable offer received.")
+        print(f"Everyone denied the offer from {sender}.")
+
+    return best_offer, best_utility
