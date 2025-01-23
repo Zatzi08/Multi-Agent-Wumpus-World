@@ -88,7 +88,8 @@ class _Map:
         return self.__shouts
 
     def remove_shout(self, x: int, y: int) -> None:
-        del self.__shouts[(x, y)]
+        if (x, y) in self.__shouts:
+            del self.__shouts[(x, y)]
 
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__kill_wumpus_tasks.add((x, y))
