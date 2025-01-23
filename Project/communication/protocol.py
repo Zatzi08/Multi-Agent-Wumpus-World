@@ -1,5 +1,7 @@
 from enum import Enum
 from typing import List, Union, Optional
+
+import Project.Agent.Agent as Agent
 #from Project.Agent.Agent import AgentRole, TileCondition
 from Project.Environment import Map
 
@@ -81,7 +83,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
     def set_agents(self, agents):
         self.agents = agents
 
-    def communicate(self, sender, potential_receivers) -> None:
+    def communicate(self, sender:tuple[int, Agent.AgentRole], potential_receivers: list[tuple[int, Agent.AgentRole]]) -> None:
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
             self.agents[sender].agent.start_communication(potential_receivers))
         receivers: list[int] = answer[0]
@@ -150,9 +152,6 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
 # wenn mehrere agenten auf einem Feld sind wird Kommunikation gestartet
 # abfragen, ob mit gleichem Agenten schonmal kommuniziert wurde
-
-# bwler würde gold verlangen, um Position zu geben
-# knight würde für help gold verlangen
 
 
 # simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
