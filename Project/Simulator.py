@@ -84,26 +84,26 @@ class Simulator:
             x: int = agent.position[0]
             y: int = agent.position[1]
             match action:
-                case AgentAction.MOVE_UP:
-                    self.__agent_move_action(agent.name, x, y + 1)
-                case AgentAction.MOVE_LEFT:
-                    self.__agent_move_action(agent.name, x - 1, y)
                 case AgentAction.MOVE_RIGHT:
-                    self.__agent_move_action(agent.name, x + 1, y)
+                    self.__agent_move_action(agent.name, x, y + 1)
+                case AgentAction.MOVE_UP:
+                    self.__agent_move_action(agent.name, x - 1, y)
                 case AgentAction.MOVE_DOWN:
+                    self.__agent_move_action(agent.name, x + 1, y)
+                case AgentAction.MOVE_LEFT:
                     self.__agent_move_action(agent.name, x, y - 1)
                 case AgentAction.PICK_UP:
                     if agent.available_item_space > 0 and TileCondition.SHINY in self.__grid.get_tile_conditions(x, y):
                         agent.items[AgentItem.GOLD.value] += 1
                         agent.available_item_space -= 1
                         self.__grid.delete_condition(x, y, TileCondition.SHINY)
-                case AgentAction.SHOOT_UP:
-                    self.__agent_shoot_action(agent.name, x, y + 1)
-                case AgentAction.SHOOT_LEFT:
-                    self.__agent_shoot_action(agent.name, x - 1, y)
                 case AgentAction.SHOOT_RIGHT:
-                    self.__agent_shoot_action(agent.name, x + 1, y)
+                    self.__agent_shoot_action(agent.name, x, y + 1)
+                case AgentAction.SHOOT_UP:
+                    self.__agent_shoot_action(agent.name, x - 1, y)
                 case AgentAction.SHOOT_DOWN:
+                    self.__agent_shoot_action(agent.name, x + 1, y)
+                case AgentAction.SHOOT_LEFT:
                     self.__agent_shoot_action(agent.name, x, y - 1)
                 case AgentAction.SHOUT:
                     names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(agent.name, 3)
