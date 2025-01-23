@@ -71,12 +71,12 @@ class Simulator:
             agent.agent.receive_tile_information(position, conditions, agent.health, agent.items,
                                                  agent.available_item_space, self.__current_step)
         # give every agent the possibility to establish communication
-        for agent in self.__agents.values():
+        """for agent in self.__agents.values():
             names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(agent.name, 1)
             agents_in_proximity: [tuple[int, AgentRole]] = []
             for name in names_of_agents_in_proximity:
                 agents_in_proximity.append((name, self.__agents[name].role))
-            self.__communication_channel.communicate(agent.name, agents_in_proximity)
+            self.__communication_channel.communicate(agent.name, agents_in_proximity)"""
 
         # have every agent perform an action
         for agent in self.__agents.values():

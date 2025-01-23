@@ -37,7 +37,9 @@ def set_layout(plt):
 )
 def update_graph(n_clicks, value):
     print("Update!", n_clicks, value)
-    for _ in range(value):
+    plt = simulator.simulate_next_step(agent)
+    print(plt)
+    for _ in range(value-1):
         plt = simulator.simulate_next_step(agent)
     return plt
 
