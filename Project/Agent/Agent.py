@@ -342,7 +342,7 @@ class Agent:
 
         # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
         if len(neighbours) == 0:
-            return "", -1
+            return None, -1
 
         queue = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
         heapq.heapify(queue)
@@ -375,7 +375,7 @@ class Agent:
 
             # Abbruchbedingung: kein Weg gefunden
             if len(queue) == 0:
-                return "", -1
+                return None, -1
 
             pos = heapq.heappop(queue)
             steps += 1
@@ -433,6 +433,8 @@ class Agent:
             if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
             move, utility = self.a_search((row, col))
+            if move is None:
+                continue
             if utility > best_utility[move]:
                 best_utility[move] = utility
 
