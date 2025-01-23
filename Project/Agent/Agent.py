@@ -76,7 +76,9 @@ class Agent:
 
         # on gold-tile
         if self.__knowledge.tile_has_condition(pos_row,pos_col, TileCondition.SHINY) and self.__available_item_space > 0:
-            return AgentAction.PICK_UP
+            # hunter soll kein Gold aufsammeln,wenn es sein itemslot für arrow blockiert
+            if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[AgentItem.ARROW.value()] == 0):
+                return AgentAction.PICK_UP
 
         # normal Bewegung ermitteln
         return self.get_movement()
@@ -296,25 +298,27 @@ class Agent:
         max_utility = None
         next_move = None
         calc_tiles = []
-
-        match self.__role:
-            case AgentRole.CARTOGRAPHER:
+        if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
+            calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
+        else:
+            match self.__role:
+                case AgentRole.CARTOGRAPHER:
+                    calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
+                    calc_tiles += self.__knowledge.get_closest_unvisited_tiles()
+                    calc_tiles = list(set(calc_tiles))
+                case AgentRole.KNIGHT:
+                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH, TileCondition.SHINY]:
+                        calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
+                case AgentRole.HUNTER:
+                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH]:
+                        calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
+                case AgentRole.BWL_STUDENT:
+                    calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
+            # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
+            if len(calc_tiles) == 0:
                 calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
                 calc_tiles += self.__knowledge.get_closest_unvisited_tiles()
-                calc_tiles = list(set(calc_tiles))
-            case AgentRole.KNIGHT:
-                for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH, TileCondition.SHINY]:
-                    calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
-            case AgentRole.HUNTER:
-                for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH]:
-                    calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
-            case AgentRole.BWL_STUDENT:
-                calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
-        # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
-        if len(calc_tiles) == 0:
-            calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
-            calc_tiles += self.__knowledge.get_closest_unvisited_tiles()
-            calc_tiles = set(calc_tiles)
+                calc_tiles = set(calc_tiles)
 
         for row, col in calc_tiles:
             # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
@@ -339,25 +343,19 @@ class Agent:
     # Ausgabe: utility: double
     # TODO: Wahrscheinlichkeiten ändern, da Spawnregeln sich geändert haben
     def utility_information(self, fields):
-        height, width = self.__utility.get_dimensions()
-        deadend_prob = NUM_DEADENDS / (height * width)
-        gold_prob = deadend_prob * 0.3
-        wumpus_prob = (gold_prob + 0.7 * 1 / 6) * 0.5
-        amount = len(fields)
         match self.__role:
             case AgentRole.KNIGHT:
-                return (gold_prob + wumpus_prob) * amount
+                return (gold_prob + wumpus_prob) * len(fields)
             case AgentRole.HUNTER:
-                return wumpus_prob * amount
+                return wumpus_prob * len(fields)
             case AgentRole.CARTOGRAPHER:
-                return amount
+                return len(fields)
             case AgentRole.BWL_STUDENT:
-                return gold_prob * amount
+                return gold_prob * len(fields)
 
     # Ausgabe: utility: double
-    # TODO: weiteren Multiplier auf gold_utility setzen
     def utility_gold(self, gold_amount):
-        return gold_amount * self.__utility.get_utility_of_condition(TileCondition.SHINY)
+        return 2 * gold_amount * self.__utility.get_utility_of_condition(TileCondition.SHINY)
 
     # Funktion: Ermittle utility einem anderen Agenten mit KILL_WUMPUS zu helfen
     def utility_help_wumpus(self):
@@ -378,8 +376,7 @@ class Agent:
     # Ausgabe: RequestObject
     # performativ hängt von Agenten in der Umgebung ab --> nicht für die Funktion relevant
     def get_offer_type(self):
-        if len(self.get_contracts()) > 0:
-            # TODO: help_request Liste nicht leer --> Cfp/Request kill wumpus (Auftrag-Attribut notwendig)
+        if len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) > 0:
             return RequestObject.KILL_WUMPUS
         return RequestObject.TILE_INFORMATION
 
@@ -417,7 +414,7 @@ class Agent:
 
         # BWL-Student und Cartograph übrig --> closest unvisited tiles
         return self.__knowledge.get_closest_unvisited_tiles()
-    # TODO: acceptable tiles ermitteln
+
     # unknown tiles, die nicht an known/visited-tiles angrenzen
     def acceptable_tiles(self, desired_tiles: set[tuple[int, int]]):
         height, width = self.__utility.get_dimensions()
@@ -449,7 +446,7 @@ class Agent:
     # Ausgabe: counter_offer : OfferedObject
     # TODO: get_counteroffer mit Dynamic Programming (mit Gruppe andere Ansätze diskutieren)
     def get_counteroffer(self, offer: Offer, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_agent_gold_amount: int, other_agent_wumpus_amount: int):
-        new_offer = Offer(OfferedObjects(offer.off_gold, list(offer.off_tiles), list(offer.off_wumpus_positions)), RequestedObjects(offer.req_gold,offer.req_tiles, offer.req_wumpus_positions), self.__role)
+        new_offer = Offer(OfferedObjects(0, [], []), RequestedObjects(0,[], 0), self.__role)
         # Abbruchbedingung: kein besseres Angebot möglich, ohne selber negative utility zu erhalten
         give_utility = self.utility_information(offer.off_tiles) + self.utility_gold(offer.off_gold) + 20 * len(offer.off_wumpus_positions)
         get_utility = self.utility_information(offer.req_tiles) + self.utility_gold(offer.req_gold) + self.utility_help_wumpus() * offer.req_wumpus_positions
@@ -575,13 +572,7 @@ class Agent:
         if len(offer.tile_information)> 0:
             desired_tiles = self.desired_tiles()
             acceptable_tiles = self.acceptable_tiles(desired_tiles)
-            desired_count = 0
-            # Annahme: tiles sind entweder in desired oder acceptable drin (wegen neuer negotiation)
-            for tile in offer.tile_information:
-                if tile in desired_tiles:
-                    desired_count += 1
             get_utility += self.utility_information(desired_tiles) + self.utility_information(acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
-
         return get_utility - give_utility
 
     # get: ausführender Agent bekommt (give trivial)
@@ -590,8 +581,8 @@ class Agent:
     # Funktion: Ermittle, ob der Agent die eingehende Kommunikation annhemen möchte
     # Ausgabe: bool
     def accept_communication(self, get_object: RequestObject, give_object: RequestObject):
-        # TODO: wenn agent ein Auftrag hat, soll er sich nur damit befassen --> keine Kommunikation annehmen
-
+        if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
+            return False
         match give_object:
             case RequestObject.KILL_WUMPUS:
                 return self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]
