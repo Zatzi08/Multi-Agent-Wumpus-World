@@ -69,7 +69,7 @@ class Agent:
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
         # shoot wumpus
-        if self.__items[AgentItem.ARROW.value()] > 0:
+        if self.__items[AgentItem.ARROW.value] > 0:
             for row,col,action in [(pos_row+row,pos_col+col, action) for row,col,action in [(1,0, AgentAction.SHOOT_DOWN),(-1,0, AgentAction.SHOOT_UP),(0,1, AgentAction.SHOOT_RIGHT),(0,-1, AgentAction.SHOOT_LEFT)] if 0 <= pos_row+row < height and 0 <= pos_col+col < width]:
                 if self.__knowledge.tile_has_condition(row,col,TileCondition.WUMPUS):
                     return action
@@ -77,7 +77,7 @@ class Agent:
         # on gold-tile
         if self.__knowledge.tile_has_condition(pos_row,pos_col, TileCondition.SHINY) and self.__available_item_space > 0:
             # hunter soll kein Gold aufsammeln,wenn es sein itemslot für arrow blockiert
-            if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[AgentItem.ARROW.value()] == 0):
+            if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[AgentItem.ARROW.value] == 0):
                 return AgentAction.PICK_UP
 
         # normal Bewegung ermitteln
@@ -182,7 +182,7 @@ class Agent:
         # Agents, die gold als ziel haben nutzen es nicht als Handelsgut (es als Handelsgut zu nutzen, wird meistens zu keinem Erflogreichen Austausch führen)
         if self.__role is [AgentRole.HUNTER, AgentRole.CARTOGRAPHER]:
             max_gold_amount = int((req_utility - offer_utility) / self.utility_gold())
-            offered_gold = min(max_gold_amount, self.__items[AgentItem.GOLD.value()])
+            offered_gold = min(max_gold_amount, self.__items[AgentItem.GOLD.value])
         return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
 
     def create_counter_offer(self, offer: Offer) -> tuple[OfferedObjects, RequestedObjects]:
@@ -294,7 +294,7 @@ class Agent:
             if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
                 avoid_tiles.remove(TileCondition.WUMPUS)
-            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value()] > 0 or steps > REPLENISH_TIME):
+            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value] > 0 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.WUMPUS)
             for heuristik, row, col, move in new_field:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
@@ -378,8 +378,8 @@ class Agent:
     # Wahrscheinlichkeiten basieren auf Wahrscheinlichkeiten in der map-generation
     # Ausgabe: utility: double
     def utility_information(self, fields):
-        wumpus_prob = len(self.__map_info[TileCondition.WUMPUS.value()])/len(self.__map_info["locations"])
-        gold_prob = len(self.__map_info[TileCondition.SHINY.value()])/len(self.__map_info["locations"])
+        wumpus_prob = len(self.__map_info[TileCondition.WUMPUS.value])/len(self.__map_info["locations"])
+        gold_prob = len(self.__map_info[TileCondition.SHINY.value])/len(self.__map_info["locations"])
         match self.__role:
             case AgentRole.KNIGHT:
                 return (wumpus_prob+gold_prob) * len(fields)
