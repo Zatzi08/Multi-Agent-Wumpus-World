@@ -114,6 +114,7 @@ class Simulator:
             print("Simulation done.")
 
         # return simulation view
+        self.__grid.add_agents(self.__agents)
         if view < 0 or view >= len(self.__agents):
             return self.__grid.print_map()
         else:
