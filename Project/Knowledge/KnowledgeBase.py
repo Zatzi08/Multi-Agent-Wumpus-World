@@ -18,9 +18,9 @@ SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 class _Map:
     def __init__(self, position: tuple[int, int], map_width: int, map_height: int):
-        self.__map: list[list[set[TileCondition]]] = [[set()] * map_height] * map_width
-        self.__visited_map: list[list[bool]] = [[False] * map_height] * map_width
-        self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set()] * len(TileCondition)
+        self.__map: list[list[set[TileCondition]]] = [[set() for _ in range(map_height)] for _ in range(map_width)]
+        self.__visited_map: list[list[bool]] = [[False for _ in range(map_height)] for _ in range(map_width)]
+        self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set() for _ in range(len(TileCondition))]
         self.__closest_unvisited_tiles: set[tuple[int, int]] = {position}
         self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = {position}
         self.__shouts: dict[tuple[int, int], int] = {}
@@ -41,8 +41,9 @@ class _Map:
         self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
         for position in SURROUNDING_TILES:
-            if not self.__map[x + position[0]][y + position[1]]:
-                self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
+            if self.__map[x + position[0]][y + position[1]]:
+                continue
+            self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
 
     def add_condition_to_tile(self, x: int, y: int, condition: TileCondition) -> None:
         self.__map[x][y].add(condition)
