@@ -84,7 +84,9 @@ class Simulator:
             self.__communication_channel.communicate(agent.name, agents_in_proximity)"""
 
         # have every agent perform an action
-        agent_list: list[int] = self.__agents.keys().copy()
+        agent_list: list[int] = []
+        for key in self.__agents.keys():
+            agent_list.append(key.copy())
 
         for agent in agent_list:
             action: AgentAction = self.__agents[agent].agent.get_next_action()
