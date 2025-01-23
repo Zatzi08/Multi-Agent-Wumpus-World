@@ -36,6 +36,7 @@ class Simulator:
                 self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
+                self.__grid.delete_agent(self.__agents[agent].name)
                 del self.__agents[agent]
             return
         elif TileCondition.PIT in self.__grid.get_tile_conditions(x, y):
@@ -73,7 +74,6 @@ class Simulator:
                                                                      self.__agents[agent.name].items,
                                                                      self.__agents[agent.name].available_item_space,
                                                                      self.__current_step)
-            #print(conditions)
 
         # give every agent the possibility to establish communication
         """for agent in self.__agents.values():
@@ -118,11 +118,9 @@ class Simulator:
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")
 
-        #print(list(map(lambda x: x.position, self.__agents.values())))
-
         # return simulation view
         if view < 0 or view >= len(self.__agents):
-        #    self.__grid.add_agents(self.__agents)
+            self.__grid.add_agents(self.__agents)
             return self.__grid.print_map()
         else:
             return self.__agents[view].agent.get_map().print_map()
