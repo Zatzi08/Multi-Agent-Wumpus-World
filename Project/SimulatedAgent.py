@@ -67,8 +67,9 @@ class SimulatedAgent:
                         if TileCondition.SHINY in self.grid.get_tile_conditions(x, y):
                             gold_in_reach.append((x, y))
                 # randomly choose a gold position in reach
-                x, y = random.choice(gold_in_reach)
-                self.agent.receive_gold_position(x, y)
+                if gold_in_reach:
+                    x, y = random.choice(gold_in_reach)
+                    self.agent.receive_gold_position(x, y)
             case _:
                 pass
 
