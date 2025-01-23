@@ -146,10 +146,11 @@ class Agent:
         requested_wumpus_positions: int = other_wumpus_amount
 
         # get request_tiles
-        req_desired_tiles = self.desired_tiles().intersection(knowledge_tiles)
-        req_acceptable_tiles = self.acceptable_tiles(self.desired_tiles()).intersection(knowledge_tiles)
+        my_desired_tiles = self.desired_tiles()
+        req_desired_tiles = my_desired_tiles.intersection(knowledge_tiles)
+        req_acceptable_tiles = self.acceptable_tiles(my_desired_tiles).intersection(knowledge_tiles)
         requested_tiles = list(req_acceptable_tiles.union(req_desired_tiles))
-        req_utility = self.utility_help_wumpus() * requested_wumpus_positions + self.utility_gold() * requested_gold + self.utility_information(req_desired_tiles)+ self.utility_information(req_acceptable_tiles) + ACCEPTABLE_TILE_FACTOR
+        request_utility = self.utility_help_wumpus() * requested_wumpus_positions + self.utility_gold() * requested_gold + self.utility_information(req_desired_tiles)+ self.utility_information(req_acceptable_tiles) + ACCEPTABLE_TILE_FACTOR
 
         # get offer
         offer_utility = 0
@@ -158,16 +159,16 @@ class Agent:
         #agents want tile_info
         if len(desired_tiles) > 0:
             off_desired_tiles = [(row,col,list(self.__knowledge.get_conditions_of_tile(row,col))) for row,col in desired_tiles if len(self.__knowledge.get_conditions_of_tile(row,col)) > 0]
-            if self.utility_information(off_desired_tiles) > req_utility:
-                reduced_amount = int(len(off_desired_tiles) * req_utility / self.utility_information(off_desired_tiles))
+            if self.utility_information(off_desired_tiles) > request_utility:
+                reduced_amount = int(len(off_desired_tiles) * request_utility / self.utility_information(off_desired_tiles))
                 offered_tiles = off_desired_tiles[:reduced_amount]
                 return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
             offered_tiles = off_desired_tiles
             offer_utility += self.utility_information(off_desired_tiles)
         if len(acceptable_tiles) > 0:
             off_acceptable_tiles = [(row,col,list(self.__knowledge.get_conditions_of_tile(row,col))) for row,col in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row,col)) > 0]
-            if self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > req_utility:
-                reduced_amount = int(len(off_acceptable_tiles) * req_utility / (self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
+            if self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > request_utility:
+                reduced_amount = int(len(off_acceptable_tiles) * request_utility / (self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
                 offered_tiles = offered_tiles.union(off_acceptable_tiles[:reduced_amount])
                 return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
             offered_tiles = offered_tiles.union(off_acceptable_tiles)
@@ -181,13 +182,51 @@ class Agent:
         # gold
         # Agents, die gold als ziel haben nutzen es nicht als Handelsgut (es als Handelsgut zu nutzen, wird meistens zu keinem Erflogreichen Austausch führen)
         if self.__role is [AgentRole.HUNTER, AgentRole.CARTOGRAPHER]:
-            max_gold_amount = int((req_utility - offer_utility) / self.utility_gold())
+            max_gold_amount = int((request_utility - offer_utility) / self.utility_gold())
             offered_gold = min(max_gold_amount, self.__items[AgentItem.GOLD.value()])
         return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
 
-    def create_counter_offer(self, offer: Offer) -> tuple[OfferedObjects, RequestedObjects]:
+    def create_counter_offer(self, offer: Offer, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[OfferedObjects, RequestedObjects]:
         # TODO analyse offer
         # TODO decision making for creating counter offers
+
+        # Ist ein Counteroffer noch zu machen --> ermittle Differenz der utilities
+        offer_utility = offer.off_gold * self.utility_gold()
+        request_utility = offer.req_gold * self.utility_gold()
+
+        # offer-wumpus-pos ignoriert, weil get_offer immer off_wumpus_pos = 0 hat (siehe obige erklärung)
+        offer_desired_subset = offer.off_tiles.intersection(desired_tiles)
+        offer_acceptable_subset = offer.off_tiles.intersection(acceptable_tiles)
+        offer_utility += self.utility_information(offer_desired_subset) + self.utility_information(offer_acceptable_subset) * ACCEPTABLE_TILE_FACTOR
+        my_desired_tiles = self.desired_tiles()
+        request_desired_subset = offer.req_tiles.intersection(my_desired_tiles)
+        request_acceptable_subset = offer.req_tiles.intersection(self.acceptable_tiles(my_desired_tiles))
+        request_utility += self.utility_information(request_desired_subset) + self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR
+        if request_utility <= offer_utility + 1:
+            return None
+        diff_utility = request_utility - offer_utility
+        current_diff_utility = diff_utility
+        request_gold = offer.req_gold
+        request_wumpus_positions = offer.req_wumpus_positions
+        request_tiles = offer.req_tiles
+
+        if offer.req_gold > 0:
+            reduce_gold_amount = int(diff_utility / self.utility_gold())
+            request_gold -= reduce_gold_amount
+            current_diff_utility -= reduce_gold_amount * self.utility_gold()
+        if current_diff_utility <= diff_utility / 2:
+            return OfferedObjects(offer.off_gold,offer.off_tiles,offer.off_wumpus_positions), RequestedObjects(request_gold,request_tiles, request_wumpus_positions)
+
+        if len(offer.req_tiles) > 0:
+            my_acceptable_tiles = offer.req_tiles.union(knowledge_tiles)
+            if current_diff_utility < self.utility_information(my_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR:
+                reduced_amount = int(len(my_acceptable_tiles) * current_diff_utility / (self.utility_information(my_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
+                request_tiles = request_tiles.difference(my_acceptable_tiles[reduced_amount:])
+                return OfferedObjects(offer.off_gold,offer.off_tiles,offer.off_wumpus_positions), RequestedObjects(request_gold,request_tiles, request_wumpus_positions)
+            request_tiles = request_tiles.difference(my_acceptable_tiles)
+
+
+
         pass
 
     def answer_to_offer(self, sender: tuple[int, AgentRole], offer: Offer) -> tuple[
@@ -472,12 +511,6 @@ class Agent:
         return set(acceptable_tiles).difference(desired_tiles)
 
 
-    def get_first_offer(self, request_object: RequestObject, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]]):
-        pass
-
-    # TODO: Methode um Tileinfo um gewisse Utility zu reduzieren
-    def reduce_tiles(self, tile_amount: set[tuple[int,int]], diff_utility: float, acceptable_tiles: bool ):
-        pass
     # TODO: Geh durch, welche noch notwendigen Funktionen welche utility-methoden nutzen müssen
     # Funktion: Ermittle auf Basis eines offers ein neues counteroffer (für tiles und jegliches andere)
     # Ausgabe: counter_offer : OfferedObject
