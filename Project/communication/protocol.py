@@ -43,21 +43,13 @@ class Offer:
     def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role):
         # TODO create offer from OfferedObjects and RequestedObjects
         self.off_gold: int = offered_objects.gold_amount
-        self.off_tiles: set[(int, int)] = set()
-        self.off_wumpus_positions: set[(int, int)] = set()
+        self.off_tiles: set[(int, int)] = {(x,y) for x,y,z in offered_objects.tile_information}
+        self.off_wumpus_positions: set[(int, int)] = {(x,y) for x,y,z in offered_objects.wumpus_positions}
         self.off_role: AgentRole = offer_role
 
         self.req_gold: int = requested_objects.gold
         self.req_tiles: list[tuple[int, int]] = requested_objects.tiles
         self.req_wumpus_positions: int = requested_objects.wumpus_positions
-
-        #put all offered tiles positions into offered Tiles set
-        for tile in offered_objects.tile_information:
-            self.off_tiles.update((tile[0], tile[1]))
-
-        for position in offered_objects.wumpus_positions:
-            self.off_wumpus_positions.update((position[0], position[1]))
-
 
 class Message:
     def __init__(self,
