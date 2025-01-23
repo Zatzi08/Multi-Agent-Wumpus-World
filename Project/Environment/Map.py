@@ -33,7 +33,7 @@ class Map:
         self.info = gen.info
 
     def add_agents(self, agents):
-        self.agents = agents
+        self.agents = agents.copy()
 
     def get_agents(self):
         return self.agents

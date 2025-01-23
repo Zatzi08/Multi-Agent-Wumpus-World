@@ -69,7 +69,7 @@ class Agent:
 
     def get_next_action(self) -> AgentAction:
 
-        print(f"{self.__name} : {self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()} {self.__knowledge.get_closest_unvisited_tiles()}")
+        #print(f"{self.__name} : {self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()} {self.__knowledge.get_closest_unvisited_tiles()}")
 
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
@@ -80,7 +80,7 @@ class Agent:
                                       (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
                                      0 <= pos_row + row < height and 0 <= pos_col + col < width]:
                 if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
-                    print(f"{self.__name} {action}")
+                    #print(f"{self.__name} {action}")
                     return action
 
         # on gold-tile
@@ -89,7 +89,7 @@ class Agent:
             # hunter soll kein Gold aufsammeln,wenn es sein itemslot für arrow blockiert
             if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[
                 AgentItem.ARROW.value] == 0):
-                print(f"{self.__name} {AgentAction.PICK_UP}")
+                #print(f"{self.__name} {AgentAction.PICK_UP}")
                 return AgentAction.PICK_UP
 
         # normal Bewegung ermitteln
@@ -363,7 +363,7 @@ class Agent:
             if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
                 avoid_tiles.remove(TileCondition.WUMPUS)
-            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value()] > 0 or steps > REPLENISH_TIME):
+            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value] > 0 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.WUMPUS)
             for heuristik, row, col, move in new_field:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
@@ -438,6 +438,8 @@ class Agent:
             if utility > best_utility[move]:
                 best_utility[move] = utility
 
+        print(best_utility)
+
         # get best move
         for move in best_utility.keys():
             if max_utility is None or best_utility[move] > max_utility:
@@ -454,8 +456,8 @@ class Agent:
     # Wahrscheinlichkeiten basieren auf Wahrscheinlichkeiten in der map-generation
     # Ausgabe: utility: double
     def utility_information(self, fields):
-        wumpus_prob = len(self.__map_info[TileCondition.WUMPUS.value()])/len(self.__map_info["locations"])
-        gold_prob = len(self.__map_info[TileCondition.SHINY.value()])/len(self.__map_info["locations"])
+        wumpus_prob = len(self.__map_info[TileCondition.WUMPUS.value])/len(self.__map_info["locations"])
+        gold_prob = len(self.__map_info[TileCondition.SHINY.value])/len(self.__map_info["locations"])
         match self.__role:
             case AgentRole.KNIGHT:
                 return (wumpus_prob+gold_prob) * len(fields)

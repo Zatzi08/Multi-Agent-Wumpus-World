@@ -54,4 +54,5 @@ def choice_agent(value):
 
 # TODO: Textfeld als secondary output mit Events
 set_layout(simulator.print_map())
+#simulator.simulate_next_step(agent)
 app.run(debug=True)
