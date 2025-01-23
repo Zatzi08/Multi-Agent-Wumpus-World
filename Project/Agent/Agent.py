@@ -68,6 +68,9 @@ class Agent:
     #
 
     def get_next_action(self) -> AgentAction:
+
+        print(f"{self.__name} : {self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()} {self.__knowledge.get_closest_unvisited_tiles()}")
+
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
         # shoot wumpus
@@ -77,6 +80,7 @@ class Agent:
                                       (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
                                      0 <= pos_row + row < height and 0 <= pos_col + col < width]:
                 if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
+                    print(f"{self.__name} {action}")
                     return action
 
         # on gold-tile
@@ -85,6 +89,7 @@ class Agent:
             # hunter soll kein Gold aufsammeln,wenn es sein itemslot für arrow blockiert
             if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[
                 AgentItem.ARROW.value] == 0):
+                print(f"{self.__name} {AgentAction.PICK_UP}")
                 return AgentAction.PICK_UP
 
         # normal Bewegung ermitteln
@@ -293,7 +298,7 @@ class Agent:
     # Ausgabe: (move: AgentAction, utility: float)
     def a_search(self, end):
 
-        def heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
+        def _heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
             end_row, end_col = end
             # unbekannte Tiles haben schlechteren heuristischen Wert, weil unklar ist, ob der Weg nutzbar ist
             if len(map_knowledge.get_conditions_of_tile(pos_row,pos_col)) == 0:
@@ -313,7 +318,7 @@ class Agent:
         # avoid certain tilestates if it's a direct neighbour
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                        TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
-        if self.__role== AgentRole.KNIGHT and self.__health > 1:
+        if self.__role == AgentRole.KNIGHT and self.__health > 1:
             avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
             avoid_tiles.remove(TileCondition.WUMPUS)
         for row, col, move in neighbours:
@@ -324,7 +329,7 @@ class Agent:
         if len(neighbours) == 0:
             return "", -1
 
-        queue = [[heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
+        queue = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
         steps += 1
@@ -333,7 +338,8 @@ class Agent:
         while (pos[1], pos[2]) != end:
             #get neighbours of pos
             neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]]]
-            new_field = [[heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
+            new_field = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in
+                         neighbours]
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
 
@@ -381,28 +387,31 @@ class Agent:
         best_utility = {AgentAction.MOVE_RIGHT: -1, AgentAction.MOVE_LEFT: -1, AgentAction.MOVE_UP: -1, AgentAction.MOVE_DOWN: -1}
         max_utility = None
         next_move = None
-        calc_tiles = []
+        calc_tiles = set()
+
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
             match self.__role:
                 case AgentRole.CARTOGRAPHER:
                     calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
-                    calc_tiles += self.__knowledge.get_closest_unvisited_tiles()
-                    calc_tiles = list(set(calc_tiles))
+                    calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
+                    calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
-                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH, TileCondition.SHINY]:
-                        calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
+                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
+                                      TileCondition.SHINY]:
+                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                 case AgentRole.HUNTER:
-                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS , TileCondition.STENCH]:
-                        calc_tiles += self.__knowledge.get_tiles_by_condition(condition)
+                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
+                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                 case AgentRole.BWL_STUDENT:
                     calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
             # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
             if len(calc_tiles) == 0:
                 calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
-                calc_tiles += self.__knowledge.get_closest_unvisited_tiles()
-                calc_tiles = set(calc_tiles)
+                calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
+
+        #print(f"{self.__name} {calc_tiles}")
 
         for row, col in calc_tiles:
             # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
@@ -419,6 +428,8 @@ class Agent:
                 max_utility = best_utility[move]
         if max_utility < 0:
             next_move = AgentAction.SHOUT
+
+        #print(f"{self.__name} {next_move} {max_utility}")
         return next_move
 
     # Funktion: Ermittle utility einer Menge von Feldern
@@ -601,14 +612,6 @@ class Agent:
                 if offer.req_gold > 0 and 0 < current_diff_utility - self.utility_gold():
                     potential_req_gold = offer.req_gold - 1
                     current_diff_utility -= self.utility_gold()
-            if
-
-
-
-
-
-
-
 
     # get: Agent der Funktion ausführt bekommt (give trivial)
     # Überlegung:

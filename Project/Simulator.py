@@ -73,6 +73,8 @@ class Simulator:
                                                                      self.__agents[agent.name].items,
                                                                      self.__agents[agent.name].available_item_space,
                                                                      self.__current_step)
+            #print(conditions)
+
         # give every agent the possibility to establish communication
         """for agent in self.__agents.values():
             names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
@@ -116,9 +118,11 @@ class Simulator:
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")
 
+        #print(list(map(lambda x: x.position, self.__agents.values())))
+
         # return simulation view
         if view < 0 or view >= len(self.__agents):
-            self.__grid.add_agents(self.__agents)
+        #    self.__grid.add_agents(self.__agents)
             return self.__grid.print_map()
         else:
             return self.__agents[view].agent.get_map().print_map()
