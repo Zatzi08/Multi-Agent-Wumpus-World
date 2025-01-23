@@ -146,7 +146,7 @@ class Agent:
     # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
     def create_offer(self, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]],
                      knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[
-        OfferedObjects, RequestedObjects]:
+    OfferedObjects, RequestedObjects]:
 
         # offer
         offered_gold: int = 0
@@ -270,39 +270,6 @@ class Agent:
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
         pass
 
-# TODO: participants zu int, AgentRole umschreiben, CounterOffer Pffer pder OfferedObjects als Eingabe?
-    def start_negotiation(self, receivers: list[int, AgentRole], receiver_offers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]]):
-        # the sender has constant request, the receivers are changing their offer to fit the sender
-        negotiation_round = 0
-        limit = 3
-        request = next(iter(receiver_offers.values()[2]))
-        good_offers: dict[tuple[int, AgentRole]:Offer] = {}
-        best_utility = -1
-        best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
-
-        print("A negotiation has started!")
-        while negotiation_round < limit:
-            negotiation_round += 1
-            for participant, answer in receiver_offers:
-                offer_utility = Agent.evaluate_offer(self, answer[1], answer[2])
-                if offer_utility > -1:
-                    good_offers.update({participant: participant.create_counter_offer(Offer(request, receiver_offers[participant][2], participant[1]))})
-
-            if len(good_offers) > 0:
-                print("Good offers are found, looking for the best")
-                for participant, p_answer in good_offers.items():
-                    offer_utility = Agent.evaluate_offer(self, p_answer[1], p_answer[2])
-                    if offer_utility > best_utility:
-                        best_utility = offer_utility
-                        best_offer = {participant: (p_answer[1], p_answer[2])}
-
-                break
-
-        if best_offer:
-            print(f"The negotiation has reached an agreement with offer: {best_offer.values()} from {best_offer.keys()}")
-
-        else:
-            print(f"The negotiation has failed")
 
 
     #
