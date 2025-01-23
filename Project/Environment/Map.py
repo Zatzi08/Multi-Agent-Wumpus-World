@@ -189,17 +189,23 @@ class Map:
         SCALINGFACTOR = 7
         plt = self.__print_base(self.filled_map)
         position = dict()
-        """for a in self.agents.values():
-            position[a.position] = f"{position.get(a.position, "")}{a.name} "
+        for a in self.agents.values():
+            position[a.position] = f"{position.get(a.position, "")}{a.name} : {a.role.name}<br>"
+        xs = []
+        ys = []
+        ag = []
         for key in position.keys():
-            print(key, position[key])"""
+            x, y = key
+            xs.append(x)
+            ys.append(y)
+            ag.append(position[key])
 
         plt.add_trace(go.Scatter(
             mode="markers",
-            x=[1],
-            y=[1],
-            text=["Name <br> Profession"],
-            hovertemplate="<br> %{text}",
+            x=xs,
+            y=ys,
+            text=ag,
+            hovertemplate="%{text}",
             name=""
         ))
 
@@ -209,7 +215,3 @@ class Map:
         plt.update_layout(dict(autosize=False, width=self.width * SCALINGFACTOR, height=self.height * SCALINGFACTOR))
 
         return plt
-
-
-a = Map(120, 120)
-a.print_map()

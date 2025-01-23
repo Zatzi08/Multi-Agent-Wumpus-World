@@ -23,6 +23,8 @@ class _Map:
         self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set()] * len(TileCondition)
         self.__closest_unvisited_tiles: set[tuple[int, int]] = set()
         self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = set()
+        self.__shouts: dict[tuple[int, int], int] = {}
+        self.__kill_wumpus_tasks: set[tuple[int, int]] = set()
 
         # add map border (walls)
         for x in range(map_width):
@@ -36,7 +38,7 @@ class _Map:
         if TileCondition.WALL in self.__map[x][y]:
             return
 
-        self.__closest_unknown_tiles_to_any_known_tiles.remove((x, y))
+        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
         for position in SURROUNDING_TILES:
             if not self.__map[x + position[0]][y + position[1]]:
@@ -51,15 +53,15 @@ class _Map:
         return condition in self.__map[x][y]
 
     def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition) -> None:
-        self.__map[x][y].remove(condition)
-        self.__tiles_by_tile_condition[condition.value].remove((x, y))
+        self.__map[x][y].discard(condition)
+        self.__tiles_by_tile_condition[condition.value].discard((x, y))
 
     def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
         return self.__map[x][y]
 
     def set_visited(self, x: int, y: int) -> None:
         self.__visited_map[x][y] = True
-        self.__closest_unvisited_tiles.remove((x, y))
+        self.__closest_unvisited_tiles.discard((x, y))
         for position in SURROUNDING_TILES:
             if (self.visited(x + position[0], y + position[1])
                     or self.tile_has_condition(x + position[0], y + position[1], TileCondition.WALL)
@@ -79,6 +81,26 @@ class _Map:
     def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
         return self.__closest_unknown_tiles_to_any_known_tiles
 
+    def add_shout(self, x: int, y: int, time: int) -> None:
+        self.__shouts[(x, y)] = time
+
+    def get_shouts(self) -> dict[tuple[int, int], int]:
+        return self.__shouts
+
+    def remove_shout(self, x: int, y: int) -> None:
+        if (x, y) in self.__shouts:
+            del self.__shouts[(x, y)]
+
+    def add_kill_wumpus_task(self, x: int, y: int) -> None:
+        self.__kill_wumpus_tasks.add((x, y))
+
+    def get_kill_wumpus_tasks(self) -> set[tuple[int, int]]:
+        for x, y in self.__kill_wumpus_tasks:
+            if (TileCondition.SAFE in self.__map[x][y] or TileCondition.WALL in self.__map[x][y]
+                    or TileCondition.PIT in self.__map[x][y] or TileCondition.STENCH in self.__map[x][y]):
+                self.__kill_wumpus_tasks.discard((x, y))
+        return self.__kill_wumpus_tasks
+
     def return_map(self) -> list[list[set[TileCondition]]]:
         return self.__map
 
@@ -97,13 +119,6 @@ class KnowledgeBase:
         #
 
         self.__map: _Map = _Map(map_width, map_height)
-
-        #
-        # AGENTS
-        #
-
-        self.__shouts: dict[tuple[int, int], int] = {}
-        self.__kill_wumpus_tasks: list[tuple[int, int]] = []
 
     #
     # POSITION
@@ -259,6 +274,7 @@ class KnowledgeBase:
         # developer has to make sure that all (missing) tile conditions are listed on visit
         if (x, y) == self.__position:
             self.__map.set_visited(x, y)
+            self.__map.remove_shout(x, y)
 
         # for every condition: check for consistency and potentially add it
         for tile_condition in tile_conditions:
@@ -363,19 +379,14 @@ class KnowledgeBase:
     #
 
     def add_shout(self, x: int, y: int, time: int) -> None:
-        self.__shouts[(x, y)] = time
+        self.update_tile(x, y, [TileCondition.SAFE])
+        self.__map.add_shout(x, y, time)
 
     def get_shouts(self) -> dict[tuple[int, int], int]:
-        return self.__shouts
-
-    def remove_shout(self, x: int, y: int) -> None:
-        self.__shouts.pop((x, y))
+        return self.__map.get_shouts()
 
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
-        self.__kill_wumpus_tasks.append((x, y))
+        self.__map.add_kill_wumpus_task(x, y)
 
-    def get_kill_wumpus_tasks(self) -> list[tuple[int, int]]:
-        return self.__kill_wumpus_tasks
-
-    def remove_kill_wumpus_task(self, x: int, y: int) -> None:
-        self.__kill_wumpus_tasks.remove((x, y))
+    def get_kill_wumpus_tasks(self) -> set[tuple[int, int]]:
+        return self.__map.get_kill_wumpus_tasks()

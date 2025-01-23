@@ -2,6 +2,8 @@ from enum import Enum
 from typing import List, Union, Optional
 #from Project.Agent.Agent import AgentRole, TileCondition
 from Project.Environment import Map
+
+
 #from Project.SimulatedAgent import SimulatedAgent
 
 
@@ -43,13 +45,14 @@ class Offer:
     def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role):
         # TODO create offer from OfferedObjects and RequestedObjects
         self.off_gold: int = offered_objects.gold_amount
-        self.off_tiles: set[(int, int)] = {(x,y) for x,y,z in offered_objects.tile_information}
-        self.off_wumpus_positions: set[(int, int)] = {(x,y) for x,y,z in offered_objects.wumpus_positions}
-        self.off_role: AgentRole = offer_role
+        self.off_tiles: set[(int, int)] = {(x, y) for x, y, z in offered_objects.tile_information}
+        self.off_wumpus_positions: set[(int, int)] = {(x, y) for x, y, z in offered_objects.wumpus_positions}
+        self.off_role = offer_role
 
         self.req_gold: int = requested_objects.gold
         self.req_tiles: list[tuple[int, int]] = requested_objects.tiles
         self.req_wumpus_positions: int = requested_objects.wumpus_positions
+
 
 class Message:
     def __init__(self,
@@ -79,8 +82,8 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         self.agents = agents
 
     def communicate(self, sender, potential_receivers) -> None:
-        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = self.agents[
-            sender].agent.start_communication(potential_receivers)
+        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
+            self.agents[sender].agent.start_communication(potential_receivers))
         receivers: list[int] = answer[0]
         offered_objects: OfferedObjects = answer[1][0]
         requested_objects: RequestedObjects = answer[1][1]
@@ -128,10 +131,11 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         print(
             f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {next(iter(best_offer.values()))[2]}")
 
-    # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
+        # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
         if best_utility == -1:
             print(f"Sender received only bad offers. Starting negotiation!")
-            self.agents[sender].agent.start_negotiation(sender, potential_receivers, (accepted_requests | counter_offers))
+            self.agents[sender].agent.start_negotiation(sender, potential_receivers,
+                                                        (accepted_requests | counter_offers))
 
         #finish communication (distribute offered objects)
         else:

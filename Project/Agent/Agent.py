@@ -9,6 +9,8 @@ import heapq  # für a*-search
 MAX_UTILITY = 200
 ACCEPTABLE_TILE_FACTOR = 0.2
 REPLENISH_TIME = 32
+
+
 class AgentRole(Enum):
     HUNTER: int = 0
     CARTOGRAPHER: int = 1
@@ -69,15 +71,20 @@ class Agent:
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
         # shoot wumpus
-        if self.__items[AgentItem.ARROW.value()] > 0:
-            for row,col,action in [(pos_row+row,pos_col+col, action) for row,col,action in [(1,0, AgentAction.SHOOT_DOWN),(-1,0, AgentAction.SHOOT_UP),(0,1, AgentAction.SHOOT_RIGHT),(0,-1, AgentAction.SHOOT_LEFT)] if 0 <= pos_row+row < height and 0 <= pos_col+col < width]:
-                if self.__knowledge.tile_has_condition(row,col,TileCondition.WUMPUS):
+        if self.__items[AgentItem.ARROW.value] > 0:
+            for row, col, action in [(pos_row + row, pos_col + col, action) for row, col, action in
+                                     [(1, 0, AgentAction.SHOOT_DOWN), (-1, 0, AgentAction.SHOOT_UP),
+                                      (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
+                                     0 <= pos_row + row < height and 0 <= pos_col + col < width]:
+                if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
                     return action
 
         # on gold-tile
-        if self.__knowledge.tile_has_condition(pos_row,pos_col, TileCondition.SHINY) and self.__available_item_space > 0:
+        if self.__knowledge.tile_has_condition(pos_row, pos_col,
+                                               TileCondition.SHINY) and self.__available_item_space > 0:
             # hunter soll kein Gold aufsammeln,wenn es sein itemslot für arrow blockiert
-            if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[AgentItem.ARROW.value()] == 0):
+            if not (self.__role == AgentRole.HUNTER and self.__available_item_space == 1 and self.__items[
+                AgentItem.ARROW.value] == 0):
                 return AgentAction.PICK_UP
 
         # normal Bewegung ermitteln
@@ -130,10 +137,11 @@ class Agent:
             return agents_to_communicate_with, self.create_offer(roles_to_communicate_with)
         return agents_to_communicate_with, None
 
-
     # Annahme: abhängig von dem RequestObject sind Argumente wie desired_tiles, acceptable_tiles und wumpus_amount 0 oder empty
     # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
-    def create_offer(self, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[OfferedObjects, RequestedObjects]:
+    def create_offer(self, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]],
+                     knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[
+        OfferedObjects, RequestedObjects]:
 
         # offer
         offered_gold: int = 0
@@ -162,7 +170,8 @@ class Agent:
             if self.utility_information(off_desired_tiles) > request_utility:
                 reduced_amount = int(len(off_desired_tiles) * request_utility / self.utility_information(off_desired_tiles))
                 offered_tiles = off_desired_tiles[:reduced_amount]
-                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
+                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(
+                    requested_gold, requested_tiles, requested_wumpus_positions)
             offered_tiles = off_desired_tiles
             offer_utility += self.utility_information(off_desired_tiles)
         if len(acceptable_tiles) > 0:
@@ -170,7 +179,8 @@ class Agent:
             if self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > request_utility:
                 reduced_amount = int(len(off_acceptable_tiles) * request_utility / (self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
                 offered_tiles = offered_tiles.union(off_acceptable_tiles[:reduced_amount])
-                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
+                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(
+                    requested_gold, requested_tiles, requested_wumpus_positions)
             offered_tiles = offered_tiles.union(off_acceptable_tiles)
             offer_utility += self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
 
@@ -235,7 +245,6 @@ class Agent:
         # TODO: decision making for offers
 
         return ResponseType.ACCEPT, None, None
-
 
     def apply_changes(self, sender, receiver, request, offer):
         #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
@@ -455,7 +464,6 @@ class Agent:
         if len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) > 0:
             return RequestObject.KILL_WUMPUS
         return RequestObject.TILE_INFORMATION
-
 
     # Überlegungen: Welche Felder sind von Interesse
     # Wumpuskiller wollen Infos zu Wumpus --> wollen PREDICTED_WUMPUS als WUMPUS aufdecken --> Frage andere Agenten nach den Felder + angrenzende Felder
