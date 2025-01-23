@@ -15,7 +15,7 @@ class Simulator:
         self.__grid: Map = Map(map_width, map_height)
         self.__replenish_time: int = 32
         self.__agents: dict[int, SimulatedAgent] = {}
-        self.__set_up_agents(map_width, map_height, number_of_agents)
+        self.__set_up_agents(self.__grid.width, self.__grid.height, number_of_agents)
         self.__communication_channel: CommunicationChannel = CommunicationChannel(self.__agents)
         # TODO: track goal progress for agents
 
