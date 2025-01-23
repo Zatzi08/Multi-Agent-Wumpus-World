@@ -8,7 +8,7 @@ import heapq  # für a*-search
 
 MAX_UTILITY = 200
 ACCEPTABLE_TILE_FACTOR = 0.2
-
+REPLENISH_TIME = 32
 class AgentRole(Enum):
     HUNTER: int = 0
     CARTOGRAPHER: int = 1
@@ -59,14 +59,13 @@ class Agent:
         self.__items: list[int] = []
         self.__available_item_space: int = 0
         self.__time = 0
-        self.map_info = map_info
+        self.__map_info = map_info
 
     #
     # next agent move
     #
 
     def get_next_action(self) -> AgentAction:
-        # TODO: implementation HENRY
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
         # shoot wumpus
@@ -132,9 +131,9 @@ class Agent:
         return agents_to_communicate_with, None
 
 
-
-    def create_offer(self, receivers: list[AgentRole]) -> tuple[OfferedObjects, RequestedObjects]:
-        # TODO: decision making for making offers
+    # Annahme: abhängig von dem RequestObject sind Argumente wie desired_tiles, acceptable_tiles und wumpus_amount 0 oder empty
+    # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
+    def create_offer(self, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[OfferedObjects, RequestedObjects]:
 
         # offer
         offered_gold: int = 0
@@ -142,13 +141,49 @@ class Agent:
         offered_wumpus_positions: list[tuple[int, int]] = []
 
         # request
-        requested_gold: int = 0
+        requested_gold: int = other_gold_amount
         requested_tiles: list[tuple[int, int]] = []
-        requested_wumpus_positions: int = 0
+        requested_wumpus_positions: int = other_wumpus_amount
 
-        return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold,
-                                                                                                       requested_tiles,
-                                                                                                       requested_wumpus_positions)
+        # get request_tiles
+        req_desired_tiles = self.desired_tiles().intersection(knowledge_tiles)
+        req_acceptable_tiles = self.acceptable_tiles(self.desired_tiles()).intersection(knowledge_tiles)
+        requested_tiles = list(req_acceptable_tiles.union(req_desired_tiles))
+        req_utility = self.utility_help_wumpus() * requested_wumpus_positions + self.utility_gold() * requested_gold + self.utility_information(req_desired_tiles)+ self.utility_information(req_acceptable_tiles) + ACCEPTABLE_TILE_FACTOR
+
+        # get offer
+        offer_utility = 0
+
+        #tile-info
+        #agents want tile_info
+        if len(desired_tiles) > 0:
+            off_desired_tiles = [(row,col,list(self.__knowledge.get_conditions_of_tile(row,col))) for row,col in desired_tiles if len(self.__knowledge.get_conditions_of_tile(row,col)) > 0]
+            if self.utility_information(off_desired_tiles) > req_utility:
+                reduced_amount = int(len(off_desired_tiles) * req_utility / self.utility_information(off_desired_tiles))
+                offered_tiles = off_desired_tiles[:reduced_amount]
+                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
+            offered_tiles = off_desired_tiles
+            offer_utility += self.utility_information(off_desired_tiles)
+        if len(acceptable_tiles) > 0:
+            off_acceptable_tiles = [(row,col,list(self.__knowledge.get_conditions_of_tile(row,col))) for row,col in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row,col)) > 0]
+            if self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > req_utility:
+                reduced_amount = int(len(off_acceptable_tiles) * req_utility / (self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
+                offered_tiles = offered_tiles.union(off_acceptable_tiles[:reduced_amount])
+                return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
+            offered_tiles = offered_tiles.union(off_acceptable_tiles)
+            offer_utility += self.utility_information(off_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
+
+        #wumpus-positions
+        # TODO: henrys Meinung:  kein offer-wumpus-positions, weil bei Empfänger der nicht wumpus jagt, das offer immer abgelehnt wird
+        #    UND die wumpus-positions eh in einem Kommunkationsversuch vom BWL_STUDENT und CARTOGRAPHER behandelt werden
+        #   Frage: ist das für euch in Ordnung?
+
+        # gold
+        # Agents, die gold als ziel haben nutzen es nicht als Handelsgut (es als Handelsgut zu nutzen, wird meistens zu keinem Erflogreichen Austausch führen)
+        if self.__role is [AgentRole.HUNTER, AgentRole.CARTOGRAPHER]:
+            max_gold_amount = int((req_utility - offer_utility) / self.utility_gold())
+            offered_gold = min(max_gold_amount, self.__items[AgentItem.GOLD.value()])
+        return OfferedObjects(offered_gold, offered_tiles, offered_wumpus_positions), RequestedObjects(requested_gold, requested_tiles, requested_wumpus_positions)
 
     def create_counter_offer(self, offer: Offer) -> tuple[OfferedObjects, RequestedObjects]:
         # TODO analyse offer
@@ -256,10 +291,10 @@ class Agent:
 
             # remove fields with "game over" tile states
             # different avoid tiles as soon as it's not a direct neighbour of position
-            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME): # TODO: steps > REPLENISH_TIME - turn % REPLENISH_TIME
+            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
                 avoid_tiles.remove(TileCondition.WUMPUS)
-            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value()] > 0 or steps > REPLENISH_TIME): # TODO: wie oben
+            elif self.__role == AgentRole.HUNTER and (self.__items[AgentItem.ARROW.value()] > 0 or steps > REPLENISH_TIME):
                 avoid_tiles.remove(TileCondition.WUMPUS)
             for heuristik, row, col, move in new_field:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
@@ -342,11 +377,12 @@ class Agent:
     #  utility of unknown fields --> Erwartungswert
     # Wahrscheinlichkeiten basieren auf Wahrscheinlichkeiten in der map-generation
     # Ausgabe: utility: double
-    # TODO: Wahrscheinlichkeiten ändern, da Spawnregeln sich geändert haben
     def utility_information(self, fields):
+        wumpus_prob = len(self.__map_info[TileCondition.WUMPUS.value()])/len(self.__map_info["locations"])
+        gold_prob = len(self.__map_info[TileCondition.SHINY.value()])/len(self.__map_info["locations"])
         match self.__role:
             case AgentRole.KNIGHT:
-                return (gold_prob + wumpus_prob) * len(fields)
+                return (wumpus_prob+gold_prob) * len(fields)
             case AgentRole.HUNTER:
                 return wumpus_prob * len(fields)
             case AgentRole.CARTOGRAPHER:
@@ -355,17 +391,17 @@ class Agent:
                 return gold_prob * len(fields)
 
     # Ausgabe: utility: double
-    def utility_gold(self, gold_amount):
-        return 2 * gold_amount * self.__utility.get_utility_of_condition(TileCondition.SHINY)
+    def utility_gold(self):
+        return 2 * self.__utility.get_utility_of_condition(TileCondition.SHINY)
 
     # Funktion: Ermittle utility einem anderen Agenten mit KILL_WUMPUS zu helfen
     def utility_help_wumpus(self):
         match self.__role:
             # knight also wants gold for helping out --> less utility than for hunter who'll always help
             case AgentRole.KNIGHT:
-                return self.__utility.get_utility_of_condition(TileCondition.WUMPUS) / 4
+                return self.__utility.get_utility_of_condition(TileCondition.WUMPUS) / 8
             case AgentRole.HUNTER:
-                return self.__utility.get_utility_of_condition(TileCondition.WUMPUS)
+                return self.__utility.get_utility_of_condition(TileCondition.WUMPUS) / 2
             case _:  # rest cant kill wumpus
                 return 0
 
@@ -436,7 +472,7 @@ class Agent:
         return set(acceptable_tiles).difference(desired_tiles)
 
 
-    def get_first_offer(self, request_object: RequestObject, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]]):
+    def get_first_offer(self):
         pass
 
     # TODO: Methode um Tileinfo um gewisse Utility zu reduzieren
@@ -449,8 +485,8 @@ class Agent:
     def get_counteroffer(self, offer: Offer, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]], other_agent_gold_amount: int, other_agent_wumpus_amount: int):
         new_offer = Offer(OfferedObjects(0, [], []), RequestedObjects(0,[], 0), self.__role)
         # Abbruchbedingung: kein besseres Angebot möglich, ohne selber negative utility zu erhalten
-        give_utility = self.utility_information(offer.off_tiles) + self.utility_gold(offer.off_gold) + 20 * len(offer.off_wumpus_positions)
-        get_utility = self.utility_information(offer.req_tiles) + self.utility_gold(offer.req_gold) + self.utility_help_wumpus() * offer.req_wumpus_positions
+        give_utility = self.utility_information(offer.off_tiles) + self.utility_gold() * offer.off_gold + 20 * len(offer.off_wumpus_positions)
+        get_utility = self.utility_information(offer.req_tiles) + self.utility_gold() * offer.req_gold + self.utility_help_wumpus() * offer.req_wumpus_positions
         # wenn sie zu nah beieinander sind, ist kein besseres offer möglich ohne selber eine negative utility zu haben
         # TODO: ist 5 ein guter Wert?
         if give_utility >= get_utility + 5:
@@ -521,9 +557,9 @@ class Agent:
                     new_offer.req_tiles = []
                     return new_offer
             if offer.req_wumpus_positions > 0:
-                if offer.req_gold > 0 and 0 < current_diff_utility - self.utility_gold(1):
+                if offer.req_gold > 0 and 0 < current_diff_utility - self.utility_gold():
                     potential_req_gold = offer.req_gold - 1
-                    current_diff_utility -= self.utility_gold(1)
+                    current_diff_utility -= self.utility_gold()
             if
 
 
@@ -548,15 +584,15 @@ class Agent:
         if request.gold > 0:
             if self.__items[AgentItem.GOLD.value] < request.gold:
                 return -1
-            give_utility += self.utility_gold(request.gold)
+            give_utility += self.utility_gold() * request.gold
         if request.wumpus_positions > 0:
             if request.wumpus_positions > len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
                 return -1
             if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
                 give_utility += self.utility_help_wumpus() * request.wumpus_positions
             elif self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
-                # 20: Kosten die Information gesammelt zu haben
-                give_utility += 20 * request.wumpus_positions
+                # utiltiy, dass denen ein Wumpus gekillt wird
+                give_utility += MAX_UTILITY/2* request.wumpus_positions
         if len(request.tiles) > 0:
             # Durch negotiating-Konzept muss keine Überprüfung der tile-Menge geamcht werden
             give_utility += self.utility_information(request.tiles)
@@ -566,7 +602,7 @@ class Agent:
         if offer.gold_amount > 0:
             if self.__available_item_space < offer.gold_amount:
                 return -1
-            get_utility += self.utility_gold(offer.gold_amount)
+            get_utility += self.utility_gold() * offer.gold_amount
         if len(offer.wumpus_positions) > 0:
             if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
                 get_utility += self.utility_help_wumpus() * offer.wumpus_positions
