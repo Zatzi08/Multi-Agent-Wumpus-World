@@ -301,6 +301,8 @@ class Agent:
             #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
 
+        name = self.__name
+
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
         visited_map.fill(False)
@@ -392,8 +394,12 @@ class Agent:
         max_utility = None
         next_move = None
         calc_tiles = set()
+
+        name = self.__name
+
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                        TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
+
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:

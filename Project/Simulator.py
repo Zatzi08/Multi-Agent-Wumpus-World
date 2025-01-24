@@ -1,4 +1,4 @@
-from Project.Environment.Map import Map
+from Project.Environment.Map import Map, print_random_map
 from Project.SimulatedAgent import SimulatedAgent
 from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
 from Project.Knowledge.KnowledgeBase import TileCondition
@@ -38,12 +38,12 @@ class Simulator:
             if self.__agents[agent].health == 0:
                 self.__grid.delete_agent(self.__agents[agent].name)
                 del self.__agents[agent]
-            return
+                return
         elif TileCondition.PIT in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_agent(self.__agents[agent].name)
             del self.__agents[agent]
             return
-        self.__agents[agent].position = (x, y + 1)
+        self.__agents[agent].position = (x, y)
 
     def __agent_shoot_action(self, agent: int, x: int, y: int):
         if self.__agents[agent].items[AgentItem.ARROW.value] > 0:
@@ -52,10 +52,18 @@ class Simulator:
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
 
-    def print_map(self):
-        return self.__grid.print_map()
+    def get_agents(self):
+        return self.__agents
+
+    def print_map(self, view):
+        if view < 0 or view >= len(self.__agents):
+            return self.__grid.print_map()
+        else:
+            return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height, self.__agents[view])
 
     def simulate_next_step(self, view: int):
+        print("\nstep:", self.__current_step)
+        current_step = self.__current_step
         if self.__current_step == self.__number_of_simulation_steps:
             return
         self.__current_step += 1
@@ -69,6 +77,7 @@ class Simulator:
         for agent in self.__agents.values():
             conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent.name].position[0],
                                                                               self.__agents[agent.name].position[1])
+            name = agent.name
             self.__agents[agent.name].agent.receive_tile_information(self.__agents[agent.name].position, conditions,
                                                                      self.__agents[agent.name].health,
                                                                      self.__agents[agent.name].items,
@@ -86,31 +95,35 @@ class Simulator:
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())
         for agent in agent_list:
+            name = self.__agents[agent].name
+            if name == 3 and current_step == 5:
+                print(self.__agents[agent].agent.get_map()[self.__agents[agent].position[1]][self.__agents[agent].position[0]])
             action: AgentAction = self.__agents[agent].agent.get_next_action()
+            print(name, action.name)
             x: int = self.__agents[agent].position[0]
             y: int = self.__agents[agent].position[1]
             match action:
                 case AgentAction.MOVE_RIGHT:
-                    self.__agent_move_action(self.__agents[agent].name, x, y + 1)
-                case AgentAction.MOVE_UP:
-                    self.__agent_move_action(self.__agents[agent].name, x - 1, y)
-                case AgentAction.MOVE_DOWN:
                     self.__agent_move_action(self.__agents[agent].name, x + 1, y)
-                case AgentAction.MOVE_LEFT:
+                case AgentAction.MOVE_UP:
+                    self.__agent_move_action(self.__agents[agent].name, x, y + 1)
+                case AgentAction.MOVE_DOWN:
                     self.__agent_move_action(self.__agents[agent].name, x, y - 1)
+                case AgentAction.MOVE_LEFT:
+                    self.__agent_move_action(self.__agents[agent].name, x - 1, y)
                 case AgentAction.PICK_UP:
                     if self.__agents[agent].available_item_space > 0 and TileCondition.SHINY in self.__grid.get_tile_conditions(x, y):
                         self.__agents[agent].items[AgentItem.GOLD.value] += 1
                         self.__agents[agent].available_item_space -= 1
                         self.__grid.delete_condition(x, y, TileCondition.SHINY)
                 case AgentAction.SHOOT_RIGHT:
-                    self.__agent_shoot_action(self.__agents[agent].name, x, y + 1)
-                case AgentAction.SHOOT_UP:
-                    self.__agent_shoot_action(self.__agents[agent].name, x - 1, y)
-                case AgentAction.SHOOT_DOWN:
                     self.__agent_shoot_action(self.__agents[agent].name, x + 1, y)
-                case AgentAction.SHOOT_LEFT:
+                case AgentAction.SHOOT_UP:
+                    self.__agent_shoot_action(self.__agents[agent].name, x, y + 1)
+                case AgentAction.SHOOT_DOWN:
                     self.__agent_shoot_action(self.__agents[agent].name, x, y - 1)
+                case AgentAction.SHOOT_LEFT:
+                    self.__agent_shoot_action(self.__agents[agent].name, x - 1, y)
                 case AgentAction.SHOUT:
                     names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent].name, 3)
                     for name in names_of_agents_in_proximity:
@@ -120,8 +133,5 @@ class Simulator:
             print("Simulation done.")
 
         # return simulation view
-        if view < 0 or view >= len(self.__agents):
-            self.__grid.add_agents(self.__agents)
-            return self.__grid.print_map()
-        else:
-            return self.__agents[view].agent.get_map().print_map()
+        self.__grid.add_agents(self.__agents)
+        return self.print_map(view)

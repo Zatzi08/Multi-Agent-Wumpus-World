@@ -83,7 +83,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
     def set_agents(self, agents):
         self.agents = agents
 
-    def communicate(self, sender:tuple[int, Agent.AgentRole], potential_receivers: list[tuple[int, Agent.AgentRole]]) -> None:
+    def communicate(self, sender, potential_receivers) -> None:
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
             self.agents[sender].agent.start_communication(potential_receivers))
         receivers: list[int] = answer[0]
