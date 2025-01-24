@@ -125,7 +125,7 @@ class KnowledgeBase:
         #
 
         self.__map: _Map = _Map(position, map_width, map_height)
-        self.__surrounding_danger_count: dict[tuple[int, int, TileCondition]] = {}
+        self.__surrounding_danger_count: dict[tuple[int, int, TileCondition], int] = {}
 
     #
     # POSITION
