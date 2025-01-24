@@ -84,16 +84,6 @@ class Simulator:
             for agent in self.__agents.values():
                 self.__agents[agent.name].replenish()
 
-        self.__spread_knowledge()
-
-        # give every agent the possibility to establish communication
-        """for agent in self.__agents.values():
-            names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
-            agents_in_proximity: [tuple[int, AgentRole]] = []
-            for name in names_of_agents_in_proximity:
-                agents_in_proximity.append((name, self.__agents[name].role))
-            self.__communication_channel.communicate(agent.name, agents_in_proximity)"""
-
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())
         for agent in agent_list:
@@ -129,6 +119,16 @@ class Simulator:
                         = self.__grid.get_agents_in_reach(self.__agents[agent].name, 3)
                     for name in names_of_agents_in_proximity:
                         self.__agents[name].agent.receive_shout_action_information(x, y)
+
+        self.__spread_knowledge()
+
+        # give every agent the possibility to establish communication
+        """for agent in self.__agents.values():
+            names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
+            agents_in_proximity: [tuple[int, AgentRole]] = []
+            for name in names_of_agents_in_proximity:
+                agents_in_proximity.append((name, self.__agents[name].role))
+            self.__communication_channel.communicate(agent.name, agents_in_proximity)"""
 
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")
