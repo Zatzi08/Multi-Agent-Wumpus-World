@@ -75,7 +75,7 @@ class Agent:
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
         # shoot wumpus
-        if self.__items[AgentItem.ARROW.value] > 0:
+        if self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
             for row, col, action in [(pos_row + row, pos_col + col, action) for row, col, action in
                                      [(1, 0, AgentAction.SHOOT_DOWN), (-1, 0, AgentAction.SHOOT_UP),
                                       (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
