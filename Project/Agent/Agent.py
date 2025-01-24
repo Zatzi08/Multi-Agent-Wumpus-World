@@ -104,7 +104,7 @@ class Agent:
                                  items: list[int], available_item_space: int, time: int):
         self.__position: tuple[int, int] = position
         self.__knowledge.update_position(self.__position)
-        self.__knowledge.update_tile(position[0], position[1], tile_conditions)
+        self.__knowledge.update_tile(position[0], position[1], tile_conditions, True)
         self.__health = health
         self.__items = items
         self.__available_item_space = available_item_space
