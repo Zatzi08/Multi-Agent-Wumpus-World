@@ -1,4 +1,4 @@
-
+import random
 from typing import Union
 
 from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
@@ -450,7 +450,7 @@ class Agent:
 
         if max_utility < 0:
             return AgentAction.SHOUT
-        if len(multiple_max_utility)  == 1:
+        return random.choice(multiple_max_utility)
         #print(f"{self.__name} {next_move} {max_utility}")
         return next_move
 
