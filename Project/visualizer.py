@@ -45,7 +45,7 @@ def set_layout(plt):
 
 # TODO: Textfeld als secondary output mit Events
 set_layout(simulator.print_map(agent))
-#for _ in range(6):
+#for _ in range(100):
 #    simulator.simulate_next_step(agent)
 
 app.run(debug=True)

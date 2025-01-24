@@ -182,8 +182,6 @@ class Map:
 
         return plt
 
-    # TODO: Unterscheidung zwischen Agent-Map und all Map
-
     def print_map(self):
 
         """
@@ -195,7 +193,7 @@ class Map:
         plt = self.__print_base(self.filled_map)
         position = dict()
         for a in self.agents.values():
-            position[a.position] = f"{position.get(a.position)}{a.name} : {a.role.name}<br>"
+            position[a.position] = f"{position.get(a.position, "")}{a.name} : {a.role.name}<br>"
         xs = []
         ys = []
         ag = []
@@ -271,7 +269,7 @@ def print_random_map(grid, width, height, agent):
     plt = make_subplots(specs=[[{"secondary_y": True}]])
 
     cmap = [[0., 'black'], [0.05, 'black'], [0.05, 'grey'], [0.1, 'grey'], [0.1, 'darkred'], [0.2, 'darkred'],
-            [0.2, 'yellow'], [0.3, 'yellow'], [0.3, 'blue'], [0.4, 'blue'], [0.4, 'red'], [0.5, 'red'],
+            [0.2, 'yellow'], [0.3, 'yellow'], [0.3, 'blue'], [0.4, 'blue'], [0.4, 'magenta'], [0.5, 'magenta'],
             [0.5, 'turquoise'], [0.6, 'turquoise'], [0.6, 'green'], [0.7, 'green'], [0.7, 'lightblue'],
             [0.8, 'lightblue'],
             [0.8, 'lightgreen'], [0.9, 'lightgreen'], [0.9, 'white'], [1., 'white']]
