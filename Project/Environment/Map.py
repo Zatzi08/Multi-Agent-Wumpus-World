@@ -195,7 +195,7 @@ class Map:
         plt = self.__print_base(self.filled_map)
         position = dict()
         for a in self.agents.values():
-            position[a.position] = f"{position.get(a.position, "")}{a.name} : {a.role.name}<br>"
+            position[a.position] = f"{position.get(a.position)}{a.name} : {a.role.name}<br>"
         xs = []
         ys = []
         ag = []

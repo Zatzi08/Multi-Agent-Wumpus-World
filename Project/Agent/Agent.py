@@ -325,7 +325,7 @@ class Agent:
         for row, col, move in neighbours:
             if 0 <= row <= width and 0 <= col <= height:
                 neighbours.remove([row, col, move])
-            if risky_tile(row, col, self.__knowledge, avoid_tiles):
+            elif risky_tile(row, col, self.__knowledge, avoid_tiles):
                 neighbours.remove([row, col, move])
 
         # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
@@ -417,7 +417,10 @@ class Agent:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
-                            neighbours = [(self.__position[0]+tiles[0],self.__position[1]+tiles[1]) for row,col in [(0,1),(1,0),(-1,0),(0,-1)] if len(self.__knowledge.get_conditions_of_tile(self.__position[0]+row,self.__position[1]+col)) == 0]
+                            neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
+                                          [(0, 1), (1, 0), (-1, 0), (0, -1)] if
+                                          len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row,
+                                                                                      self.__position[1] + col)) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.HUNTER:
                     if self.__items[AgentItem.ARROW.value] > 0:
@@ -427,7 +430,10 @@ class Agent:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
-                            neighbours = [(self.__position[0]+tiles[0], self.__position[1]+tiles[1]) for row,col in [(0,1),(1,0),(-1,0),(0,-1)] if len(self.__knowledge.get_conditions_of_tile(self.__position[0]+row,self.__position[1]+col)) == 0]
+                            neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
+                                          [(0, 1), (1, 0), (-1, 0), (0, -1)] if
+                                          len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row,
+                                                                                      self.__position[1] + col)) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.BWL_STUDENT:
                     calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
@@ -440,6 +446,7 @@ class Agent:
 
         for row, col in calc_tiles:
             # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
+            print(f"{row}, {col}")
             if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
             if risky_tile(row, col, self.__knowledge, avoid_tiles):
