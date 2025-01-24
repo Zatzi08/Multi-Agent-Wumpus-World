@@ -37,7 +37,7 @@ class _Map:
     def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
         self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
-        if TileCondition.WALL in self.__map[x][y]:
+        if TileCondition.WALL in self.__map[y][x]:
             return
 
         for position in SURROUNDING_TILES:
@@ -46,27 +46,27 @@ class _Map:
             self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
 
     def add_condition_to_tile(self, x: int, y: int, condition: TileCondition) -> None:
-        self.__map[x][y].add(condition)
+        self.__map[y][x].add(condition)
         self.__tiles_by_tile_condition[condition.value].add((x, y))
         self.__update_closest_unknown_tiles_using_new_tile(x, y)
         if condition == TileCondition.WALL and (x, y) in self.__closest_unvisited_tiles:
             self.__closest_unvisited_tiles.discard((x, y))
 
     def tile_has_condition(self, x: int, y: int, condition: TileCondition) -> bool:
-        return condition in self.__map[x][y]
+        return condition in self.__map[y][x]
 
     def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition) -> None:
-        self.__map[x][y].discard(condition)
+        self.__map[y][x].discard(condition)
         self.__tiles_by_tile_condition[condition.value].discard((x, y))
 
         if condition == TileCondition.WALL or condition == TileCondition.PIT or condition == TileCondition.SAFE:
             raise ValueError("Knowledge base is trying to remove a WALL/PIT/SAFE condition.")
 
     def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
-        return self.__map[x][y]
+        return self.__map[y][x]
 
     def set_visited(self, x: int, y: int) -> None:
-        self.__visited_map[x][y] = True
+        self.__visited_map[y][x] = True
         self.__closest_unvisited_tiles.discard((x, y))
         for position in SURROUNDING_TILES:
             if (self.visited(x + position[0], y + position[1])
@@ -76,7 +76,7 @@ class _Map:
             self.__closest_unvisited_tiles.add((x + position[0], y + position[1]))
 
     def visited(self, x: int, y: int) -> bool:
-        return self.__visited_map[x][y]
+        return self.__visited_map[y][x]
 
     def get_tiles_by_condition(self, condition: TileCondition) -> set[tuple[int, int]]:
         return self.__tiles_by_tile_condition[condition.value]
@@ -102,8 +102,8 @@ class _Map:
 
     def get_kill_wumpus_tasks(self) -> set[tuple[int, int]]:
         for x, y in self.__kill_wumpus_tasks:
-            if (TileCondition.SAFE in self.__map[x][y] or TileCondition.WALL in self.__map[x][y]
-                    or TileCondition.PIT in self.__map[x][y] or TileCondition.STENCH in self.__map[x][y]):
+            if (TileCondition.SAFE in self.__map[y][x] or TileCondition.WALL in self.__map[y][x]
+                    or TileCondition.PIT in self.__map[y][x] or TileCondition.STENCH in self.__map[y][x]):
                 self.__kill_wumpus_tasks.discard((x, y))
         return self.__kill_wumpus_tasks
 
@@ -323,7 +323,7 @@ class KnowledgeBase:
                     # add
                     self.__map.add_condition_to_tile(x, y, TileCondition.SHINY)
 
-                    # Shiny[x][y] => Safe[x][y]
+                    # Shiny[y][x] => Safe[y][x]
                     self.update_tile(x, y, [TileCondition.SAFE])
                 case TileCondition.WUMPUS:
                     # if tile is safe already, wumpus is already gone

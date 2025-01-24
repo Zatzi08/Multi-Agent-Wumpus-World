@@ -89,27 +89,31 @@ class Map:
         return adjacent_agents
 
     def delete_condition(self, x, y, condition: TileCondition):
-        self.map.filled_map[y][x].remove(condition)
+        self.filled_map[y][x].remove(condition)
         if condition in [TileCondition.WUMPUS, TileCondition.PIT]:
+            self.filled_map[y][x].append(TileCondition.SAFE)
             if condition == TileCondition.WUMPUS:
                 second_condition = TileCondition.STENCH
             else:
                 second_condition = TileCondition.BREEZE
             for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-                self.map.filled_map.__delete_stench_or_breeze(x + ox, y + oy, second_condition)
+                condition = self.filled_map[y + oy][x + ox]
+                self.__delete_stench_or_breeze(x + ox, y + oy, second_condition)
 
     def __delete_stench_or_breeze(self, x, y, condition: TileCondition):
         if condition != TileCondition.STENCH and condition != TileCondition.BREEZE:
             raise "Invalid Condition"
-        if condition not in self.get_tile_conditions(x, y):
-            raise "Incorrect Map Initialization"
+        cond = self.get_tile_conditions(x, y)
+        if condition not in cond:
+            #print("Incorrect Map Initialization - eventual Error in Map line 107")
+            return
         delete = True
         for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-            if TileCondition.WUMPUS in self.map.filled_map[y + oy][x + ox]:
+            if TileCondition.WUMPUS in self.filled_map[y + oy][x + ox]:
                 delete = False
                 break
         if delete:
-            self.map.filled_map[y][x].remove(condition)
+            self.filled_map[y][x].remove(condition)
 
     def delete_agent(self, name):
         self.agents.pop(name)
@@ -216,3 +220,80 @@ class Map:
         plt.update_layout(dict(autosize=False, width=self.width * SCALINGFACTOR, height=self.height * SCALINGFACTOR))
 
         return plt
+
+
+def print_random_map(grid, width, height, agent):
+    def convertGrid(grid):
+        g = np.ndarray((height, width), float)
+        b = np.ndarray((height, width), dtype=StringDType())
+
+        for y in range(0, height):
+            for x in range(0, width):
+                if TileCondition.WALL in list(grid[y][x]):
+                    g[y][x] = 0.05
+                    b[y][x] = "Wall"
+                elif TileCondition.WUMPUS in list(grid[y][x]):
+                    g[y][x] = 0.2
+                    b[y][x] = "Wumpus"
+                elif TileCondition.SHINY in list(grid[y][x]):
+                    g[y][x] = 0.3
+                    b[y][x] = "Gold"
+                elif TileCondition.PIT in list(grid[y][x]):
+                    g[y][x] = 0.4
+                    b[y][x] = "Pit"
+                elif TileCondition.PREDICTED_WUMPUS in list(grid[y][x]):
+                    g[y][x] = 0.5
+                    b[y][x] = "Predicted Wumpus"
+                elif TileCondition.PREDICTED_PIT in list(grid[y][x]):
+                    g[y][x] = 0.6
+                    b[y][x] = "Predicted Pit"
+                elif TileCondition.BREEZE in list(grid[y][x]) and TileCondition.STENCH in list(grid[y][x]):
+                    g[y][x] = 0.7
+                    b[y][x] = "Breeze and Stench"
+                elif TileCondition.BREEZE in list(grid[y][x]):
+                    g[y][x] = 0.8
+                    b[y][x] = "Breeze"
+                elif TileCondition.STENCH in list(grid[y][x]):
+                    g[y][x] = 0.9
+                    b[y][x] = "Stench"
+                elif TileCondition.SAFE in list(grid[y][x]):
+                    g[y][x] = 1.0
+                    b[y][x] = "Path"
+                else:
+                    g[y][x] = 0.1
+                    b[y][x] = 'Unknown'
+
+        return g, b
+
+    SCALINGFACTOR = 7
+    data, txt = convertGrid(grid)
+
+    plt = make_subplots(specs=[[{"secondary_y": True}]])
+
+    cmap = [[0., 'black'], [0.05, 'black'], [0.05, 'grey'], [0.1, 'grey'], [0.1, 'darkred'], [0.2, 'darkred'],
+            [0.2, 'yellow'], [0.3, 'yellow'], [0.3, 'blue'], [0.4, 'blue'], [0.4, 'red'], [0.5, 'red'],
+            [0.5, 'turquoise'], [0.6, 'turquoise'], [0.6, 'green'], [0.7, 'green'], [0.7, 'lightblue'],
+            [0.8, 'lightblue'],
+            [0.8, 'lightgreen'], [0.9, 'lightgreen'], [0.9, 'white'], [1., 'white']]
+    plt.add_trace(go.Heatmap(name="",
+                             z=data,
+                             text=txt,
+                             colorscale=cmap,
+                             showscale=False,
+                             hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"), )
+
+    plt.add_trace(go.Scatter(
+        mode="markers",
+        x=[agent.position[0]],
+        y=[agent.position[1]],
+        text=[f"{agent.name} : {agent.role.name}"],
+        hovertemplate="%{text}",
+        name=""
+    ))
+
+    plt.update_xaxes(dict(fixedrange=True, showgrid=False))
+    plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
+
+    plt.update_layout(dict(autosize=False, width=width * SCALINGFACTOR, height=height * SCALINGFACTOR))
+
+    return plt

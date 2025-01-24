@@ -297,9 +297,11 @@ class Agent:
         def _heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
             end_row, end_col = end
             # unbekannte Tiles haben schlechteren heuristischen Wert, weil unklar ist, ob der Weg nutzbar ist
-            if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
-                return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
+            #if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
+            #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
+
+        name = self.__name
 
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
@@ -390,8 +392,12 @@ class Agent:
         max_utility = None
         next_move = None
         calc_tiles = set()
+
+        name = self.__name
+
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                        TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
+
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
