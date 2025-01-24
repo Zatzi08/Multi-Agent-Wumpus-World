@@ -35,10 +35,10 @@ class _Map:
             self.__map[map_width - 1][y].add(TileCondition.WALL)
 
     def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
+        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
+
         if TileCondition.WALL in self.__map[x][y]:
             return
-
-        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
         for position in SURROUNDING_TILES:
             if self.__map[x + position[0]][y + position[1]]:
@@ -49,6 +49,8 @@ class _Map:
         self.__map[x][y].add(condition)
         self.__tiles_by_tile_condition[condition.value].add((x, y))
         self.__update_closest_unknown_tiles_using_new_tile(x, y)
+        if condition == TileCondition.WALL and (x, y) in self.__closest_unvisited_tiles:
+            self.__closest_unvisited_tiles.discard((x, y))
 
     def tile_has_condition(self, x: int, y: int, condition: TileCondition) -> bool:
         return condition in self.__map[x][y]
