@@ -390,7 +390,8 @@ class Agent:
         max_utility = None
         next_move = None
         calc_tiles = set()
-
+        avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
+                       TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
@@ -400,10 +401,14 @@ class Agent:
                     calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
+                    avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+                    avoid_tiles.remove(TileCondition.WUMPUS)
                     for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
                                       TileCondition.SHINY]:
                         calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                 case AgentRole.HUNTER:
+                    avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+                    avoid_tiles.remove(TileCondition.WUMPUS)
                     for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
                         calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                 case AgentRole.BWL_STUDENT:
@@ -419,20 +424,33 @@ class Agent:
             # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
             if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
+            risk = False
+            for state in avoid_tiles:
+                if state in self.__knowledge.get_conditions_of_tile(row,col):
+                    risk = True
+                    break
+            if risk:
+                continue
             move, utility = self.a_search((row, col))
             if move is None:
                 continue
             if utility > best_utility[move]:
                 best_utility[move] = utility
 
+        multiple_max_utility = []
         # get best move
         for move in best_utility.keys():
             if max_utility is None or best_utility[move] > max_utility:
+                multiple_max_utility = [move]
                 next_move = move
                 max_utility = best_utility[move]
-        if max_utility < 0:
-            next_move = AgentAction.SHOUT
+                continue
+            if best_utility[move] == max_utility:
+                multiple_max_utility.append(move)
 
+        if max_utility < 0:
+            return AgentAction.SHOUT
+        if len(multiple_max_utility)  == 1:
         #print(f"{self.__name} {next_move} {max_utility}")
         return next_move
 
