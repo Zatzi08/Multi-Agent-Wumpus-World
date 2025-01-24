@@ -312,7 +312,7 @@ class Agent:
 
         steps = 1
         neighbours = [[pos_row + row, pos_col + col, move] for row, col, move in
-                      [[0, 1, AgentAction.MOVE_RIGHT], [1, 0, AgentAction.MOVE_UP], [0, -1, AgentAction.MOVE_LEFT], [-1, 0, AgentAction.MOVE_DOWN]]]
+                      [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN], [-1, 0, AgentAction.MOVE_LEFT]]]
 
         # avoid certain tilestates if it's a direct neighbour
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
