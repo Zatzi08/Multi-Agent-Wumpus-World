@@ -26,6 +26,18 @@ class Simulator:
             self.__agents[i] = SimulatedAgent(i, role, spawn_position, map_width, map_height, self.__replenish_time,
                                               self.__grid)
         self.__grid.add_agents(self.__agents)
+        self.__spread_knowledge()
+
+    def __spread_knowledge(self):
+        # give every agent knowledge about their status and the tile they are on
+        for agent in self.__agents.values():
+            conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent.name].position[0],
+                                                                              self.__agents[agent.name].position[1])
+            self.__agents[agent.name].agent.receive_tile_information(self.__agents[agent.name].position, conditions,
+                                                                     self.__agents[agent.name].health,
+                                                                     self.__agents[agent.name].items,
+                                                                     self.__agents[agent.name].available_item_space,
+                                                                     self.__current_step)
 
     def __agent_move_action(self, agent: int, x: int, y: int):
         if TileCondition.WALL in self.__grid.get_tile_conditions(x, y):
@@ -63,7 +75,6 @@ class Simulator:
 
     def simulate_next_step(self, view: int):
         print("\nstep:", self.__current_step)
-        current_step = self.__current_step
         if self.__current_step == self.__number_of_simulation_steps:
             return
         self.__current_step += 1
@@ -73,16 +84,7 @@ class Simulator:
             for agent in self.__agents.values():
                 self.__agents[agent.name].replenish()
 
-        # give every agent knowledge about their status and the tile they are on
-        for agent in self.__agents.values():
-            conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent.name].position[0],
-                                                                              self.__agents[agent.name].position[1])
-            name = agent.name
-            self.__agents[agent.name].agent.receive_tile_information(self.__agents[agent.name].position, conditions,
-                                                                     self.__agents[agent.name].health,
-                                                                     self.__agents[agent.name].items,
-                                                                     self.__agents[agent.name].available_item_space,
-                                                                     self.__current_step)
+        self.__spread_knowledge()
 
         # give every agent the possibility to establish communication
         """for agent in self.__agents.values():
@@ -95,11 +97,8 @@ class Simulator:
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())
         for agent in agent_list:
-            name = self.__agents[agent].name
-            if name == 3 and current_step == 5:
-                print(self.__agents[agent].agent.get_map()[self.__agents[agent].position[1]][self.__agents[agent].position[0]])
             action: AgentAction = self.__agents[agent].agent.get_next_action()
-            print(name, action.name)
+            print(agent, action.name)
             x: int = self.__agents[agent].position[0]
             y: int = self.__agents[agent].position[1]
             match action:
@@ -112,7 +111,8 @@ class Simulator:
                 case AgentAction.MOVE_LEFT:
                     self.__agent_move_action(self.__agents[agent].name, x - 1, y)
                 case AgentAction.PICK_UP:
-                    if self.__agents[agent].available_item_space > 0 and TileCondition.SHINY in self.__grid.get_tile_conditions(x, y):
+                    if (self.__agents[agent].available_item_space > 0
+                            and TileCondition.SHINY in self.__grid.get_tile_conditions(x, y)):
                         self.__agents[agent].items[AgentItem.GOLD.value] += 1
                         self.__agents[agent].available_item_space -= 1
                         self.__grid.delete_condition(x, y, TileCondition.SHINY)
@@ -125,7 +125,8 @@ class Simulator:
                 case AgentAction.SHOOT_LEFT:
                     self.__agent_shoot_action(self.__agents[agent].name, x - 1, y)
                 case AgentAction.SHOUT:
-                    names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent].name, 3)
+                    names_of_agents_in_proximity: list[int]\
+                        = self.__grid.get_agents_in_reach(self.__agents[agent].name, 3)
                     for name in names_of_agents_in_proximity:
                         self.__agents[name].agent.receive_shout_action_information(x, y)
 
