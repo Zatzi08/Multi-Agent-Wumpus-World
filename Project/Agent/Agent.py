@@ -331,6 +331,7 @@ class Agent:
         queue = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
+        visited_map[pos[1]][pos[2]] = True
         steps += 1
 
         # pos: [heuristik, x,y,next_move]
@@ -355,13 +356,15 @@ class Agent:
 
             # add non "game over" fields
             for tile in new_field:
-                heapq.heappush(queue, tile)
+                if not visited_map[tile[1]][tile[2]]:
+                    heapq.heappush(queue, tile)
 
             # Abbruchbedingung: kein Weg gefunden
             if len(queue) == 0:
                 return None, -1
 
             pos = heapq.heappop(queue)
+            visited_map[pos[1]][pos[2]] = True
             steps += 1
 
         next_move = pos[3]
