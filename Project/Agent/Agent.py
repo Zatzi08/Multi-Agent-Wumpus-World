@@ -297,15 +297,15 @@ class Agent:
         def _heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
             end_row, end_col = end
             # unbekannte Tiles haben schlechteren heuristischen Wert, weil unklar ist, ob der Weg nutzbar ist
-            if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
-                return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
+            #if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
+            #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
 
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
         visited_map.fill(False)
         visited_map[pos_row][pos_col] = True
-
+        height, width = self.__utility.get_dimensions()
         # Abbruchbedingung: already on end-field
         if (pos_row, pos_col) == end:
             return None , -1
@@ -321,6 +321,8 @@ class Agent:
             avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
             avoid_tiles.remove(TileCondition.WUMPUS)
         for row, col, move in neighbours:
+            if 0 <= row <= width and 0 <= col <= height:
+                neighbours.remove([row, col, move])
             if risky_tile(row, col, self.__knowledge, avoid_tiles):
                 neighbours.remove([row, col, move])
 
@@ -337,7 +339,7 @@ class Agent:
         # pos: [heuristik, x,y,next_move]
         while (pos[1], pos[2]) != end:
             #get neighbours of pos
-            neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]]]
+            neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if 0 <= pos[1] + row <= width and 0 <= pos[2] + col <= height]
             new_field = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in
                          neighbours]
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
@@ -401,16 +403,26 @@ class Agent:
                     calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
-                    avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-                    avoid_tiles.remove(TileCondition.WUMPUS)
-                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
-                                      TileCondition.SHINY]:
-                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
+                    if self.__health > 1:
+                        avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+                        avoid_tiles.remove(TileCondition.WUMPUS)
+                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
+                                          TileCondition.SHINY]:
+                            calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
+                    else:
+                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
+                            neighbours = [(self.__position[0]+tiles[0],self.__position[1]+tiles[1]) for row,col in [(0,1),(1,0),(-1,0),(0,-1)] if len(self.__knowledge.get_conditions_of_tile(self.__position[0]+row,self.__position[1]+col)) == 0]
+                            calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.HUNTER:
-                    avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-                    avoid_tiles.remove(TileCondition.WUMPUS)
-                    for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
-                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
+                    if self.__items[AgentItem.ARROW.value] > 0:
+                        avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+                        avoid_tiles.remove(TileCondition.WUMPUS)
+                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
+                            calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
+                    else:
+                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
+                            neighbours = [(self.__position[0]+tiles[0], self.__position[1]+tiles[1]) for row,col in [(0,1),(1,0),(-1,0),(0,-1)] if len(self.__knowledge.get_conditions_of_tile(self.__position[0]+row,self.__position[1]+col)) == 0]
+                            calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.BWL_STUDENT:
                     calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
             # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
