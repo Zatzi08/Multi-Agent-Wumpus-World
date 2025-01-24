@@ -424,12 +424,7 @@ class Agent:
             # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
             if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
                 continue
-            risk = False
-            for state in avoid_tiles:
-                if state in self.__knowledge.get_conditions_of_tile(row,col):
-                    risk = True
-                    break
-            if risk:
+            if risky_tile(row, col, self.__knowledge, avoid_tiles):
                 continue
             move, utility = self.a_search((row, col))
             if move is None:
