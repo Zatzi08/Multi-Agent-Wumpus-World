@@ -35,10 +35,10 @@ class _Map:
             self.__map[map_width - 1][y].add(TileCondition.WALL)
 
     def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
+        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
+
         if TileCondition.WALL in self.__map[x][y]:
             return
-
-        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
         for position in SURROUNDING_TILES:
             if self.__map[x + position[0]][y + position[1]]:
@@ -49,6 +49,8 @@ class _Map:
         self.__map[x][y].add(condition)
         self.__tiles_by_tile_condition[condition.value].add((x, y))
         self.__update_closest_unknown_tiles_using_new_tile(x, y)
+        if condition == TileCondition.WALL and (x, y) in self.__closest_unvisited_tiles:
+            self.__closest_unvisited_tiles.discard((x, y))
 
     def tile_has_condition(self, x: int, y: int, condition: TileCondition) -> bool:
         return condition in self.__map[x][y]
@@ -56,6 +58,9 @@ class _Map:
     def remove_condition_from_tile(self, x: int, y: int, condition: TileCondition) -> None:
         self.__map[x][y].discard(condition)
         self.__tiles_by_tile_condition[condition.value].discard((x, y))
+
+        if condition == TileCondition.WALL or condition == TileCondition.PIT or condition == TileCondition.SAFE:
+            raise ValueError("Knowledge base is trying to remove a WALL/PIT/SAFE condition.")
 
     def get_conditions_of_tile(self, x: int, y: int) -> set[TileCondition]:
         return self.__map[x][y]
@@ -120,6 +125,7 @@ class KnowledgeBase:
         #
 
         self.__map: _Map = _Map(position, map_width, map_height)
+        self.__surrounding_danger_count: dict[tuple[int, int, TileCondition], int] = {}
 
     #
     # POSITION
@@ -228,16 +234,19 @@ class KnowledgeBase:
             real_danger = TileCondition.PIT
 
         # predict surrounding dangers
-        count = 0
+        self.__surrounding_danger_count[(x, y, tile_condition)] = 0
         for position in SURROUNDING_TILES:
             # count if surrounding tile could be (or is) wumpus
             if self.__predict(x + position[0], y + position[1], predicted_danger):
-                count += 1
-        if count == 0:
+                self.__surrounding_danger_count[(x, y, tile_condition)] += 1
+        if self.__surrounding_danger_count[(x, y, tile_condition)] == 0:
             # for breezes there cannot be 0
+            if predicted_danger == TileCondition.BREEZE:
+                raise ValueError(f"Knowledge base is trying to remove a breeze.")
             # for stenches: remove if 0 (stench cannot be there anymore)
             self.__map.remove_condition_from_tile(x, y, TileCondition.STENCH)
-        elif count == 1:
+            del self.__surrounding_danger_count[(x, y, tile_condition)]
+        elif self.__surrounding_danger_count[(x, y, tile_condition)] == 1:
             # resolve, as predicted danger is real (prediction is correct)
             for position in SURROUNDING_TILES:
                 if self.__map.tile_has_condition(x + position[0], y + position[1], predicted_danger):
@@ -248,27 +257,37 @@ class KnowledgeBase:
 
     def __discard_and_re_predict(self, x: int, y: int, tile_condition: TileCondition) -> None:
         """discards (predicted) dangers, then re-evaluates stenches and danger predictions accordingly"""
+        if not self.__map.tile_has_condition(x, y, tile_condition):
+            return
 
-        # check for allowed tile_condition values
-        if tile_condition not in {TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS, TileCondition.PREDICTED_PIT}:
+        # check for allowed tile conditions
+        if tile_condition == TileCondition.PREDICTED_PIT:
+            prediction_condition = TileCondition.BREEZE
+            predicted_danger = TileCondition.PREDICTED_PIT
+            real_danger = TileCondition.PIT
+        elif tile_condition == TileCondition.PREDICTED_WUMPUS or tile_condition == TileCondition.WUMPUS:
+            prediction_condition = TileCondition.STENCH
+            predicted_danger = TileCondition.PREDICTED_WUMPUS
+            real_danger = TileCondition.WUMPUS
+        else:
             raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, "
                              f"{TileCondition.WUMPUS}, and {TileCondition.PREDICTED_PIT}.")
 
-        if self.__map.tile_has_condition(x, y, tile_condition):
-            # discard danger
-            self.__map.remove_condition_from_tile(x, y, tile_condition)
+        # discard danger
+        self.__map.remove_condition_from_tile(x, y, tile_condition)
 
-            # get tile condition to re-predict
-            if tile_condition == TileCondition.PREDICTED_PIT:
-                prediction_condition = TileCondition.BREEZE
-            else:
-                prediction_condition = TileCondition.STENCH
-
-            # (if possible) remove or re-predict surroundings
-            for position in SURROUNDING_TILES:
-                if self.__map.tile_has_condition(x + position[0], y + position[1], prediction_condition):
-                    self.__map.remove_condition_from_tile(x + position[0], y + position[1], prediction_condition)
-                    self.__add_stench_or_breeze(x + position[0], y + position[1], prediction_condition)
+        # (if possible) remove or re-predict surroundings
+        for inner_tile in SURROUNDING_TILES:
+            if self.__map.tile_has_condition(x + inner_tile[0], y + inner_tile[1], prediction_condition):
+                self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] -= 1
+                if self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 0:
+                    self.__map.remove_condition_from_tile(x + inner_tile[0], y + inner_tile[1], prediction_condition)
+                    del self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)]
+                elif self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 1:
+                    for outer_tile in {inner_tile + tile for tile in SURROUNDING_TILES}:
+                        if self.__map.tile_has_condition(x + outer_tile[0], y + outer_tile[1], predicted_danger):
+                            self.__map.remove_condition_from_tile(x + outer_tile[0], y + outer_tile[1], predicted_danger)
+                            self.update_tile(x + outer_tile[0], y + outer_tile[1], [real_danger])
 
     def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition]) -> None:
         """updates map knowledge given some knowledge about a tile"""
