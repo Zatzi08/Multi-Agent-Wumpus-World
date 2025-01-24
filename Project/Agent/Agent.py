@@ -116,6 +116,9 @@ class Agent:
     def receive_bump_information(self, x: int, y: int):
         self.__knowledge.update_tile(x, y, [TileCondition.WALL])
 
+    def receive_wumpus_scream(self, x: int, y: int):
+        self.__knowledge.update_tile(x, y, [TileCondition.SAFE])
+
     def receive_gold_position(self, x: int, y: int):
         self.__knowledge.update_tile(x, y, [TileCondition.SHINY])
 

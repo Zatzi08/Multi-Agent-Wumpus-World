@@ -46,6 +46,7 @@ class Simulator:
         elif TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             if self.__agents[agent].role == AgentRole.KNIGHT:
                 self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
+                self.__agents[agent].agent.receive_wumpus_scream(x, y)
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
                 self.__grid.delete_agent(self.__agents[agent].name)
@@ -63,6 +64,7 @@ class Simulator:
             self.__agents[agent].available_item_space += 1
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
+            self.__agents[agent].agent.receive_wumpus_scream(x, y)
 
     def get_agents(self):
         return self.__agents
@@ -71,7 +73,8 @@ class Simulator:
         if view < 0 or view >= len(self.__agents):
             return self.__grid.print_map()
         else:
-            return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height, self.__agents[view])
+            return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,
+                                    self.__agents[view])
 
     def simulate_next_step(self, view: int):
         print("\nstep:", self.__current_step)
