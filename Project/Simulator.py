@@ -2,7 +2,7 @@ from Project.Environment.Map import Map, print_random_map
 from Project.SimulatedAgent import SimulatedAgent
 from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
 from Project.Knowledge.KnowledgeBase import TileCondition
-from Project.communication.protocol import CommunicationChannel
+from Project.communication.protocol import CommunicationChannel, OfferedObjects
 import random
 
 random.seed()
@@ -75,6 +75,45 @@ class Simulator:
         else:
             return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,
                                     self.__agents[view])
+
+
+    def apply_changes(self, sender: int, receiver: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
+        """applies all changes to the associated agents after a successful communication process"""
+        sim_agents = self.get_agents()
+
+        # prepare to change simulated agents
+        sim_sender = sim_agents[sender]
+        sim_receiver = sim_agents[receiver]
+
+        # prepare to change agents
+        sender = sim_sender.agent
+        receiver = sim_receiver.agent
+
+        # changes in simulated agents
+        if receiver_offer.gold_amount != 0:
+            sim_sender.items[AgentItem.ARROW.value] += receiver_offer.gold_amount
+            sender.set_items(receiver_offer.gold_amount, 0)
+
+        if sender_offer.gold_amount != 0:
+            sim_receiver.items[AgentItem.ARROW.value] += sender_offer.gold_amount
+            receiver.set_items(sender_offer.gold_amount, 0)
+
+        if receiver_offer.tile_information is not []:
+            for (x, y, conditions) in sender_offer.tile_information:
+                sender.receive_tiles_with_condition((x, y), conditions)
+
+        if sender_offer.tile_information is not []:
+            for (x, y, conditions) in receiver_offer.tile_information:
+                receiver.receive_tiles_with_condition((x, y), conditions)
+
+        if receiver_offer.wumpus_positions is not []:
+            for (x, y) in sender_offer.wumpus_positions:
+                sender.get_knowledgeBase().add_kill_wumpus_task(x, y)
+
+        if sender_offer.wumpus_positions is not []:
+            for (x, y) in receiver_offer.wumpus_positions:
+                receiver.get_knowledgeBase().add_kill_wumpus_task(x, y)
+
 
     def simulate_next_step(self, view: int):
         print("\nstep:", self.__current_step)

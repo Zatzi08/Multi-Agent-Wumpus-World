@@ -122,13 +122,19 @@ class Agent:
     def receive_gold_position(self, x: int, y: int):
         self.__knowledge.update_tile(x, y, [TileCondition.SHINY])
 
-    def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: TileCondition) -> None:
+    def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: list[TileCondition]) -> None:
         for tile in tiles:
             self.__knowledge.update_tile(tile[0], tile[1], [condition])
 
     def get_map(self) -> list[list[set[TileCondition]]]:
         return self.__knowledge.return_map()
 
+    def set_items(self, gold_amount: int, arrow_amount: int):
+        self.__items[AgentItem.GOLD.value] += gold_amount
+        self.__items[AgentItem.ARROW.value] += arrow_amount
+
+    def get_knowledgeBase(self) -> KnowledgeBase:
+        return self.__knowledge
     #
     # communication
     #
@@ -293,10 +299,6 @@ class Agent:
         # TODO: decision making for offers
 
         return ResponseType.ACCEPT, None, None
-
-    def apply_changes(self, sender, receiver, request, offer):
-        #TODO: match case was für ein request/offer das hier ist und apply auf self.sender und self.receiver
-        pass
 
     #
     # utility
