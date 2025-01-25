@@ -492,9 +492,6 @@ class Agent:
 
         name = self.__name
 
-        avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
-                       TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
-
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
@@ -505,8 +502,6 @@ class Agent:
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
                     if self.__health > 1:
-                        avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-                        avoid_tiles.remove(TileCondition.WUMPUS)
                         for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
                                           TileCondition.SHINY]:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
@@ -519,8 +514,6 @@ class Agent:
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.HUNTER:
                     if self.__items[AgentItem.ARROW.value] > 0:
-                        avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-                        avoid_tiles.remove(TileCondition.WUMPUS)
                         for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
