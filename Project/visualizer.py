@@ -5,7 +5,7 @@ from Project.SimulatedAgent import SimulatedAgent
 
 app = Dash()
 agent = -1
-simulator = Simulator(120, 120, 12, 200)
+simulator = Simulator(120, 120, 12, 2000)
 agents = simulator.get_agents()
 
 @callback(
@@ -16,7 +16,9 @@ agents = simulator.get_agents()
     prevent_initial_call=True
 )
 def update_graph(n_clicks, agent, value):
-    print("Update!", n_clicks, value, agent)
+    if agent is None:
+        agent = -1
+    print("\nUpdate!", n_clicks, value, agent)
     plt = simulator.simulate_next_step(agent)
     for _ in range(value-1):
         plt = simulator.simulate_next_step(agent)

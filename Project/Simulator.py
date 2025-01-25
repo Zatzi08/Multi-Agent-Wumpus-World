@@ -70,7 +70,7 @@ class Simulator:
         return self.__agents
 
     def print_map(self, view):
-        if view < 0 or view >= len(self.__agents):
+        if view not in self.__agents.keys():
             return self.__grid.print_map()
         else:
             return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,

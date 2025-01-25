@@ -262,7 +262,7 @@ class Agent:
             # reduce/remove acceptable tiles
             if current_diff_utility < self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR:
                 reduced_amount = int(len(request_acceptable_subset) * current_diff_utility / (
-                            self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR))
+                        self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR))
                 request_tiles = request_tiles.difference(set(list(request_acceptable_subset)[reduced_amount:]))
                 return OfferedObjects(offer.off_gold, offer.off_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold, request_tiles,
@@ -307,9 +307,8 @@ class Agent:
     # Funktion: shortes path berechnen
     # Ausgabe: (move: AgentAction, utility: float)
     def new_a_search(self, goal_tiles):
-        def get_heuristik(pos_row, pos_col, steps,goal_tiles):
-            return steps + min([abs(pos_row-row)+abs(pos_col+col) for row,col in goal_tiles])
-
+        def get_heuristik(pos_row, pos_col, steps, goal_tiles):
+            return steps + min([abs(pos_row - row) + abs(pos_col - col) for row, col in goal_tiles])
 
         name = self.__name
 
@@ -333,8 +332,8 @@ class Agent:
         if self.__role == AgentRole.KNIGHT and self.__health > 1:
             avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
             avoid_tiles.remove(TileCondition.WUMPUS)
-        for row, col, move in neighbours:
-            if 0 <= row <= width and 0 <= col <= height:
+        for row, col, move in neighbours.copy():
+            if not (0 <= row < width and 0 <= col < height):
                 neighbours.remove([row, col, move])
                 continue
             if risky_tile(row, col, self.__knowledge, avoid_tiles):
@@ -344,18 +343,18 @@ class Agent:
         if len(neighbours) == 0:
             return AgentAction.SHOUT
 
-        queue = [[get_heuristik(row,col,steps,goal_tiles), row, col, move] for row, col, move in neighbours]
+        queue = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in neighbours]
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
         visited_map[pos[1]][pos[2]] = True
         steps += 1
 
         # pos: [heuristik, x,y,next_move]
-        while (pos[1], pos[2]) in goal_tiles:
+        while (pos[1], pos[2]) not in goal_tiles:
             #get neighbours of pos
             neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if
-                          0 <= pos[1] + row <= width and 0 <= pos[2] + col <= height]
-            new_field = [[get_heuristik(row,col,steps,goal_tiles), row, col, move] for row, col, move in
+                          0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
+            new_field = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in
                          neighbours]
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
@@ -395,7 +394,6 @@ class Agent:
             #if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
             #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
-
 
         name = self.__name
 
