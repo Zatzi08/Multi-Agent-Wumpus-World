@@ -129,6 +129,7 @@ class KnowledgeBase:
 
         self.__map: _Map = _Map(position, map_width, map_height)
         self.__surrounding_danger_count: dict[tuple[int, int, TileCondition], int] = {}
+        self.__found_wumpus: set[tuple[int, int]] = set()
 
     #
     # POSITION
@@ -160,6 +161,10 @@ class KnowledgeBase:
         if tile_condition == TileCondition.PREDICTED_PIT:
             surrounding_tiles_condition = TileCondition.BREEZE
         else:
+            # wumpus or predicted wumpus -> return if there is/was a wumpus already on surrounding tiles
+            for tile in SURROUNDING_TILES:
+                if (x + tile[0], y + tile[1]) in self.__found_wumpus:
+                    return False
             surrounding_tiles_condition = TileCondition.STENCH
 
         # check if all surrounding tiles fulfill the test condition
@@ -174,6 +179,10 @@ class KnowledgeBase:
             count += 1
         if count == 4:
             self.__map.add_condition_to_tile(x, y, tile_condition)
+            if tile_condition == TileCondition.WUMPUS:
+                self.__found_wumpus.add((x, y))
+                for tile in SURROUNDING_TILES:
+                    self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
             return True
         return False
 
@@ -191,9 +200,13 @@ class KnowledgeBase:
 
         # get check parameters
         if tile_condition == TileCondition.PREDICTED_PIT:
+            if self.__map.tile_has_condition(x, y, TileCondition.BREEZE):
+                return False
             tile_check_1 = TileCondition.PIT
             tile_check_2 = TileCondition.WUMPUS
         else:
+            if self.__map.tile_has_condition(x, y, TileCondition.STENCH):
+                return False
             tile_check_1 = TileCondition.WUMPUS
             tile_check_2 = TileCondition.PIT
 
@@ -232,9 +245,13 @@ class KnowledgeBase:
         if tile_condition == TileCondition.STENCH:
             predicted_danger = TileCondition.PREDICTED_WUMPUS
             real_danger = TileCondition.WUMPUS
+            # remove predicted wumpus as it cannot be on stench (no 2 wumpus can be next to each other)
+            self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_WUMPUS)
         else:
             predicted_danger = TileCondition.PREDICTED_PIT
             real_danger = TileCondition.PIT
+            # remove predicted pit as it cannot be on breeze (no 2 pits can be next to each other)
+            self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_PIT)
 
         # predict surrounding dangers
         self.__surrounding_danger_count[(x, y, tile_condition)] = 0
@@ -296,14 +313,14 @@ class KnowledgeBase:
     def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition], from_simulator: bool = False)\
             -> None:
         """updates map knowledge given some knowledge about a tile"""
-        # developer has to make sure that all (missing) tile conditions are listed on visit
         if from_simulator:
             if (x, y) == self.__position:
                 if not self.__map.visited(x, y):
                     self.__map.set_visited(x, y)
                 self.__map.remove_shout(x, y)
 
-            if self.__map.tile_has_condition(x, y, TileCondition.STENCH) and TileCondition.STENCH not in tile_conditions:
+            if (self.__map.tile_has_condition(x, y, TileCondition.STENCH)
+                    and TileCondition.STENCH not in tile_conditions):
                 self.__map.remove_condition_from_tile(x, y, TileCondition.STENCH)
                 for tile in SURROUNDING_TILES:
                     self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
@@ -342,6 +359,8 @@ class KnowledgeBase:
                     # Shiny[y][x] => Safe[y][x]
                     self.update_tile(x, y, [TileCondition.SAFE])
                 case TileCondition.WUMPUS:
+                    # no lying
+                    self.__found_wumpus.add((x, y))
                     # if tile is safe already, wumpus is already gone
                     if self.__map.tile_has_condition(x, y, TileCondition.SAFE):
                         continue
@@ -378,6 +397,10 @@ class KnowledgeBase:
 
                     # add
                     self.__map.add_condition_to_tile(x, y, TileCondition.PIT)
+
+                    # remove predicted pits around pit (no two pits can be next to one another)
+                    for tile in SURROUNDING_TILES:
+                        self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_PIT)
 
                     # place breezes around pit
                     for position in SURROUNDING_TILES:
