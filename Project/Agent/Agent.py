@@ -304,6 +304,87 @@ class Agent:
 
     # Funktion: shortes path berechnen
     # Ausgabe: (move: AgentAction, utility: float)
+    def new_a_search(self, goal_tiles):
+        def get_heuristik(pos_row, pos_col, steps,goal_tiles):
+            return steps + min([abs(pos_row-row)+abs(pos_col+col) for row,col in goal_tiles])
+
+
+        name = self.__name
+
+        pos_row, pos_col = self.__position
+        visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
+        visited_map.fill(False)
+        visited_map[pos_row][pos_col] = True
+        height, width = self.__utility.get_dimensions()
+
+        if self.__position in goal_tiles:
+            goal_tiles.remove(self.__position)
+
+        steps = 1
+        neighbours = [[pos_row + row, pos_col + col, move] for row, col, move in
+                      [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
+                       [-1, 0, AgentAction.MOVE_LEFT]]]
+
+        # avoid certain tilestates if it's a direct neighbour
+        avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
+                       TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
+        if self.__role == AgentRole.KNIGHT and self.__health > 1:
+            avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+            avoid_tiles.remove(TileCondition.WUMPUS)
+        for row, col, move in neighbours:
+            if 0 <= row <= width and 0 <= col <= height:
+                neighbours.remove([row, col, move])
+                continue
+            if risky_tile(row, col, self.__knowledge, avoid_tiles):
+                neighbours.remove([row, col, move])
+
+        # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
+        if len(neighbours) == 0:
+            return AgentAction.SHOUT
+
+        queue = [[get_heuristik(row,col,steps,goal_tiles), row, col, move] for row, col, move in neighbours]
+        heapq.heapify(queue)
+        pos = heapq.heappop(queue)
+        visited_map[pos[1]][pos[2]] = True
+        steps += 1
+
+        # pos: [heuristik, x,y,next_move]
+        while (pos[1], pos[2]) in goal_tiles:
+            #get neighbours of pos
+            neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if
+                          0 <= pos[1] + row <= width and 0 <= pos[2] + col <= height]
+            new_field = [[get_heuristik(row,col,steps,goal_tiles), row, col, move] for row, col, move in
+                         neighbours]
+            avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
+                           TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
+
+            # remove fields with "game over" tile states
+            # different avoid tiles as soon as it's not a direct neighbour of position
+            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
+                avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+                avoid_tiles.remove(TileCondition.WUMPUS)
+            elif self.__role == AgentRole.HUNTER and (
+                    self.__items[AgentItem.ARROW.value] > 0 or steps > REPLENISH_TIME):
+                avoid_tiles.remove(TileCondition.WUMPUS)
+            for heuristik, row, col, move in new_field:
+                if risky_tile(row, col, self.__knowledge, avoid_tiles):
+                    new_field.remove([heuristik, row, col, move])
+
+            # add non "game over" fields
+            for tile in new_field:
+                if not visited_map[tile[1]][tile[2]]:
+                    heapq.heappush(queue, tile)
+
+            # Abbruchbedingung: kein Weg gefunden
+            if len(queue) == 0:
+                return AgentAction.SHOUT
+
+            pos = heapq.heappop(queue)
+            visited_map[pos[1]][pos[2]] = True
+            steps += 1
+
+        return pos[3]
+
     def a_search(self, end):
 
         def _heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
@@ -312,6 +393,7 @@ class Agent:
             #if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
             #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
             return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
+
 
         name = self.__name
 
@@ -406,10 +488,6 @@ class Agent:
     # Funktion: Ermittle Rangordnung der nächstmöglichen moves
     # Ausgabe: (next_move: Agent_Action, best_utility: dict)
     def get_movement(self):
-        best_utility = {AgentAction.MOVE_RIGHT: -1, AgentAction.MOVE_LEFT: -1, AgentAction.MOVE_UP: -1,
-                        AgentAction.MOVE_DOWN: -1}
-        max_utility = None
-        next_move = None
         calc_tiles = set()
 
         name = self.__name
@@ -460,36 +538,7 @@ class Agent:
                 calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
 
         #print(f"{self.__name} {calc_tiles}")
-
-        for row, col in calc_tiles:
-            # nur Stench-Tiles sollen mehrfach besucht werden können (Herausfinden ob Wumpus getötet wurde)
-            #print(f"{row}, {col}")
-            if self.__knowledge.visited(row, col) and not self.__knowledge.tile_has_condition(row, col, TileCondition.STENCH):
-                continue
-            if risky_tile(row, col, self.__knowledge, avoid_tiles):
-                continue
-            move, utility = self.a_search((row, col))
-            if move is None:
-                continue
-            if utility > best_utility[move]:
-                best_utility[move] = utility
-
-        multiple_max_utility = []
-        # get best move
-        for move in best_utility.keys():
-            if max_utility is None or best_utility[move] > max_utility:
-                multiple_max_utility = [move]
-                next_move = move
-                max_utility = best_utility[move]
-                continue
-            if best_utility[move] == max_utility:
-                multiple_max_utility.append(move)
-
-        if max_utility < 0:
-            return AgentAction.SHOUT
-        return random.choice(multiple_max_utility)
-        #print(f"{self.__name} {next_move} {max_utility}")
-        return next_move
+        return self.new_a_search(calc_tiles)
 
     # Funktion: Ermittle utility einer Menge von Feldern
     #  utility of unknown fields --> Erwartungswert
