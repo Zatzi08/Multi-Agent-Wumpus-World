@@ -274,7 +274,19 @@ class Agent:
     # Ausgabe: (move: AgentAction, utility: float)
     def new_a_search(self, goal_tiles):
         def get_heuristik(pos_row, pos_col, steps, goal_tiles):
-            return steps + min([abs(pos_row - row) + abs(pos_col - col) for row, col in goal_tiles])
+            best_heuristik, heuristik = None, None
+            for row, col in goal_tiles:
+                utility = None
+                if len(self.__knowledge.get_conditions_of_tile(pos_row + row, pos_col + col)) == 0:
+                    utility = self.__utility.get_utility_of_condition(-1)
+                else:
+                    for condition in self.__knowledge.get_conditions_of_tile(pos_row + row, pos_col + col):
+                        if utility is None or utility < self.__utility.get_utility_of_condition(condition):
+                            utility = self.__utility.get_utility_of_condition(condition)
+                heuristik = (steps + abs(pos_row - row) + abs(pos_col - col)) / utility
+                if best_heuristik is None or best_heuristik < utility:
+                    best_heuristik = heuristik
+            return heuristik
 
         name = self.__name
 
@@ -320,8 +332,7 @@ class Agent:
             #get neighbours of pos
             neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if
                           0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
-            new_field = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in
-                         neighbours]
+
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
 
@@ -333,10 +344,12 @@ class Agent:
             elif self.__role == AgentRole.HUNTER and (
                     self.__items[AgentItem.ARROW.value] > 0 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.WUMPUS)
-            for heuristik, row, col, move in new_field:
+            for row, col, move in neighbours:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
-                    new_field.remove([heuristik, row, col, move])
+                    neighbours.remove([row, col, move])
 
+            new_field = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in
+                         neighbours]
             # add non "game over" fields
             for tile in new_field:
                 if not visited_map[tile[1]][tile[2]]:
