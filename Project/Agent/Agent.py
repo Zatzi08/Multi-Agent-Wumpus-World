@@ -568,6 +568,15 @@ class Agent:
         # desired tiles und acceptable_tiles dürfen keine Schnittmenge haben, da Funktionen unter der Annahme arbeiten
         return set(acceptable_tiles).difference(desired_tiles)
 
+    def knowledge_tiles(self):
+        knowledge_tiles = set()
+        for condition in TileCondition:
+            tiles = self.__knowledge.get_tiles_by_condition(condition)
+            if len(tiles) > 0:
+                knowledge_tiles = knowledge_tiles.union(tiles)
+        return knowledge_tiles
+
+
     # get: Agent der Funktion ausführt bekommt (give trivial)
     # Überlegung:
     #   Abbruchbedingungen: Es wird etwas angefragt, was der Agent nicht hat
@@ -617,19 +626,14 @@ class Agent:
 
     # Funktion: Ermittle, ob der Agent die eingehende Kommunikation annhemen möchte
     # Ausgabe: bool
-    def accept_communication(self, get_object: RequestObject, give_object: RequestObject):
+    def accept_communication(self, communication_topic: RequestObject):
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             return False
-        match give_object:
+        match communication_topic:
             case RequestObject.KILL_WUMPUS:
                 return self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]
             case RequestObject.GOLD:
                 return self.__items[AgentItem.GOLD.value] > 0
-        match get_object:
-            case RequestObject.KILL_WUMPUS:
-                return self.__role not in [AgentRole.KNIGHT, AgentRole.HUNTER]
-            case RequestObject.GOLD:
-                return self.__available_item_space > 0
             case RequestObject.TILE_INFORMATION:
                 # Agent geht nur auf Informationsaustausch ein, wenn er keine Information über seine eigenen Ziele besitzt
                 if self.__role == AgentRole.CARTOGRAPHER:
@@ -638,9 +642,13 @@ class Agent:
                 match self.__role:
                     case AgentRole.KNIGHT:
                         goal_states = [TileCondition.WUMPUS, TileCondition.SHINY]
+                        if self.__available_item_space == 0:
+                            goal_states.remove(TileCondition.SHINY)
                     case AgentRole.HUNTER:
                         goal_states = [TileCondition.WUMPUS]
                     case AgentRole.BWL_STUDENT:
+                        if self.__available_item_space == 0:
+                            return False
                         goal_states = [TileCondition.SHINY]
                 for condition in goal_states:
                     if len(self.__knowledge.get_tiles_by_condition(condition)) > 0:
