@@ -294,14 +294,13 @@ class Agent:
             return heuristik
 
         name = self.__name
-
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
         visited_map.fill(False)
         visited_map[pos_row][pos_col] = True
         height, width = self.__utility.get_dimensions()
 
-        if self.__position in goal_tiles:
+        if self.__position in goal_tiles.copy():
             goal_tiles.remove(self.__position)
 
         steps = 1
@@ -388,7 +387,10 @@ class Agent:
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
                     if self.__health > 1:
-                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]:
+                        goal_states = [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]
+                        if self.__available_item_space == 0:
+                            goal_states.remove(TileCondition.SHINY)
+                        for condition in goal_states:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
