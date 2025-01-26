@@ -1,5 +1,5 @@
 from Project.SimulatedAgent.AgentEnums import AgentItem
-from Project.communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 
 class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
     def __init__(self, agents):
