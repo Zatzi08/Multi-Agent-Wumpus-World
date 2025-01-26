@@ -425,6 +425,7 @@ class Agent:
             max_utility, next_move = None, AgentAction.SHOUT
             for row,col, move in [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
                                   [-1, 0, AgentAction.MOVE_LEFT]]:
+                utility = None
                 if len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row, self.__position[1] + col)) == 0:
                     utility = self.__utility.get_utility_of_condition(-1)
                 else:
