@@ -264,28 +264,15 @@ class Agent:
         # req_wumpus nicht behandelt, weil anderer größere Utility davon hat als man selbst --> Reduktion von req_wumpus hilft nicht
         return None
 
-    def answer_to_offer(self, request) -> tuple[
+    def answer_to_offer(self, initiator_request: RequestedObjects) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects]:
-        response: ResponseType
-        wumpus_count = 0
-        knowledge_set: set[tuple[int, int]] = set()
-        col_count = 0
-        row_count = 0
+        response: ResponseType = ResponseType.ACCEPT
+        wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
 
-        for col in self.get_map():
-            col_count += 1
-            for row in col:
-                row_count += 1
-                knowledge_set.add(tuple(row_count, col_count))
-                if TileCondition.WUMPUS in row:
-                    wumpus_count += 1
+        accept = self.accept_communication(initiator_request)
+        offer, request = self.create_offer(self, self.desired_tiles(), self.acceptable_tiles(self, self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
 
-        accept = self.accept_communication()
-        offer, request = self.create_offer(self, self.desired_tiles(), self.acceptable_tiles(self.desired_tiles()), knowledge_set, self.__items[AgentItem.GOLD.value], wumpus_count)
-
-        if accept:
-            response = ResponseType.ACCEPT
-        else:
+        if not accept:
             response = ResponseType.DENY
 
         return response, offer, request
