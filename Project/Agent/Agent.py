@@ -344,7 +344,7 @@ class Agent:
             elif self.__role == AgentRole.HUNTER and (
                     self.__items[AgentItem.ARROW.value] > 0 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.WUMPUS)
-            for row, col, move in neighbours:
+            for row, col, move in neighbours.copy():
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
                     neighbours.remove([row, col, move])
 
@@ -410,7 +410,7 @@ class Agent:
 
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                        TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
-        if self.__role == AgentRole.KNIGHT and self.__health:
+        if self.__role == AgentRole.KNIGHT and self.__health > 1:
             avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
             avoid_tiles.remove(TileCondition.WUMPUS)
         elif self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
