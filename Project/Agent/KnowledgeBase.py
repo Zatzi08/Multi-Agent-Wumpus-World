@@ -333,6 +333,15 @@ class KnowledgeBase:
                     self.__discard_and_re_predict(x, y, TileCondition.WUMPUS)
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_WUMPUS)
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_PIT)
+
+                    if not self.__map.tile_has_condition(x, y, TileCondition.STENCH):
+                        for tile in SURROUNDING_TILES:
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.WUMPUS)
+
+                    if not self.__map.tile_has_condition(x, y, TileCondition.BREEZE):
+                        for tile in SURROUNDING_TILES:
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_PIT)
                 case TileCondition.WALL:
                     # remove predicted dangers as the tile is a wall
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_WUMPUS)
@@ -353,10 +362,6 @@ class KnowledgeBase:
                     if self.__map.tile_has_condition(x, y, TileCondition.SAFE):
                         continue
 
-                    # remove predictions as there is a resolution now
-                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_WUMPUS)
-                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_PIT)
-
                     # add, if all surrounding tiles could be stenches
                     if self.__add_condition_if_all_surrounding_tiles_allow(x, y, TileCondition.WUMPUS):
                         # wumpus added: place stenches around wumpus
@@ -372,6 +377,10 @@ class KnowledgeBase:
                                 self.__map.remove_condition_from_tile(x + position[0], y + position[1],
                                                                       TileCondition.STENCH)
                                 self.__add_stench_or_breeze(x + position[0], y + position[1], TileCondition.STENCH)
+
+                    # remove predictions as there is a resolution now
+                    self.__map.remove_condition_from_tile(x, y, TileCondition.PREDICTED_WUMPUS)
+                    self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_PIT)
                 case TileCondition.PREDICTED_WUMPUS:
                     # predict wumpus
                     self.__predict(x, y, TileCondition.PREDICTED_WUMPUS)
