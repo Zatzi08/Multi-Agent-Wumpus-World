@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import List, Union, Optional
 
-import Project.Agent.Agent as Agent
+from Project.Agent.Agent import Agent, AgentItem
 #from Project.Agent.Agent import AgentRole, TileCondition
 from Project.Environment import Map
 
 
-#from Project.SimulatedAgent import SimulatedAgent
+from Project.SimulatedAgent import SimulatedAgent
 
 
 class Performative(Enum):
@@ -143,6 +143,34 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
             print(f"The request is completed, with {best_offer} as the accepted offer")
             self.agents[receiver].agent.apply_changes(sender, receiver, next(iter(offer_answer))[1], next(iter(offer_answer))[0])
 
+    def apply_changes(self, sender_name: int, receiver_name: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
+        """applies all changes to the associated agents after a successful communication process"""
+        # prepare to change simulated agents
+        sender: SimulatedAgent = self.agents[sender_name]
+        receiver: SimulatedAgent = self.agents[receiver_name]
+
+        # changes in simulated agents
+        if receiver_offer.gold_amount != 0:
+            sender.items[AgentItem.GOLD.value] += receiver_offer.gold_amount
+
+        if sender_offer.gold_amount != 0:
+            receiver.items[AgentItem.GOLD.value] += sender_offer.gold_amount
+
+        if receiver_offer.tile_information is not []:
+            for (x, y, conditions) in sender_offer.tile_information:
+                sender.agent.receive_tile_from_communication(x, y, conditions)
+
+        if sender_offer.tile_information is not []:
+            for (x, y, conditions) in receiver_offer.tile_information:
+                receiver.agent.receive_tile_from_communication(x, y, conditions)
+
+        if receiver_offer.wumpus_positions is not []:
+            for (x, y) in sender_offer.wumpus_positions:
+                sender.agent.add_kill_wumpus_task(x, y)
+
+        if sender_offer.wumpus_positions is not []:
+            for (x, y) in receiver_offer.wumpus_positions:
+                receiver.agent.add_kill_wumpus_task(x, y)
 
 # TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
 # Eventueller Ablauf von kommunikation:

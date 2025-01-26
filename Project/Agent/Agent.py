@@ -100,15 +100,17 @@ class Agent:
     # agent knowledge
     #
 
-    def receive_tile_information(self, position: tuple[int, int], tile_conditions: list[TileCondition], health: int,
-                                 items: list[int], available_item_space: int, time: int):
+    def receive_status_from_simulator(self, position: tuple[int, int], health: int, items: list[int],
+                                      available_item_space: int, time: int):
         self.__position: tuple[int, int] = position
         self.__knowledge.update_position(self.__position)
-        self.__knowledge.update_tile(position[0], position[1], tile_conditions, True)
         self.__health = health
         self.__items = items
         self.__available_item_space = available_item_space
         self.__time = time
+
+    def receive_tile_from_simulator(self, x: int, y: int, tile_conditions: list[TileCondition]):
+        self.__knowledge.update_tile(x, y, tile_conditions, True)
 
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
@@ -122,19 +124,18 @@ class Agent:
     def receive_gold_position(self, x: int, y: int):
         self.__knowledge.update_tile(x, y, [TileCondition.SHINY])
 
-    def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: list[TileCondition]) -> None:
+    def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: TileCondition) -> None:
         for tile in tiles:
             self.__knowledge.update_tile(tile[0], tile[1], [condition])
+
+    def receive_tile_from_communication(self, x: int, y: int, conditions: list[TileCondition]) -> None:
+        self.__knowledge.update_tile(x, y, conditions)
 
     def get_map(self) -> list[list[set[TileCondition]]]:
         return self.__knowledge.return_map()
 
-    def set_items(self, gold_amount: int, arrow_amount: int):
-        self.__items[AgentItem.GOLD.value] += gold_amount
-        self.__items[AgentItem.ARROW.value] += arrow_amount
-
-    def get_knowledgeBase(self) -> KnowledgeBase:
-        return self.__knowledge
+    def add_kill_wumpus_task(self, x: int, y: int) -> None:
+        self.__knowledge.add_kill_wumpus_task(x, y)
     #
     # communication
     #
