@@ -1,8 +1,8 @@
-from Project.Environment.Map import Map, print_random_map
+from Project.Environment.Map import Map, print_agent_map
 from Project.SimulatedAgent.SimulatedAgent import SimulatedAgent
 from Project.Environment.TileCondition import TileCondition
 from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem, AgentAction
-from Project.Communication.Channel import Channel
+from Project.communication.Channel import Channel
 import random
 
 random.seed()
@@ -75,11 +75,12 @@ class Simulator:
         if view not in self.__agents.keys():
             return self.__grid.print_map()
         else:
-            return print_random_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,
+            return print_agent_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,
                                     self.__agents[view])
 
     def simulate_next_step(self, view: int):
         print("\nstep:", self.__current_step)
+        step =  self.__current_step
         if self.__current_step == self.__number_of_simulation_steps:
             return
         self.__current_step += 1

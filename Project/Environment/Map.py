@@ -27,7 +27,7 @@ class Map:
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
         self.agents = {}
-        self.info = gen.info
+        self.info = gen.get_map_info()
 
     def add_agents(self, agents):
         self.agents = agents
@@ -110,7 +110,7 @@ class Map:
             self.filled_map[y][x].remove(condition)
 
     def get_safe_tiles(self):
-        return self.info[TileCondition.SAFE.value]
+        return sorted(self.info[TileCondition.SAFE.value])
 
     def __print_base(self, grid):
         def convertGrid(grid):
@@ -180,11 +180,10 @@ class Map:
         @:return plotly
         """
 
-        SCALINGFACTOR = 7
         plt = self.__print_base(self.filled_map)
         position = dict()
         for a in self.agents.values():
-            position[a.position] = f"{position.get(a.position)}{a.name} : {a.role.name}<br>"
+            position[a.position] = f"{position.get(a.position, "")}{a.name} : {a.role.name}<br>"
         xs = []
         ys = []
         ag = []
@@ -206,12 +205,12 @@ class Map:
         plt.update_xaxes(dict(fixedrange=True, showgrid=False))
         plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
 
-        plt.update_layout(dict(autosize=False, width=self.width * SCALINGFACTOR, height=self.height * SCALINGFACTOR))
+        plt.update_layout(dict(autosize=False, width=840, height=840))
 
         return plt
 
 
-def print_random_map(grid, width, height, agent):
+def print_agent_map(grid, width, height, agent):
     def convertGrid(grid):
         g = np.ndarray((height, width), float)
         b = np.ndarray((height, width), dtype=StringDType())
@@ -254,7 +253,6 @@ def print_random_map(grid, width, height, agent):
 
         return g, b
 
-    SCALINGFACTOR = 7
     data, txt = convertGrid(grid)
 
     plt = make_subplots(specs=[[{"secondary_y": True}]])
@@ -283,6 +281,6 @@ def print_random_map(grid, width, height, agent):
     plt.update_xaxes(dict(fixedrange=True, showgrid=False))
     plt.update_yaxes(dict(fixedrange=True, showgrid=False, showline=True))
 
-    plt.update_layout(dict(autosize=False, width=width * SCALINGFACTOR, height=height * SCALINGFACTOR))
+    plt.update_layout(dict(autosize=False, width=840, height=840))
 
     return plt
