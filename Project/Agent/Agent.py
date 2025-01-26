@@ -403,13 +403,25 @@ class Agent:
         if self.__role == AgentRole.KNIGHT and self.__health:
             avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
             avoid_tiles.remove(TileCondition.WUMPUS)
-        elif self.__role == AgentRole.HUNTER and  self.__items[AgentItem.ARROW.value] > 0:
+        elif self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
             avoid_tiles.remove(TileCondition.WUMPUS)
         for tile in calc_tiles.copy():
             if risky_tile(tile[0], tile[1], self.__knowledge, avoid_tiles):
                 calc_tiles.remove(tile)
         #print(f"{self.__name} {calc_tiles}")
-        return self.new_a_search(calc_tiles)
+        if len(calc_tiles) == 0: # keine Goal-tiles --> geh zum besten Nachbarn
+            max_utility, next_move = None, AgentAction.SHOUT
+            for row,col, move in [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
+                                  [-1, 0, AgentAction.MOVE_LEFT]]:
+                utility = None
+                for condition in self.__knowledge.get_conditions_of_tile(self.__position[0] + row,self.__position[1] + col):
+                    if utility is None or utility < self.__utility.get_utility_of_condition(condition):
+                        utility = self.__utility.get_utility_of_condition(condition)
+                if max_utility is None or max_utility < utility:
+                    next_move = move
+            return next_move
+        else:
+            return self.new_a_search(calc_tiles)
 
     # Funktion: Ermittle utility einer Menge von Feldern
     #  utility of unknown fields --> Erwartungswert
