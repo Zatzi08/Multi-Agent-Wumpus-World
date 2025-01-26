@@ -2,7 +2,7 @@ from Project.Environment.Map import Map, print_agent_map
 from Project.SimulatedAgent.SimulatedAgent import SimulatedAgent
 from Project.Environment.TileCondition import TileCondition
 from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem, AgentAction
-from Project.communication.Channel import Channel
+from Project.Communication.Channel import Channel
 import random
 
 random.seed()

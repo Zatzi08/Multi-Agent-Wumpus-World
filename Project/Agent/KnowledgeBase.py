@@ -289,6 +289,8 @@ class KnowledgeBase:
             if self.__map.tile_has_condition(x + inner_tile[0], y + inner_tile[1], prediction_condition):
                 self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] -= 1
                 if self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 0:
+                    if prediction_condition == TileCondition.BREEZE:
+                        raise ValueError(f"Knowledge base is trying to remove a breeze.")
                     self.__map.remove_condition_from_tile(x + inner_tile[0], y + inner_tile[1], prediction_condition)
                     del self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)]
                 elif self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 1:
