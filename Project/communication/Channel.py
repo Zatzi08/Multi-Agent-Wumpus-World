@@ -35,7 +35,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
         for participant in self.participants:
             receiver_answers: dict[int, tuple]
             receiver_answers.update(
-                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, initiator_offer)})
+                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, requested_objects, self.agents[participant].agent.__items[AgentItem.GOLD.value], self.agents[participant].agent.__items[AgentItem.GOLD.value])})
 
         # TODO evaluate answers
         if not receiver_answers:
@@ -96,17 +96,6 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
             for (x, y) in receiver_offer.wumpus_positions:
                 self.agents[receiver].agent.add_kill_wumpus_task(x, y)
 
-# TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
-# Eventueller Ablauf von kommunikation:
-#   - Initiator initialisiert Kanal mit Sender, Receiver, Request, usw.
-#   - Kanal übernimmt kommunikation bis Ergebnis vorhanden
-#   - Kanal setzt Ergebnis um (an Agent)
-
-# wenn mehrere agenten auf einem Feld sind wird Kommunikation gestartet
-# abfragen, ob mit gleichem Agenten schonmal kommuniziert wurde
-
-
-# simulator ruft das auf, nicht utility da utility von kommunikation aufgerufen wird nicht andersrum (man kommuniziert immer)
 
 def get_best_offer(offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]], sender, best_offer, best_utility):
     if len(offer_list) >= 1:
@@ -152,6 +141,20 @@ def start_negotiation(self, receivers: list[int], initiator_offer):
 
     if best_offer:
         print(f"The negotiation has reached an agreement with offer: {best_offer.values()} from {best_offer.keys()}")
+        return best_offer
 
     else:
         print(f"The negotiation has failed")
+
+def verify_offer(self, offer: OfferedObjects, participant: int):
+
+    knowledge = self.agents[participant].__knowledge
+    for tile in offer.tile_information.copy():# copy?
+        # tile_information[2] ist eine list, get_map.. ist ein set. Wie soll ich das vergleichen? Soll ich tile_information in ein set machen?
+        if not (self.agents[participant].get_map[tile[0]][tile[1]]) and self.agents[participant].get_map[tile[0]][tile[1]] == offer.tile_information[2]:
+            offer.tile_information.remove(tile)
+
+    for tile in offer.wumpus_positions.copy():# copy?
+        # tile_information[2] ist eine list, get_map.. ist ein set. Wie soll ich das vergleichen? Soll ich tile_information in ein set machen?
+        if not (self.agents[participant].get_map[tile[0]][tile[1]]) and knowledge.get_condition_of_tile(tile[0], tile[1]) == self.agents[participant].get_map[tile[0]][tile[1]]:
+            offer.tile_information.remove(tile)
