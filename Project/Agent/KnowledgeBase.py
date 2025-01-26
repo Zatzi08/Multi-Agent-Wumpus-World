@@ -270,13 +270,13 @@ class KnowledgeBase:
 
         # check for allowed tile conditions
         if tile_condition == TileCondition.PREDICTED_PIT:
-            prediction_condition = TileCondition.BREEZE
-            predicted_danger = TileCondition.PREDICTED_PIT
-            real_danger = TileCondition.PIT
+            prediction_condition: TileCondition = TileCondition.BREEZE
+            predicted_danger: TileCondition = TileCondition.PREDICTED_PIT
+            real_danger: TileCondition = TileCondition.PIT
         elif tile_condition == TileCondition.PREDICTED_WUMPUS or tile_condition == TileCondition.WUMPUS:
-            prediction_condition = TileCondition.STENCH
-            predicted_danger = TileCondition.PREDICTED_WUMPUS
-            real_danger = TileCondition.WUMPUS
+            prediction_condition: TileCondition = TileCondition.STENCH
+            predicted_danger: TileCondition = TileCondition.PREDICTED_WUMPUS
+            real_danger: TileCondition = TileCondition.WUMPUS
         else:
             raise ValueError(f"Invalid value: {tile_condition}. Allowed: {TileCondition.PREDICTED_WUMPUS}, "
                              f"{TileCondition.WUMPUS}, and {TileCondition.PREDICTED_PIT}.")
@@ -289,14 +289,31 @@ class KnowledgeBase:
             if self.__map.tile_has_condition(x + inner_tile[0], y + inner_tile[1], prediction_condition):
                 self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] -= 1
                 if self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 0:
+                    if prediction_condition == TileCondition.BREEZE:
+                        raise ValueError(f"Knowledge base is trying to remove a breeze.")
                     self.__map.remove_condition_from_tile(x + inner_tile[0], y + inner_tile[1], prediction_condition)
                     del self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)]
                 elif self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 1:
-                    for outer_tile in {inner_tile + tile for tile in SURROUNDING_TILES}:
+                    for outer_tile in {(inner_tile[0] + tile[0], inner_tile[1] + tile[1])
+                                       for tile in SURROUNDING_TILES}:
                         if self.__map.tile_has_condition(x + outer_tile[0], y + outer_tile[1], predicted_danger):
                             self.__map.remove_condition_from_tile(x + outer_tile[0], y + outer_tile[1],
                                                                   predicted_danger)
                             self.update_tile(x + outer_tile[0], y + outer_tile[1], [real_danger])
+
+    def __place_stenches_or_breezes_around_danger(self, x: int, y: int, condition: TileCondition):
+        match condition:
+            case TileCondition.WUMPUS:
+                set_condition: TileCondition = TileCondition.STENCH
+            case TileCondition.PIT:
+                set_condition: TileCondition = TileCondition.BREEZE
+            case _:
+                raise ValueError(f"Only {TileCondition.WUMPUS} and {TileCondition.PIT} are allowed.")
+
+        for position in SURROUNDING_TILES:
+            if (self.__map.tile_has_condition(x + position[0], y + position[1], TileCondition.SAFE)
+                    or self.__map.visited(x + position[0], y + position[1])):
+                self.__add_stench_or_breeze(x + position[0], y + position[1], set_condition)
 
     def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition], from_simulator: bool = False)\
             -> None:
@@ -317,6 +334,10 @@ class KnowledgeBase:
             if self.__map.tile_has_condition(x, y, TileCondition.SHINY) and TileCondition.SHINY not in tile_conditions:
                 self.__map.remove_condition_from_tile(x, y, TileCondition.SHINY)
 
+        if TileCondition.SAFE in tile_conditions:
+            tile_conditions.remove(TileCondition.SAFE)
+            tile_conditions.append(TileCondition.SAFE)
+
         # for every condition: check for consistency and potentially add it
         for tile_condition in tile_conditions:
             # filter already known conditions
@@ -334,12 +355,12 @@ class KnowledgeBase:
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_WUMPUS)
                     self.__discard_and_re_predict(x, y, TileCondition.PREDICTED_PIT)
 
-                    if not self.__map.tile_has_condition(x, y, TileCondition.STENCH):
+                    if self.__map.visited(x, y) and not self.__map.tile_has_condition(x, y, TileCondition.STENCH):
                         for tile in SURROUNDING_TILES:
                             self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
                             self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.WUMPUS)
 
-                    if not self.__map.tile_has_condition(x, y, TileCondition.BREEZE):
+                    if self.__map.visited(x, y) and not self.__map.tile_has_condition(x, y, TileCondition.BREEZE):
                         for tile in SURROUNDING_TILES:
                             self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_PIT)
                 case TileCondition.WALL:
@@ -365,8 +386,7 @@ class KnowledgeBase:
                     # add, if all surrounding tiles could be stenches
                     if self.__add_condition_if_all_surrounding_tiles_allow(x, y, TileCondition.WUMPUS):
                         # wumpus added: place stenches around wumpus
-                        for position in SURROUNDING_TILES:
-                            self.__add_stench_or_breeze(x + position[0], y + position[1], TileCondition.STENCH)
+                        self.__place_stenches_or_breezes_around_danger(x, y, TileCondition.WUMPUS)
                     else:
                         # wumpus not added: tile must be safe now
                         self.__map.add_condition_to_tile(x, y, TileCondition.SAFE)
@@ -400,8 +420,7 @@ class KnowledgeBase:
                         self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_PIT)
 
                     # place breezes around pit
-                    for position in SURROUNDING_TILES:
-                        self.__add_stench_or_breeze(x + position[0], y + position[1], TileCondition.BREEZE)
+                    self.__place_stenches_or_breezes_around_danger(x, y, TileCondition.PIT)
                 case TileCondition.PREDICTED_PIT:
                     # predict pit
                     self.__predict(x, y, TileCondition.PREDICTED_PIT)

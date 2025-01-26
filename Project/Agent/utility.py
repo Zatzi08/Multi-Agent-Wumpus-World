@@ -1,5 +1,5 @@
 from Project.Agent import KnowledgeBase
-from Project.communication.protocol import RequestTypeObj
+from Project.Communication.protocol import RequestTypeObj
 from Project.Agent.KnowledgeBase import TileCondition
 from Project.Agent.Agent import AgentGoal
 import heapq
@@ -281,7 +281,7 @@ def utility_help_wumpus(agent):
 # bool'sche Ausgabe, ob eine Kommunikation angenommen werden soll
 def accept_communication(map_knowledge : KnowledgeBase, agent, request_type: RequestTypeObj):
     if request_type == RequestTypeObj.HELP:
-        # hunter and knight accept communication and later decide dependent on their arrows/health
+        # hunter and knight accept Communication and later decide dependent on their arrows/health
         return "wumpus" not in agent.goals
     else: # position (information exchange)
         # agent only engages in information exchange if he doesnt have a goal-tile in his knowledge

@@ -1,5 +1,5 @@
 from Project.Agent.KnowledgeBase import KnowledgeBase
-from Project.communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 from Project.Environment.TileCondition import TileCondition
 from Project.SimulatedAgent.AgentEnums import AgentGoal, AgentRole, AgentItem, AgentAction
 import heapq  # für a*-search
@@ -39,15 +39,6 @@ class Agent:
 
         pos_row, pos_col = self.__position
         height, width = self.__utility.get_dimensions()
-        # shoot wumpus
-        if self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
-            for row, col, action in [(pos_row + row, pos_col + col, action) for row, col, action in
-                                     [(1, 0, AgentAction.SHOOT_DOWN), (-1, 0, AgentAction.SHOOT_UP),
-                                      (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
-                                     0 <= pos_row + row < height and 0 <= pos_col + col < width]:
-                if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
-                    #print(f"{self.__name} {action}")
-                    return action
 
         # on gold-tile
         if self.__knowledge.tile_has_condition(pos_row, pos_col,
@@ -58,6 +49,20 @@ class Agent:
                 #print(f"{self.__name} {AgentAction.PICK_UP}")
                 return AgentAction.PICK_UP
 
+        # shoot wumpus
+        if self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
+            shoot_action = None
+            for row, col, action in [(pos_row + row, pos_col + col, action) for row, col, action in
+                                     [(1, 0, AgentAction.SHOOT_RIGHT), (-1, 0, AgentAction.SHOOT_LEFT),
+                                      (0, 1, AgentAction.SHOOT_UP), (0, -1, AgentAction.SHOOT_DOWN)] if
+                                     0 <= pos_row + row < height and 0 <= pos_col + col < width]:
+                if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
+                    #print(f"{self.__name} {action}")
+                    return action
+                if self.__knowledge.tile_has_condition(row, col, TileCondition.PREDICTED_WUMPUS):
+                    shoot_action = action
+            if shoot_action is not None:
+                return shoot_action
         # normal Bewegung ermitteln
         return self.get_movement()
 
@@ -102,7 +107,7 @@ class Agent:
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
     #
-    # communication
+    # Communication
     #
 
     def start_communication(self, agents: list[tuple[int, AgentRole]]) \
@@ -308,14 +313,13 @@ class Agent:
             return heuristik
 
         name = self.__name
-
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
         visited_map.fill(False)
         visited_map[pos_row][pos_col] = True
         height, width = self.__utility.get_dimensions()
 
-        if self.__position in goal_tiles:
+        if self.__position in goal_tiles.copy():
             goal_tiles.remove(self.__position)
 
         steps = 1
@@ -391,7 +395,7 @@ class Agent:
         calc_tiles = set()
 
         name = self.__name
-
+        time = self.__time
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
@@ -402,7 +406,10 @@ class Agent:
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
                     if self.__health > 1:
-                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]:
+                        goal_states = [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]
+                        if self.__available_item_space == 0:
+                            goal_states.remove(TileCondition.SHINY)
+                        for condition in goal_states:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
@@ -421,7 +428,10 @@ class Agent:
                             calc_tiles = calc_tiles.union(set(neighbours))
 
                 case AgentRole.BWL_STUDENT:
-                    calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
+                    if self.__available_item_space > 0:
+                        calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
+                    calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles())
+                    calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
             # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
             if len(calc_tiles) == 0:
                 calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
@@ -438,7 +448,7 @@ class Agent:
             if risky_tile(tile[0], tile[1], self.__knowledge, avoid_tiles):
                 calc_tiles.remove(tile)
         #print(f"{self.__name} {calc_tiles}")
-
+        time = self.__time
         # keine Goal-tiles --> geh zum besten Nachbarn
         if len(calc_tiles) == 0:
             max_utility, next_move = None, AgentAction.SHOUT
