@@ -53,8 +53,8 @@ class Agent:
         if self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0:
             shoot_action = None
             for row, col, action in [(pos_row + row, pos_col + col, action) for row, col, action in
-                                     [(1, 0, AgentAction.SHOOT_DOWN), (-1, 0, AgentAction.SHOOT_UP),
-                                      (0, 1, AgentAction.SHOOT_RIGHT), (0, -1, AgentAction.SHOOT_LEFT)] if
+                                     [(1, 0, AgentAction.SHOOT_RIGHT), (-1, 0, AgentAction.SHOOT_LEFT),
+                                      (0, 1, AgentAction.SHOOT_UP), (0, -1, AgentAction.SHOOT_DOWN)] if
                                      0 <= pos_row + row < height and 0 <= pos_col + col < width]:
                 if self.__knowledge.tile_has_condition(row, col, TileCondition.WUMPUS):
                     #print(f"{self.__name} {action}")
