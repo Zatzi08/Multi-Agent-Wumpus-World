@@ -35,7 +35,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
         for participant in self.participants:
             receiver_answers: dict[int, tuple]
             receiver_answers.update(
-                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, requested_objects, self.agents[participant].agent.__items[AgentItem.GOLD.value], self.agents[participant].agent.__items[AgentItem.GOLD.value])})
+                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, requested_objects)})
 
         # TODO evaluate answers
         if not receiver_answers:
