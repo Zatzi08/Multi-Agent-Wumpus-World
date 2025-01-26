@@ -1,11 +1,11 @@
 from Project.SimulatedAgent.AgentEnums import AgentItem
-from Project.communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 
 class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
     def __init__(self, agents):
         self.agents = agents
-        self.initiator: int = 0  # set for each communication
-        self.participants: [int] = []  # set for each communication
+        self.initiator: int = 0  # set for each Communication
+        self.participants: [int] = []  # set for each Communication
 
     def set_agents(self, agents):
         self.agents = agents
@@ -17,7 +17,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
         offered_objects: OfferedObjects = answer[1][0]
         requested_objects: RequestedObjects = answer[1][1]
 
-        # check if communication should take place
+        # check if Communication should take place
         if not receivers:
             return False
 
@@ -63,7 +63,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
             print(f"Sender received only bad offers. Starting negotiation!")
             self.agents[sender].agent.start_negotiation(sender, potential_receivers, initiator_offer)
             # return
-        # finish communication (distribute offered objects)
+        # finish Communication (distribute offered objects)
         else:
             receiver = best_offer.keys()
             offer_answer = best_offer.values()
@@ -72,7 +72,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
             return True
 
     def apply_changes(self, sender: int, receiver: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
-        """applies all changes to the associated agents after a successful communication process"""
+        """applies all changes to the associated agents after a successful Communication process"""
         # changes in simulated agents
         if receiver_offer.gold_amount != 0:
             self.agents[sender].items[AgentItem.GOLD.value] += receiver_offer.gold_amount

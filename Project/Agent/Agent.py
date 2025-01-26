@@ -1,5 +1,5 @@
 from Project.Agent.KnowledgeBase import KnowledgeBase
-from Project.communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 from Project.Environment.TileCondition import TileCondition
 from Project.SimulatedAgent.AgentEnums import AgentGoal, AgentRole, AgentItem, AgentAction
 import heapq  # für a*-search
@@ -107,7 +107,7 @@ class Agent:
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
     #
-    # communication
+    # Communication
     #
 
     def start_communication(self, agents: list[tuple[int, AgentRole]]) \
