@@ -134,7 +134,7 @@ class Simulator:
         for agent in self.__agents.values():
             self.__spread_knowledge(agent.name, True)
 
-        # give every agent the possibility to establish communication
+        # give every agent the possibility to establish Communication
         """
         for agent in self.__agents.values():
             names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)

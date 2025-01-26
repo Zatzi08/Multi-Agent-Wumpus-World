@@ -59,12 +59,12 @@ class SimulatedAgent:
             case AgentRole.BWL_STUDENT:
                 # find all gold positions in reach
                 gold_in_reach: list[tuple[int, int]] = []
-                max_x: int = self.position[0] + BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE
-                min_x: int = self.position[0] - BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE
-                max_y: int = self.position[1] + BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE
-                min_y: int = self.position[1] - BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE
-                for x in range(min_x, max_x + 1):
-                    for y in range(min_y, max_y + 1):
+                max_x: int = min(self.grid.width, self.position[0] + BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE + 1)
+                min_x: int = max(0, self.position[0] - BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE)
+                max_y: int = min(self.grid.height, self.position[1] + BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE + 1)
+                min_y: int = max(0, self.position[1] - BWLStudentValue.REPLENISH_MAXIMUM_GOLD_DISTANCE)
+                for x in range(min_x, max_x):
+                    for y in range(min_y, max_y):
                         if TileCondition.SHINY in self.grid.get_tile_conditions(x, y):
                             gold_in_reach.append((x, y))
                 # randomly choose a gold position in reach

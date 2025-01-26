@@ -107,7 +107,7 @@ class Agent:
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
     #
-    # communication
+    # Communication
     #
 
     def start_communication(self, agents: list[tuple[int, AgentRole]]) \
