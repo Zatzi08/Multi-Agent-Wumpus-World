@@ -1,7 +1,6 @@
 from dash import dcc, Dash, html, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 from Project.Simulator import Simulator
-from Project.SimulatedAgent import SimulatedAgent
 
 app = Dash()
 agent = -1

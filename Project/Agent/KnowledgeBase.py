@@ -1,23 +1,11 @@
-from enum import Enum
-
-
-class TileCondition(Enum):
-    SAFE: int = 0
-    WALL: int = 1
-    SHINY: int = 2
-    WUMPUS: int = 3
-    PREDICTED_WUMPUS: int = 4
-    STENCH: int = 5
-    PIT: int = 6
-    PREDICTED_PIT: int = 7
-    BREEZE: int = 8
+from Project.Environment.TileCondition import TileCondition
 
 
 SURROUNDING_TILES = {(-1, 0), (1, 0), (0, -1), (0, 1)}
 
 
 class _Map:
-    def __init__(self, position: tuple[int, int], map_width: int, map_height: int):
+    def __init__(self, map_width: int, map_height: int):
         self.__map: list[list[set[TileCondition]]] = [[set() for _ in range(map_height)] for _ in range(map_width)]
         self.__visited_map: list[list[bool]] = [[False for _ in range(map_height)] for _ in range(map_width)]
         self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set() for _ in range(len(TileCondition))]
@@ -127,7 +115,7 @@ class KnowledgeBase:
         # MAP
         #
 
-        self.__map: _Map = _Map(position, map_width, map_height)
+        self.__map: _Map = _Map(map_width, map_height)
         self.__surrounding_danger_count: dict[tuple[int, int, TileCondition], int] = {}
         self.__found_wumpus: set[tuple[int, int]] = set()
 

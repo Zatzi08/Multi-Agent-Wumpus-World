@@ -1,80 +1,7 @@
-from enum import Enum
-from typing import List, Union, Optional
+from Project.SimulatedAgent.AgentEnums import AgentItem
+from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 
-from Project.Agent.Agent import Agent, AgentItem
-#from Project.Agent.Agent import AgentRole, TileCondition
-from Project.Environment import Map
-
-
-from Project.SimulatedAgent import SimulatedAgent
-
-
-class Performative(Enum):
-    CFP = 1
-    REQUEST = 2
-    RESPONSE = 3
-    INFORM = 4
-
-
-class RequestObject(Enum):
-    GOLD = 1
-    TILE_INFORMATION = 2
-    KILL_WUMPUS = 3
-
-
-class ResponseType(Enum):
-    ACCEPT = 1
-    DENY = 2
-    COUNTEROFFER = 3
-
-
-class OfferedObjects:
-    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list]],
-                 wumpus_positions: List[tuple[int, int]]):
-        self.gold_amount = gold_amount
-        self.tile_information = tile_information
-        self.wumpus_positions = wumpus_positions
-
-
-class RequestedObjects:
-    def __init__(self, gold: int, tiles: list[tuple[int, int]], wumpus_positions: int):
-        self.gold: int = gold
-        self.tiles: list[tuple[int, int]] = tiles
-        self.wumpus_positions: int = wumpus_positions
-
-
-class Offer:
-    def __init__(self, offered_objects: OfferedObjects, requested_objects: RequestedObjects, offer_role):
-        # TODO create offer from OfferedObjects and RequestedObjects
-        self.off_gold: int = offered_objects.gold_amount
-        self.off_tiles: set[(int, int)] = {(x, y) for x, y, z in offered_objects.tile_information}
-        self.off_wumpus_positions: set[(int, int)] = {(x, y) for x, y, z in offered_objects.wumpus_positions}
-        self.off_role = offer_role
-
-        self.req_gold: int = requested_objects.gold
-        self.req_tiles: list[tuple[int, int]] = requested_objects.tiles
-        self.req_wumpus_positions: int = requested_objects.wumpus_positions
-
-
-class Message:
-    def __init__(self,
-                 performative: Performative,
-                 sender: str,
-                 receiver: Union[str, List[str]],
-                 content: dict[RequestObject, Union[str, int, tuple]],
-                 obj: Union[RequestObject, RequestObject]):
-        self.performative = performative
-        self.sender = sender
-        self.receiver = receiver
-        self.content = content
-        self.obj = obj
-
-    def __repr__(self):
-        return f"Message(performative={self.performative}, obj={self.obj}, sender={self.sender}, " \
-               f"receiver={self.receiver}, content={self.content})"
-
-
-class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
+class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
     def __init__(self, agents):
         self.agents = agents
         self.initiator: int = 0  # set for each communication
@@ -144,34 +71,30 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
             self.agents[receiver].agent.apply_changes(sender, receiver, next(iter(offer_answer))[1], next(iter(offer_answer))[0])
             return True
 
-    def apply_changes(self, sender_name: int, receiver_name: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
+    def apply_changes(self, sender: int, receiver: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
         """applies all changes to the associated agents after a successful communication process"""
-        # prepare to change simulated agents
-        sender: SimulatedAgent = self.agents[sender_name]
-        receiver: SimulatedAgent = self.agents[receiver_name]
-
         # changes in simulated agents
         if receiver_offer.gold_amount != 0:
-            sender.items[AgentItem.GOLD.value] += receiver_offer.gold_amount
+            self.agents[sender].items[AgentItem.GOLD.value] += receiver_offer.gold_amount
 
         if sender_offer.gold_amount != 0:
-            receiver.items[AgentItem.GOLD.value] += sender_offer.gold_amount
+            self.agents[receiver].items[AgentItem.GOLD.value] += sender_offer.gold_amount
 
         if receiver_offer.tile_information is not []:
             for (x, y, conditions) in sender_offer.tile_information:
-                sender.agent.receive_tile_from_communication(x, y, conditions)
+                self.agents[sender].agent.receive_tile_from_communication(x, y, conditions)
 
         if sender_offer.tile_information is not []:
             for (x, y, conditions) in receiver_offer.tile_information:
-                receiver.agent.receive_tile_from_communication(x, y, conditions)
+                self.agents[receiver].agent.receive_tile_from_communication(x, y, conditions)
 
         if receiver_offer.wumpus_positions is not []:
             for (x, y) in sender_offer.wumpus_positions:
-                sender.agent.add_kill_wumpus_task(x, y)
+                self.agents[sender].agent.add_kill_wumpus_task(x, y)
 
         if sender_offer.wumpus_positions is not []:
             for (x, y) in receiver_offer.wumpus_positions:
-                receiver.agent.add_kill_wumpus_task(x, y)
+                self.agents[receiver].agent.add_kill_wumpus_task(x, y)
 
 # TODO: fühlt sich mehr an wie Funktionen des Kanals so wie es geschrieben ist
 # Eventueller Ablauf von kommunikation:

@@ -1,4 +1,4 @@
-from Project.Agent.KnowledgeBase import TileCondition
+from Project.Environment.TileCondition import TileCondition
 
 import random
 

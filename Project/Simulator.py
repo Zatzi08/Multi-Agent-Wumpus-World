@@ -1,8 +1,8 @@
 from Project.Environment.Map import Map, print_random_map
-from Project.SimulatedAgent import SimulatedAgent
-from Project.Agent.KnowledgeBase import TileCondition
-from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
-from Project.communication.protocol import CommunicationChannel
+from Project.SimulatedAgent.SimulatedAgent import SimulatedAgent
+from Project.Environment.TileCondition import TileCondition
+from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem, AgentAction
+from Project.Communication.Channel import Channel
 import random
 
 random.seed()
@@ -16,7 +16,7 @@ class Simulator:
         self.__replenish_time: int = 32
         self.__agents: dict[int, SimulatedAgent] = {}
         self.__set_up_agents(self.__grid.width, self.__grid.height, number_of_agents)
-        self.__communication_channel: CommunicationChannel = CommunicationChannel(self.__agents)
+        self.__communication_channel: Channel = Channel(self.__agents)
         # TODO: track goal progress for agents
 
     def __set_up_agents(self, map_width: int, map_height: int, number_of_agents: int):

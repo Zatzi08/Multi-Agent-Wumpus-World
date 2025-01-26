@@ -1,7 +1,8 @@
-from Project.Agent.Agent import AgentRole, AgentItem, Agent, Hunter, Cartographer, Knight, BWLStudent
-from Project.Agent.KnowledgeBase import TileCondition
+from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem
+from Project.Agent.Agent import Agent, Hunter, Cartographer, Knight, BWLStudent
+from Project.Environment.TileCondition import TileCondition
 import random
-from Environment.Map import Map
+from Project.Environment.Map import Map
 
 class SimulatedAgent:
     def __init__(self, name: int, role: AgentRole, spawn_position: tuple[int, int], map_width: int, map_height: int,

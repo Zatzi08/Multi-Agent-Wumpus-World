@@ -1,5 +1,5 @@
 from Project.Environment.env import EnvGenerator
-from Project.Agent.KnowledgeBase import TileCondition
+from Project.Environment.TileCondition import TileCondition
 #from Project.SimulatedAgent import SimulatedAgent
 
 import plotly.graph_objects as go
