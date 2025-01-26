@@ -352,104 +352,6 @@ class Agent:
 
         return pos[3]
 
-    def a_search(self, end):
-
-        def _heuristik(pos_row, pos_col, end, steps, map_knowledge: KnowledgeBase):
-            end_row, end_col = end
-            # unbekannte Tiles haben schlechteren heuristischen Wert, weil unklar ist, ob der Weg nutzbar ist
-            #if len(map_knowledge.get_conditions_of_tile(pos_row, pos_col)) == 0:
-            #    return (abs(pos_row - end_row) + abs(pos_col - end_col) + steps) * 2
-            return abs(pos_row - end_row) + abs(pos_col - end_col) + steps
-
-        name = self.__name
-
-        pos_row, pos_col = self.__position
-        visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
-        visited_map.fill(False)
-        visited_map[pos_row][pos_col] = True
-        height, width = self.__utility.get_dimensions()
-        # Abbruchbedingung: already on end-field
-        if (pos_row, pos_col) == end:
-            return None, -1
-
-        steps = 1
-        neighbours = [[pos_row + row, pos_col + col, move] for row, col, move in
-                      [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
-                       [-1, 0, AgentAction.MOVE_LEFT]]]
-
-        # avoid certain tilestates if it's a direct neighbour
-        avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
-                       TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
-        if self.__role == AgentRole.KNIGHT and self.__health > 1:
-            avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-            avoid_tiles.remove(TileCondition.WUMPUS)
-        for row, col, move in neighbours:
-            if 0 <= row <= width and 0 <= col <= height:
-                neighbours.remove([row, col, move])
-                continue
-            if risky_tile(row, col, self.__knowledge, avoid_tiles):
-                neighbours.remove([row, col, move])
-
-        # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
-        if len(neighbours) == 0:
-            return None, -1
-
-        queue = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in neighbours]
-        heapq.heapify(queue)
-        pos = heapq.heappop(queue)
-        visited_map[pos[1]][pos[2]] = True
-        steps += 1
-
-        # pos: [heuristik, x,y,next_move]
-        while (pos[1], pos[2]) != end:
-            #get neighbours of pos
-            neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if
-                          0 <= pos[1] + row <= width and 0 <= pos[2] + col <= height]
-            new_field = [[_heuristik(row, col, end, steps, self.__knowledge), row, col, move] for row, col, move in
-                         neighbours]
-            avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
-                           TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
-
-            # remove fields with "game over" tile states
-            # different avoid tiles as soon as it's not a direct neighbour of position
-            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > self.__replenish_time):
-                avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
-                avoid_tiles.remove(TileCondition.WUMPUS)
-            elif self.__role == AgentRole.HUNTER and (
-                    self.__items[AgentItem.ARROW.value] > 0 or steps > self.__replenish_time):
-                avoid_tiles.remove(TileCondition.WUMPUS)
-            for heuristik, row, col, move in new_field:
-                if risky_tile(row, col, self.__knowledge, avoid_tiles):
-                    new_field.remove([heuristik, row, col, move])
-
-            # add non "game over" fields
-            for tile in new_field:
-                if not visited_map[tile[1]][tile[2]]:
-                    heapq.heappush(queue, tile)
-
-            # Abbruchbedingung: kein Weg gefunden
-            if len(queue) == 0:
-                return None, -1
-
-            pos = heapq.heappop(queue)
-            visited_map[pos[1]][pos[2]] = True
-            steps += 1
-
-        next_move = pos[3]
-        states = self.__knowledge.get_conditions_of_tile(pos[1], pos[2])
-        if len(states) == 0:  # unknown tile
-            max_utility = self.__utility.get_utility_of_condition(-1)
-        else:
-            max_utility = None
-            for state in states:
-                if max_utility is None or self.__utility.get_utility_of_condition(state) > max_utility:
-                    max_utility = self.__utility.get_utility_of_condition(state)
-
-        # reduziere Utility von Felder, auf denen Agenten kürzlich waren (reduziert Loopgefahr)
-        if (pos[1], pos[2]) in self.__knowledge.get_path()[-5:]:
-            max_utility = 1
-        utility = max_utility / pos[0]  # Utility des Feldes dividiert durch Anzahl an Schritte bis zum Feld
-        return next_move, utility
 
     # Funktion: Ermittle Rangordnung der nächstmöglichen moves
     # Ausgabe: (next_move: Agent_Action, best_utility: dict)
@@ -496,6 +398,16 @@ class Agent:
                 calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
                 calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
 
+        avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
+                       TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
+        if self.__role == AgentRole.KNIGHT and self.__health:
+            avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
+            avoid_tiles.remove(TileCondition.WUMPUS)
+        elif self.__role == AgentRole.HUNTER and  self.__items[AgentItem.ARROW.value] > 0:
+            avoid_tiles.remove(TileCondition.WUMPUS)
+        for tile in calc_tiles.copy():
+            if risky_tile(tile[0], tile[1], self.__knowledge, avoid_tiles):
+                calc_tiles.remove(tile)
         #print(f"{self.__name} {calc_tiles}")
         return self.new_a_search(calc_tiles)
 
