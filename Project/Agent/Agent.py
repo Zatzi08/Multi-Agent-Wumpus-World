@@ -1,5 +1,5 @@
 from Project.Agent.KnowledgeBase import KnowledgeBase
-from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 from Project.Environment.TileCondition import TileCondition
 from Project.SimulatedAgent.AgentEnums import AgentGoal, AgentRole, AgentItem, AgentAction
 import heapq  # für a*-search
@@ -150,7 +150,7 @@ class Agent:
         # get offer
         offer_utility = 0
 
-        #tile-info
+        #tile-__info
         #agents want tile_info
         if len(desired_tiles) > 0:
             offer_desired_tiles = [(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col in

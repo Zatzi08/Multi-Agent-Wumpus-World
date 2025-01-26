@@ -7,7 +7,7 @@ import numpy as np
 
 class EnvGenerator:
     __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
-                 'num_dead_end', 'info']
+                 'num_dead_end', '__info']
 
     def __init__(self, height, width, seed=42):
         self.height = height
@@ -19,9 +19,13 @@ class EnvGenerator:
         self.seed = seed
         self.num_dead_end: int = -1
         self.grid = []
-        self.info = {}
+        self.__info: dict = dict()
         self.__genByTile()
-        self.__analyseMap()
+
+    def get_map_info(self):
+        if 2 not in self.__info.keys():
+            self.__analyseMap()
+        return self.__info
 
     def getGrid(self):
         return self.grid.copy()
@@ -38,36 +42,28 @@ class EnvGenerator:
         return neighbors
 
     def __analyseMap(self):
-        safe = []
-        wumpus = []
-        gold = []
-        pit = []
+        safe = set()
+        wumpus = set()
+        gold = set()
+        pit = set()
 
-        visit = [self.start_pos]
-        visited = np.ndarray((self.width, self.height)).astype(bool)
-        visited.fill(False)
-        while visit:
-            x, y = visit.pop()
-            visited[y][x] = True
-            n = self.getNeighbors(x, y)
-            if TileCondition.WALL not in self.grid[y][x]:
-                if TileCondition.PIT in self.grid[y][x]:
-                    pit.append((x, y))
-                elif TileCondition.WUMPUS in self.grid[y][x]:
-                    wumpus.append((x, y))
-                elif TileCondition.SHINY in self.grid[y][x]:
-                    gold.append((x, y))
-                else:
-                    safe.append((x, y))
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                if TileCondition.WALL not in self.grid[y][x]:
+                    if TileCondition.PIT in self.grid[y][x]:
+                        pit.add((x, y))
+                    elif TileCondition.WUMPUS in self.grid[y][x]:
+                        wumpus.add((x, y))
+                    elif TileCondition.SHINY in self.grid[y][x]:
+                        gold.add((x, y))
+                    elif TileCondition.STENCH not in self.grid[y][x] and TileCondition.BREEZE not in self.grid[y][x]:
+                        safe.add((x, y))
 
-            for xi, yi in n:
-                if not visited[yi][xi]:
-                    visit.append((xi, yi))
 
-        self.info[TileCondition.SAFE.value] = safe
-        self.info[TileCondition.WUMPUS.value] = wumpus
-        self.info[TileCondition.SHINY.value] = gold
-        self.info[TileCondition.PIT.value] = pit
+        self.__info[TileCondition.SAFE.value] = safe
+        self.__info[TileCondition.WUMPUS.value] = wumpus
+        self.__info[TileCondition.SHINY.value] = gold
+        self.__info[TileCondition.PIT.value] = pit
 
     def __convertToArray(self, grid):
 
@@ -80,8 +76,8 @@ class EnvGenerator:
 
         g = np.ndarray((self.height, self.width), list)
 
-        self.info[TileCondition.WALL.value] = []
-        self.info["locations"] = []
+        wall = set()
+        loca = set()
 
         # Path = [] Wall = [TileCondition.WALL]
         for y in range(0, self.height):
@@ -89,10 +85,12 @@ class EnvGenerator:
                 if grid[y][x] == ' ':
                     g[y][x] = [TileCondition.SAFE]
                     if x != 1 and y != 1:
-                        self.info["locations"] += [(x, y)]
+                        loca.add((x, y))
                 else:
                     g[y][x] = [TileCondition.WALL]
-                    self.info[TileCondition.WALL.value] += [(x, y)]
+                    wall.add((x, y))
+        self.__info["locations"] = loca
+        self.__info[TileCondition.WALL.value] = wall
         return g
 
     # define Tiles -> gen grid using Tiles by prob and some rules
@@ -338,7 +336,7 @@ class EnvGenerator:
 
         grid = self.grid.copy()
 
-        space = self.info["locations"]
+        space = sorted(self.__info["locations"])
 
         treasure = random.sample(space, k=int(len(space) * self.treasure_prob))
         wumpus = random.sample(space, k=int(len(space) * self.wumpus_prob))

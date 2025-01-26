@@ -4,7 +4,7 @@ from Project.Simulator import Simulator
 
 app = Dash()
 agent = -1
-simulator = Simulator(120, 120, 12, 2000)
+simulator = Simulator(60, 60, 6, 2000)
 agents = simulator.get_agents()
 
 @callback(
