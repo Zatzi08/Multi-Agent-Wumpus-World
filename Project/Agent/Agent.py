@@ -277,10 +277,10 @@ class Agent:
             best_heuristik, heuristik = None, None
             for row, col in goal_tiles:
                 utility = None
-                if len(self.__knowledge.get_conditions_of_tile(pos_row + row, pos_col + col)) == 0:
+                if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
                     utility = self.__utility.get_utility_of_condition(-1)
                 else:
-                    for condition in self.__knowledge.get_conditions_of_tile(pos_row + row, pos_col + col):
+                    for condition in self.__knowledge.get_conditions_of_tile(row, col):
                         if utility is None or utility < self.__utility.get_utility_of_condition(condition):
                             utility = self.__utility.get_utility_of_condition(condition)
                 heuristik = (steps + abs(pos_row - row) + abs(pos_col - col)) / utility
