@@ -407,7 +407,10 @@ class Agent:
                             calc_tiles = calc_tiles.union(set(neighbours))
 
                 case AgentRole.BWL_STUDENT:
-                    calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
+                    if self.__available_item_space > 0:
+                        calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
+                    calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles())
+                    calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
             # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
             if len(calc_tiles) == 0:
                 calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
