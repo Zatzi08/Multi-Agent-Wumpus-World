@@ -391,16 +391,16 @@ class Agent:
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
                                           len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
+
                 case AgentRole.HUNTER:
                     if self.__items[AgentItem.ARROW.value] > 0:
-                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS]:
-                            calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
-                    else:
+                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS))
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
                                           len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
+
                 case AgentRole.BWL_STUDENT:
                     calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
             # Agenten haben keine goal (affiliated) tiles in der Knowledgebase
@@ -419,14 +419,18 @@ class Agent:
             if risky_tile(tile[0], tile[1], self.__knowledge, avoid_tiles):
                 calc_tiles.remove(tile)
         #print(f"{self.__name} {calc_tiles}")
-        if len(calc_tiles) == 0: # keine Goal-tiles --> geh zum besten Nachbarn
+
+        # keine Goal-tiles --> geh zum besten Nachbarn
+        if len(calc_tiles) == 0:
             max_utility, next_move = None, AgentAction.SHOUT
             for row,col, move in [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
                                   [-1, 0, AgentAction.MOVE_LEFT]]:
-                utility = None
-                for condition in self.__knowledge.get_conditions_of_tile(self.__position[0] + row,self.__position[1] + col):
-                    if utility is None or utility < self.__utility.get_utility_of_condition(condition):
-                        utility = self.__utility.get_utility_of_condition(condition)
+                if len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row, self.__position[1] + col)) == 0:
+                    utility = self.__utility.get_utility_of_condition(-1)
+                else:
+                    for condition in self.__knowledge.get_conditions_of_tile(self.__position[0] + row, self.__position[1] + col):
+                        if utility is None or utility < self.__utility.get_utility_of_condition(condition):
+                            utility = self.__utility.get_utility_of_condition(condition)
                 if max_utility is None or max_utility < utility:
                     next_move = move
             return next_move
