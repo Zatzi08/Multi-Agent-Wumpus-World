@@ -274,7 +274,7 @@ class Agent:
     # Ausgabe: (move: AgentAction, utility: float)
     def new_a_search(self, goal_tiles):
         def get_heuristik(pos_row, pos_col, steps, goal_tiles):
-            best_heuristik, heuristik = None, None
+            best_heuristik, heuristik= None, None
             for row, col in goal_tiles:
                 utility = None
                 if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
@@ -283,7 +283,7 @@ class Agent:
                     for condition in self.__knowledge.get_conditions_of_tile(row, col):
                         if utility is None or utility < self.__utility.get_utility_of_condition(condition):
                             utility = self.__utility.get_utility_of_condition(condition)
-                heuristik = (steps + abs(pos_row - row) + abs(pos_col - col)) / utility
+                heuristik = float((steps + abs(pos_row - row) + abs(pos_col - col)) / utility)
                 if best_heuristik is None or best_heuristik < utility:
                     best_heuristik = heuristik
             return heuristik
@@ -383,26 +383,23 @@ class Agent:
                     calc_tiles = set(calc_tiles)
                 case AgentRole.KNIGHT:
                     if self.__health > 1:
-                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH,
-                                          TileCondition.SHINY]:
+                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
-                                          len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row,
-                                                                                      self.__position[1] + col)) == 0]
+                                          len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.HUNTER:
                     if self.__items[AgentItem.ARROW.value] > 0:
-                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.STENCH]:
+                        for condition in [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS]:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
-                                          len(self.__knowledge.get_conditions_of_tile(self.__position[0] + row,
-                                                                                      self.__position[1] + col)) == 0]
+                                          len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.BWL_STUDENT:
                     calc_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)
