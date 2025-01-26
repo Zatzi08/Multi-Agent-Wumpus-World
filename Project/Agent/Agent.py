@@ -376,7 +376,7 @@ class Agent:
         calc_tiles = set()
 
         name = self.__name
-
+        time = self.__time
         if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
@@ -429,7 +429,7 @@ class Agent:
             if risky_tile(tile[0], tile[1], self.__knowledge, avoid_tiles):
                 calc_tiles.remove(tile)
         #print(f"{self.__name} {calc_tiles}")
-
+        time = self.__time
         # keine Goal-tiles --> geh zum besten Nachbarn
         if len(calc_tiles) == 0:
             max_utility, next_move = None, AgentAction.SHOUT
