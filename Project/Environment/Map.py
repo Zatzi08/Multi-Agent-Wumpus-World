@@ -1,10 +1,7 @@
-from dash import dcc
-
 from Project.Environment.env import EnvGenerator
-from Project.Knowledge.KnowledgeBase import TileCondition
+from Project.Agent.KnowledgeBase import TileCondition
 #from Project.SimulatedAgent import SimulatedAgent
 
-from plotly import offline
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from numpy.dtypes import StringDType
@@ -33,10 +30,7 @@ class Map:
         self.info = gen.info
 
     def add_agents(self, agents):
-        self.agents = agents.copy()
-
-    def get_agents(self):
-        return self.agents
+        self.agents = agents
 
     def get_tile_conditions(self, x, y):
         return self.filled_map[y][x]
@@ -115,9 +109,6 @@ class Map:
         if delete:
             self.filled_map[y][x].remove(condition)
 
-    def delete_agent(self, name):
-        self.agents.pop(name)
-
     def get_safe_tiles(self):
         return self.info[TileCondition.SAFE.value]
 
@@ -193,7 +184,7 @@ class Map:
         plt = self.__print_base(self.filled_map)
         position = dict()
         for a in self.agents.values():
-            position[a.position] = f"{position.get(a.position, "")}{a.name} : {a.role.name}<br>"
+            position[a.position] = f"{position.get(a.position)}{a.name} : {a.role.name}<br>"
         xs = []
         ys = []
         ag = []

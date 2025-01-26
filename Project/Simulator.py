@@ -1,8 +1,8 @@
 from Project.Environment.Map import Map, print_random_map
 from Project.SimulatedAgent import SimulatedAgent
+from Project.Agent.KnowledgeBase import TileCondition
 from Project.Agent.Agent import AgentRole, AgentItem, AgentAction
-from Project.Knowledge.KnowledgeBase import TileCondition
-from Project.communication.protocol import CommunicationChannel, OfferedObjects
+from Project.communication.protocol import CommunicationChannel
 import random
 
 random.seed()
@@ -25,27 +25,23 @@ class Simulator:
             role: AgentRole = random.choice(list(AgentRole))
             self.__agents[i] = SimulatedAgent(i, role, spawn_position, map_width, map_height, self.__replenish_time,
                                               self.__grid)
+            self.__spread_knowledge(i, True)
         self.__grid.add_agents(self.__agents)
-        self.__spread_knowledge(True)
 
-    def __spread_knowledge(self, include_tile: bool):
-        # give every agent knowledge about their status and the tile they are on
-        for agent in self.__agents.values():
-            # status update
-            self.__agents[agent.name].agent.receive_status_from_simulator(self.__agents[agent.name].position,
-                                                                          self.__agents[agent.name].health,
-                                                                          self.__agents[agent.name].items,
-                                                                          self.__agents[
-                                                                              agent.name].available_item_space,
-                                                                          self.__current_step)
+    def __spread_knowledge(self, agent: int, include_tile: bool):
+        # status update
+        self.__agents[agent].agent.receive_status_from_simulator(self.__agents[agent].position,
+                                                                 self.__agents[agent].health,
+                                                                 self.__agents[agent].items,
+                                                                 self.__agents[agent].available_item_space,
+                                                                 self.__current_step)
 
-            # tile update
-            if include_tile:
-                conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent.name].position[0],
-                                                                                  self.__agents[agent.name].position[1])
-                self.__agents[agent.name].agent.receive_tile_from_simulator(self.__agents[agent.name].position[0],
-                                                                            self.__agents[agent.name].position[1],
-                                                                            conditions)
+        # tile update
+        if include_tile:
+            conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent].position[0],
+                                                                              self.__agents[agent].position[1])
+            self.__agents[agent].agent.receive_tile_from_simulator(self.__agents[agent].position[0],
+                                                                   self.__agents[agent].position[1], conditions)
 
     def __agent_move_action(self, agent: int, x: int, y: int):
         if TileCondition.WALL in self.__grid.get_tile_conditions(x, y):
@@ -57,11 +53,9 @@ class Simulator:
                 self.__agents[agent].agent.receive_wumpus_scream(x, y)
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
-                self.__grid.delete_agent(self.__agents[agent].name)
                 del self.__agents[agent]
                 return
         elif TileCondition.PIT in self.__grid.get_tile_conditions(x, y):
-            self.__grid.delete_agent(self.__agents[agent].name)
             del self.__agents[agent]
             return
         self.__agents[agent].position = (x, y)
@@ -94,6 +88,10 @@ class Simulator:
         if not self.__current_step % self.__replenish_time:
             for agent in self.__agents.values():
                 self.__agents[agent.name].replenish()
+
+        # give every agent knowledge about their status and the tile they are on
+        for agent in self.__agents.values():
+            self.__spread_knowledge(agent.name, True)
 
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())
@@ -131,17 +129,23 @@ class Simulator:
                     for name in names_of_agents_in_proximity:
                         self.__agents[name].agent.receive_shout_action_information(x, y)
 
-        self.__spread_knowledge(True)
+        # give every agent knowledge about their status and the tile they are on
+        for agent in self.__agents.values():
+            self.__spread_knowledge(agent.name, True)
 
         # give every agent the possibility to establish communication
-        """for agent in self.__agents.values():
+        """
+        for agent in self.__agents.values():
             names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
-            agents_in_proximity: [tuple[int, AgentRole]] = []
+            agents_in_proximity: list[tuple[int, AgentRole]] = []
             for name in names_of_agents_in_proximity:
                 agents_in_proximity.append((name, self.__agents[name].role))
-            self.__communication_channel.communicate(agent.name, agents_in_proximity)"""
-
-        self.__spread_knowledge(False)
+            if self.__communication_channel.communicate(agent.name, agents_in_proximity):
+                # update knowledge of participants
+                self.__spread_knowledge(agent.name, False)
+                for (receiver, _) in agents_in_proximity:
+                    self.__spread_knowledge(receiver, False)
+        """
 
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")

@@ -83,7 +83,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
     def set_agents(self, agents):
         self.agents = agents
 
-    def communicate(self, sender, potential_receivers) -> None:
+    def communicate(self, sender, potential_receivers) -> bool:
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
             self.agents[sender].agent.start_communication(potential_receivers))
         receivers: list[int] = answer[0]
@@ -92,7 +92,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         # check if communication should take place
         if not receivers:
-            return
+            return False
 
         # set sender and receivers
         self.initiator = sender
@@ -112,7 +112,7 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
 
         # TODO evaluate answers
         if not receiver_answers:
-            return None
+            return False
         # put all accepting answers and counter-offers into new dicts
         accepted_requests = dict[int, tuple[OfferedObjects, RequestedObjects]]
         counter_offers = dict[int, tuple[OfferedObjects, RequestedObjects]]
@@ -135,13 +135,14 @@ class CommunicationChannel:  # TODO: Sollte der Kanal nicht den state speichern;
         if best_utility == -1:
             print(f"Sender received only bad offers. Starting negotiation!")
             self.agents[sender].agent.start_negotiation(sender, potential_receivers, initiator_offer)
-
+            # return
         # finish communication (distribute offered objects)
         else:
             receiver = best_offer.keys()
             offer_answer = best_offer.values()
             print(f"The request is completed, with {best_offer} as the accepted offer")
             self.agents[receiver].agent.apply_changes(sender, receiver, next(iter(offer_answer))[1], next(iter(offer_answer))[0])
+            return True
 
     def apply_changes(self, sender_name: int, receiver_name: int, receiver_offer: OfferedObjects, sender_offer: OfferedObjects):
         """applies all changes to the associated agents after a successful communication process"""

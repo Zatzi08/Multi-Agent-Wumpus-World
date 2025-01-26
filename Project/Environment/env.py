@@ -1,6 +1,4 @@
-from numpy.dtypes import StringDType
-
-from Project.Knowledge.KnowledgeBase import TileCondition
+from Project.Agent.KnowledgeBase import TileCondition
 
 import random
 

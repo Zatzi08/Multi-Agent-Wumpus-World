@@ -1,7 +1,4 @@
-import random
-from typing import Union
-
-from Project.Knowledge.KnowledgeBase import KnowledgeBase, TileCondition
+from Project.Agent.KnowledgeBase import KnowledgeBase, TileCondition
 from enum import Enum
 from Project.communication.protocol import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
 import heapq  # für a*-search
@@ -9,7 +6,6 @@ from numpy import ndarray
 
 MAX_UTILITY = 200
 ACCEPTABLE_TILE_FACTOR = 0.2
-REPLENISH_TIME = 32
 
 
 class AgentRole(Enum):
@@ -362,11 +358,11 @@ class Agent:
 
             # remove fields with "game over" tile states
             # different avoid tiles as soon as it's not a direct neighbour of position
-            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
+            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
                 avoid_tiles.remove(TileCondition.WUMPUS)
             elif self.__role == AgentRole.HUNTER and (
-                    self.__items[AgentItem.ARROW.value] > 0 or steps > REPLENISH_TIME):
+                    self.__items[AgentItem.ARROW.value] > 0 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.WUMPUS)
             for heuristik, row, col, move in new_field:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
@@ -447,11 +443,11 @@ class Agent:
 
             # remove fields with "game over" tile states
             # different avoid tiles as soon as it's not a direct neighbour of position
-            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > REPLENISH_TIME):
+            if self.__role == AgentRole.KNIGHT and (self.__health > 1 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.PREDICTED_WUMPUS)
                 avoid_tiles.remove(TileCondition.WUMPUS)
             elif self.__role == AgentRole.HUNTER and (
-                    self.__items[AgentItem.ARROW.value] > 0 or steps > REPLENISH_TIME):
+                    self.__items[AgentItem.ARROW.value] > 0 or steps > self.__replenish_time):
                 avoid_tiles.remove(TileCondition.WUMPUS)
             for heuristik, row, col, move in new_field:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):

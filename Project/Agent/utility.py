@@ -1,6 +1,6 @@
-from Project.Knowledge import KnowledgeBase
+from Project.Agent import KnowledgeBase
 from Project.communication.protocol import RequestTypeObj
-from Project.Knowledge.KnowledgeBase import TileCondition
+from Project.Agent.KnowledgeBase import TileCondition
 from Project.Agent.Agent import AgentGoal
 import heapq
 from Project.Simulator import MAP_WIDTH, MAP_HEIGHT
@@ -245,7 +245,7 @@ def utility_movement(map_knowledge: KnowledgeBase, agent):
 # wumpus = (gold + (1-3/10)*1/6 ) * 1/2
 
 
-def utility_information(fields, agent,map_knowledge: KnowledgeBase):
+def utility_information(fields, agent, map_knowledge: KnowledgeBase):
     # expected utiltiy of area based on probabilities for map generation
     deadend_prob = agent.getNumDeadEnds() / (MAP_HEIGHT*MAP_WIDTH)
     gold_prob = deadend_prob * 0.3
@@ -279,7 +279,7 @@ def utility_help_wumpus(agent):
 
 
 # bool'sche Ausgabe, ob eine Kommunikation angenommen werden soll
-def accept_communication(map_knowledge : KnowledgeBase,agent, request_type: RequestTypeObj):
+def accept_communication(map_knowledge : KnowledgeBase, agent, request_type: RequestTypeObj):
     if request_type == RequestTypeObj.HELP:
         # hunter and knight accept communication and later decide dependent on their arrows/health
         return "wumpus" not in agent.goals

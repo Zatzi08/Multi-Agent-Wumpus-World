@@ -1,5 +1,5 @@
 from Project.Agent.Agent import AgentRole, AgentItem, Agent, Hunter, Cartographer, Knight, BWLStudent
-from Knowledge.KnowledgeBase import TileCondition
+from Project.Agent.KnowledgeBase import TileCondition
 import random
 from Environment.Map import Map
 
