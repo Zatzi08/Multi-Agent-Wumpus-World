@@ -28,6 +28,8 @@ class Agent:
         self.__available_item_space: int = 0
         self.__time = 0
         self.__map_info = map_info
+        self.__last_goal_tiles = set()
+        self.__path_to_goal_tile = []
 
     #
     # next agent move
@@ -322,8 +324,8 @@ class Agent:
 
         steps = 1
         neighbours = [[pos_row + row, pos_col + col, move] for row, col, move in
-                      [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
-                       [-1, 0, AgentAction.MOVE_LEFT]]]
+                      [[0, 1, [AgentAction.MOVE_UP]], [1, 0, [AgentAction.MOVE_RIGHT]], [0, -1, [AgentAction.MOVE_DOWN]],
+                       [-1, 0, [AgentAction.MOVE_LEFT]]]]
 
         # avoid certain tilestates if it's a direct neighbour
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
@@ -342,8 +344,8 @@ class Agent:
         if len(neighbours) == 0:
             return AgentAction.SHOUT
         if len(neighbours) == 1:
-            return neighbours[0][2]
-        queue = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in neighbours]
+            return neighbours[0][2][0]
+        queue = [[get_heuristik(row, col, steps, goal_tiles), row, col, path] for row, col, path in neighbours]
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
         visited_map[pos[1]][pos[2]] = True
@@ -352,8 +354,9 @@ class Agent:
         # pos: [heuristik, x,y,next_move]
         while (pos[1], pos[2]) not in goal_tiles:
             #get neighbours of pos
-            neighbours = [[pos[1] + row, pos[2] + col, pos[3]] for row, col in [[0, 1], [1, 0], [0, -1], [-1, 0]] if
-                          0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
+            neighbours = [[pos[1] + row, pos[2] + col, pos[3].append(move)] for row, col,move in
+                          [[0, 1,AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
+                           [-1, 0,AgentAction.MOVE_LEFT]] if 0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
 
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
@@ -370,7 +373,7 @@ class Agent:
                 if risky_tile(row, col, self.__knowledge, avoid_tiles):
                     neighbours.remove([row, col, move])
 
-            new_field = [[get_heuristik(row, col, steps, goal_tiles), row, col, move] for row, col, move in
+            new_field = [[get_heuristik(row, col, steps, goal_tiles), row, col, path] for row, col, path in
                          neighbours]
             # add non "game over" fields
             for tile in new_field:
@@ -385,7 +388,8 @@ class Agent:
             visited_map[pos[1]][pos[2]] = True
             steps += 1
 
-        return pos[3]
+        self.__path_to_goal_tile = pos[3][1:]
+        return pos[3][0]
 
 
     # Funktion: Ermittle Rangordnung der nächstmöglichen moves
@@ -440,10 +444,26 @@ class Agent:
         # keine Goal-tiles --> geh zum besten Nachbarn
         # Case: Agent alles durchforstet und ist stuck
         if len(calc_tiles) == 0:
-            if len(self.__knowledge.get_tiles_by_condition(TileCondition.STENCH)) > 0:
+            stench_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.STENCH)
+            if len(stench_tiles) > 0:
+                path = self.__knowledge.get_path()
+                for index in range(len(path)):
+                    if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
+                        stench_tiles.remove(path[len(path)-1-index])
+                        break
+                if len(self.__last_goal_tiles.difference(stench_tiles)) == 0:
+                    next_action = self.__path_to_goal_tile[0]
+                    self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
+                    return next_action
+                self.__last_goal_tiles = stench_tiles
                 return self.new_a_search(self.__knowledge.get_tiles_by_condition(TileCondition.STENCH))
             return AgentAction.SHOUT
         else:
+            if len(self.__last_goal_tiles.difference(calc_tiles)) == 0:
+                next_action = self.__path_to_goal_tile[0]
+                self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
+                return next_action
+            self.__last_goal_tiles = calc_tiles
             return self.new_a_search(calc_tiles)
 
     # Funktion: Ermittle utility einer Menge von Feldern
@@ -486,7 +506,7 @@ class Agent:
     # Ausgabe: RequestObject
     # performativ hängt von Agenten in der Umgebung ab --> nicht für die Funktion relevant
     def get_offer_type(self):
-        if len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) > 0:
+        if self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) > 0:
             return RequestObject.KILL_WUMPUS
         return RequestObject.TILE_INFORMATION
 
