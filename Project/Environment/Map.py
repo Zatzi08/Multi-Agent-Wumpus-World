@@ -91,23 +91,17 @@ class Map:
             else:
                 second_condition = TileCondition.BREEZE
             for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-                condition = self.filled_map[y + oy][x + ox]
                 self.__delete_stench_or_breeze(x + ox, y + oy, second_condition)
 
     def __delete_stench_or_breeze(self, x, y, condition: TileCondition):
-        if condition != TileCondition.STENCH and condition != TileCondition.BREEZE:
+        if condition != TileCondition.STENCH:
             raise "Invalid Condition"
         cond = self.get_tile_conditions(x, y)
         if condition not in cond:
             #print("Incorrect Map Initialization - eventual Error in Map line 107")
             return
-        delete = True
-        for ox, oy in [(0, 1), (-1, 0), (0, -1), (1, 0)]:
-            if TileCondition.WUMPUS in self.filled_map[y + oy][x + ox]:
-                delete = False
-                break
-        if delete:
-            self.filled_map[y][x].remove(condition)
+        self.filled_map[y][x].remove(TileCondition.STENCH)
+
 
     def get_safe_tiles(self):
         return sorted(self.info[TileCondition.SAFE.value])

@@ -20,23 +20,23 @@ class SimulatedAgent:
             case AgentRole.HUNTER:
                 self.agent = Hunter(name, spawn_position, map_width, map_height, replenish_time, grid.info)
                 self.health = HunterValue.HEALTH
-                self.items = HunterValue.ITEMS
+                self.items = HunterValue.ITEMS.copy()
                 self.available_item_space = HunterValue.ITEM_CAPACITY
             case AgentRole.CARTOGRAPHER:
                 self.agent = Cartographer(name, spawn_position, map_width, map_height, replenish_time, grid.info)
                 self.health = CartographerValue.HEALTH
-                self.items = CartographerValue.ITEMS
+                self.items = CartographerValue.ITEMS.copy()
                 self.available_item_space = CartographerValue.ITEM_CAPACITY
                 self.agent.receive_tiles_with_condition(self.grid.info[TileCondition.WALL.value], TileCondition.WALL)
             case AgentRole.KNIGHT:
                 self.agent = Knight(name, spawn_position, map_width, map_height, replenish_time, grid.info)
                 self.health = KnightValue.HEALTH
-                self.items = KnightValue.ITEMS
+                self.items = KnightValue.ITEMS.copy()
                 self.available_item_space = KnightValue.ITEM_CAPACITY
             case AgentRole.BWL_STUDENT:
                 self.agent = BWLStudent(name, spawn_position, map_width, map_height, replenish_time, grid.info)
                 self.health = BWLStudentValue.HEALTH
-                self.items = BWLStudentValue.ITEMS
+                self.items = BWLStudentValue.ITEMS.copy()
                 self.available_item_space = BWLStudentValue.ITEM_CAPACITY
 
         if self.agent is None or self.health is None or self.items is None or self.available_item_space is None:
