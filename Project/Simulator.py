@@ -71,7 +71,9 @@ class Simulator:
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
             self.__agents[agent].agent.receive_wumpus_scream(x, y)
-            self.__goal_tracker[agent][AgentGoal.WUMPUS.value][0] += 1
+            self.__goal_tracker[agent][AgentGoal.WUMPUS.value] = (self.__goal_tracker[agent]
+                                                                  [AgentGoal.WUMPUS.value][0]+1,
+                                                                  self.__goal_tracker[agent][AgentGoal.WUMPUS.value][1])
 
     def get_agents(self):
         return self.__agents
@@ -79,10 +81,14 @@ class Simulator:
     def print_map(self, view):
         # update tracked goals (wumpus gets updated when the agent kills a wumpus)
         for agent in self.__agents.values():
-            self.__goal_tracker[agent.name][AgentGoal.GOLD.value][0] = agent.items[AgentItem.GOLD.value]
-            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value][0] += sum(len(conditions) == 0
-                                                                                    for sub_list in agent.get_map()
-                                                                                    for conditions in sub_list)
+            self.__goal_tracker[agent.name][AgentGoal.GOLD.value] = (agent.items[AgentItem.GOLD.value],
+                                                                     self.__goal_tracker[agent.name]
+                                                                     [AgentGoal.GOLD.value][1])
+            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value] += (sum(len(conditions) == 0
+                                                                              for sub_list in agent.get_map()
+                                                                              for conditions in sub_list),
+                                                                              self.__goal_tracker[agent.name]
+                                                                              [AgentGoal.MAP_PROGRESS.value][1])
 
         if view not in self.__agents.keys():
             return self.__grid.print_map(), self.__goal_tracker
