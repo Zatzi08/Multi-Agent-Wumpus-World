@@ -224,7 +224,7 @@ class Agent:
         request_gold = offer.req_gold
         request_wumpus_positions = offer.req_wumpus_positions
         request_tiles = set_req_tiles
-
+        offer_tiles = [(row,col, list(self.__knowledge.get_conditions_of_tile(row,col))) for row,col in offer.off_tiles]
         if offer.req_gold > 0:
             reduce_gold_amount = int(diff_utility / self.utility_gold())
             request_gold -= reduce_gold_amount
@@ -232,8 +232,8 @@ class Agent:
 
         # check if utility is low enough
         if current_diff_utility <= diff_utility / 2:
-            return OfferedObjects(offer.off_gold, offer.off_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
-                request_gold, request_tiles, request_wumpus_positions)
+            return OfferedObjects(offer.off_gold, offer_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
+                request_gold, list(request_tiles), request_wumpus_positions)
 
         if len(offer.req_tiles) > 0:
             # reduce/remove acceptable tiles
@@ -241,15 +241,15 @@ class Agent:
                 reduced_amount = int(len(request_acceptable_subset) * current_diff_utility / (
                         self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR))
                 request_tiles = request_tiles.difference(set(list(request_acceptable_subset)[reduced_amount:]))
-                return OfferedObjects(offer.off_gold, offer.off_tiles,
-                                      list(offer.off_wumpus_positions)), RequestedObjects(request_gold, request_tiles,
+                return OfferedObjects(offer.off_gold, offer_tiles,
+                                      list(offer.off_wumpus_positions)), RequestedObjects(request_gold, list(request_tiles),
                                                                                           request_wumpus_positions)
             request_tiles = request_tiles.difference(request_acceptable_subset)
             current_diff_utility -= self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR
 
             # check if utilty is low enough
             if current_diff_utility <= diff_utility / 2:
-                return OfferedObjects(offer.off_gold, offer.off_tiles,
+                return OfferedObjects(offer.off_gold, offer_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold,
                                                                                           list(request_tiles),
                                                                                           request_wumpus_positions)
@@ -259,15 +259,17 @@ class Agent:
                 reduced_amount = int(len(request_desired_subset) * current_diff_utility / self.utility_information(
                     request_desired_subset))
                 request_tiles = request_tiles.difference(set(list(request_desired_subset)[reduced_amount:]))
-                return OfferedObjects(offer.off_gold, offer.off_tiles,
+                return OfferedObjects(offer.off_gold, offer_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold,
                                                                                           list(request_tiles),
                                                                                           request_wumpus_positions)
             request_tiles = request_tiles.difference(request_desired_subset)
-            return OfferedObjects(offer.off_gold, offer.off_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
+            return OfferedObjects(offer.off_gold, offer_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
                 request_gold, list(request_tiles), request_wumpus_positions)
 
         # req_wumpus nicht behandelt, weil anderer größere Utility davon hat als man selbst --> Reduktion von req_wumpus hilft nicht
+
+        # keine Veränderung möglich, ohne negative utility
         return None
     
     
