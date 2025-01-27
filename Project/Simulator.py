@@ -15,9 +15,10 @@ class Simulator:
         self.__grid: Map = Map(map_width, map_height)
         self.__replenish_time: int = 32
         self.__agents: dict[int, SimulatedAgent] = {}
+        self.__goal_tracker: list[list[tuple[int, bool]]] = [[(0, False) for _ in range(len(AgentGoal))]
+                                                             for _ in range(number_of_agents)]
         self.__set_up_agents(self.__grid.width, self.__grid.height, number_of_agents)
         self.__communication_channel: Channel = Channel(self.__agents)
-        self.__goal_tracker: list[list[int]] = [[0 for _ in range(len(AgentGoal))] for _ in range(len(self.__agents))]
 
     def __set_up_agents(self, map_width: int, map_height: int, number_of_agents: int):
         for i in range(0, number_of_agents, 1):
@@ -25,6 +26,8 @@ class Simulator:
             role: AgentRole = random.choice(list(AgentRole))
             self.__agents[i] = SimulatedAgent(i, role, spawn_position, map_width, map_height, self.__replenish_time,
                                               self.__grid)
+            for goal in self.__agents[i].get_goals():
+                self.__goal_tracker[i][goal.value] = (0, True)
             self.__spread_knowledge(i, True)
         self.__grid.add_agents(self.__agents)
 
@@ -51,7 +54,7 @@ class Simulator:
             if self.__agents[agent].role == AgentRole.KNIGHT:
                 self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
                 self.__agents[agent].agent.receive_wumpus_scream(x, y)
-                self.__goal_tracker[agent][AgentGoal.WUMPUS.value] += 1
+                self.__goal_tracker[agent][AgentGoal.WUMPUS.value][0] += 1
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
                 del self.__agents[agent]
@@ -68,7 +71,7 @@ class Simulator:
         if TileCondition.WUMPUS in self.__grid.get_tile_conditions(x, y):
             self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
             self.__agents[agent].agent.receive_wumpus_scream(x, y)
-            self.__goal_tracker[agent][AgentGoal.WUMPUS.value] += 1
+            self.__goal_tracker[agent][AgentGoal.WUMPUS.value][0] += 1
 
     def get_agents(self):
         return self.__agents
@@ -76,15 +79,15 @@ class Simulator:
     def print_map(self, view):
         # update tracked goals (wumpus gets updated when the agent kills a wumpus)
         for agent in self.__agents.values():
-            self.__goal_tracker[agent.name][AgentGoal.GOLD.value] = agent.items[AgentItem.GOLD.value]
-            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value] = sum(len(conditions) == 0
-                                                                                for sub_list in agent.get_map()
-                                                                                for conditions in sub_list)
+            self.__goal_tracker[agent.name][AgentGoal.GOLD.value][0] = agent.items[AgentItem.GOLD.value]
+            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value][0] += sum(len(conditions) == 0
+                                                                                    for sub_list in agent.get_map()
+                                                                                    for conditions in sub_list)
 
         if view not in self.__agents.keys():
             return self.__grid.print_map(), self.__goal_tracker
         else:
-            return print_agent_map(self.__agents[view].agent.get_map(), self.__grid.width, self.__grid.height,
+            return print_agent_map(self.__agents[view].agent.return_map(), self.__grid.width, self.__grid.height,
                                    self.__agents[view]), self.__goal_tracker
 
     def simulate_next_step(self, view: int):

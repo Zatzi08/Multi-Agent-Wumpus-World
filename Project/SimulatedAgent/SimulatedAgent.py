@@ -1,4 +1,4 @@
-from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem
+from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem, AgentGoal
 from Project.Agent.Agent import Agent, Hunter, Cartographer, Knight, BWLStudent
 from Project.Environment.TileCondition import TileCondition
 import random
@@ -75,7 +75,10 @@ class SimulatedAgent:
                 pass
 
     def get_map(self) -> list[list[set[TileCondition]]]:
-        return self.agent.get_map()
+        return self.agent.return_map()
+
+    def get_goals(self) -> set[AgentGoal]:
+        return self.agent.return_goals()
 
 
 class DefaultAgentValue:
