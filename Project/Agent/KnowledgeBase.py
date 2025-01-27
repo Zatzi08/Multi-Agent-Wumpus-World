@@ -25,7 +25,7 @@ class _Map:
     def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
         self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
 
-        if TileCondition.WALL in self.__map[y][x]:
+        if TileCondition.WALL in self.__map[y][x] or TileCondition.PIT in self.__map[y][x]:
             return
 
         for position in SURROUNDING_TILES:
