@@ -83,12 +83,12 @@ class SimulatedAgent:
 
 class DefaultAgentValue:
     HEALTH: int = 1
-    ITEM_CAPACITY: int = 5
+    ITEM_CAPACITY: int = 1213
     ITEMS: list[int] = [0] * len(AgentItem)
 
 
 class HunterValue(DefaultAgentValue):
-    ITEM_CAPACITY: int = 3
+    ITEM_CAPACITY: int = DefaultAgentValue.ITEM_CAPACITY
     ITEMS: list[int] = DefaultAgentValue.ITEMS
     ITEMS[AgentItem.ARROW.value] = 1
 
@@ -102,7 +102,7 @@ class CartographerValue(DefaultAgentValue):
 
 class KnightValue(DefaultAgentValue):
     HEALTH: int = 2
-    ITEM_CAPACITY: int = 3
+    ITEM_CAPACITY: int = DefaultAgentValue.ITEM_CAPACITY
 
     # specifics
     REPLENISH_HEALTH: int = 2
