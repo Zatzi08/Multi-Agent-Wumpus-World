@@ -1,5 +1,6 @@
 from Project.SimulatedAgent.AgentEnums import AgentItem
 from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Environment.TileCondition import TileCondition
 import random
 
 class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell performativ "confirm" zwischen Kanal und initiator zum prüfen ob Wert von Gegenangebot und Content passt
@@ -137,7 +138,7 @@ def start_negotiation(self, initiator: int, receivers: list[tuple[int, Offer]], 
         for participant, offer in receivers:
             p_agent = self.agents[participant].agent
             desired_tiles = p_agent.desired_tiles()
-            counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles), p_agent.knowledge_tiles(), p_agent.__items[AgentItem.GOLD.value], p_agent.get_wumpus_count())
+            counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles), p_agent.knowledge_tiles(), p_agent.__items[AgentItem.GOLD.value], len(p_agent.get_tiles_by_condition(TileCondition.WUMPUS)))
             verify_offer(counter_offer, participant)
             if self.agents[participant].agent.evaluate_offer() > -1:
                 good_offers.update({participant: (counter_offer, counter_request)})
@@ -164,10 +165,10 @@ def verify_offer(self, offer: OfferedObjects, participant: int):
     knowledge = self.agents[participant].__knowledge
     for tile in offer.tile_information.copy():# copy?
         # tile_information[2] ist eine list, get_map.. ist ein set. Wie soll ich das vergleichen? Soll ich tile_information in ein set machen?
-        if not (self.agents[participant].get_map[tile[0]][tile[1]]) and self.agents[participant].get_map[tile[0]][tile[1]] == offer.tile_information[2]:
+        if not (self.agents[participant].return_map[tile[0]][tile[1]]) and self.agents[participant].return_map[tile[0]][tile[1]] == offer.tile_information[2]:
             offer.tile_information.remove(tile)
 
     for tile in offer.wumpus_positions.copy():# copy?
         # tile_information[2] ist eine list, get_map.. ist ein set. Wie soll ich das vergleichen? Soll ich tile_information in ein set machen?
-        if not (self.agents[participant].get_map[tile[0]][tile[1]]) and knowledge.get_condition_of_tile(tile[0], tile[1]) == self.agents[participant].get_map[tile[0]][tile[1]]:
+        if not (self.agents[participant].return_map[tile[0]][tile[1]]) and knowledge.get_condition_of_tile(tile[0], tile[1]) == self.agents[participant].return_map[tile[0]][tile[1]]:
             offer.tile_information.remove(tile)

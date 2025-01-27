@@ -338,12 +338,15 @@ class KnowledgeBase:
             tile_conditions.remove(TileCondition.SAFE)
             tile_conditions.append(TileCondition.SAFE)
 
+        if TileCondition.SHINY in tile_conditions:
+            tile_conditions.remove(TileCondition.SHINY)
+            tile_conditions.append(TileCondition.SHINY)
+
         # for every condition: check for consistency and potentially add it
         for tile_condition in tile_conditions:
             # filter already known conditions
             if self.__map.tile_has_condition(x, y, tile_condition):
                 continue
-
             # consistency
             match tile_condition:
                 case TileCondition.SAFE:

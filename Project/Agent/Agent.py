@@ -103,19 +103,15 @@ class Agent:
     def receive_tile_from_communication(self, x: int, y: int, conditions: list[TileCondition]) -> None:
         self.__knowledge.update_tile(x, y, conditions)
 
-    def get_map(self) -> list[list[set[TileCondition]]]:
+    def return_map(self) -> list[list[set[TileCondition]]]:
         return self.__knowledge.return_map()
+
+    def return_goals(self) -> set[AgentGoal]:
+        return self.__goals
 
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
 
-    def get_wumpus_count(self):
-        wumpus_count: int = 0
-        for y in self.get_map:
-            for x in y:
-                if TileCondition.WUMPUS in x:
-                    wumpus_count+=1
-        return wumpus_count
     #
     # Communication
     #
