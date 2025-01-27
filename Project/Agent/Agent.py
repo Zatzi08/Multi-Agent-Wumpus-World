@@ -106,6 +106,14 @@ class Agent:
 
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
+
+    def get_wumpus_count(self):
+        wumpus_count: int = 0
+        for y in self.get_map:
+            for x in y:
+                if TileCondition.WUMPUS in x:
+                    wumpus_count+=1
+        return wumpus_count
     #
     # Communication
     #
@@ -263,6 +271,9 @@ class Agent:
 
         # req_wumpus nicht behandelt, weil anderer größere Utility davon hat als man selbst --> Reduktion von req_wumpus hilft nicht
         return None
+    
+    
+
 
     def answer_to_offer(self, initiator_request: RequestedObjects) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects]:
