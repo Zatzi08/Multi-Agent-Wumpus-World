@@ -196,8 +196,7 @@ class Agent:
     #  weil sonst in counter_offer die TileConditions für die tiles geholt werden müssen (unnötiger Aufwand)
     #  2. Was soll die Rückgabe von counter_offer sein, wenn kein neues Counteroffer erstellt wird? Aktuell: None
     def create_counter_offer(self, offer: Offer, desired_tiles: set[tuple[int, int]],
-                             acceptable_tiles: set[tuple[int, int]], knowledge_tiles: set[tuple[int, int]],
-                             other_gold_amount: int, other_wumpus_amount: int) -> tuple[
+                             acceptable_tiles: set[tuple[int, int]]) -> tuple[
         OfferedObjects, RequestedObjects]:
         set_off_tiles = set(offer.off_tiles)
         set_req_tiles = set(offer.req_tiles)
@@ -495,7 +494,6 @@ class Agent:
                 return 0
 
     # TODO: Methode: Berechnung eines eigenen Offers
-    # Voraussetzung: Vor Methodenaufruf wurde festgestellt, dass der Agent eine Kommunikation starten möchte
     # Überlegung:
     # - help_request Liste nicht leer --> Cfp/Request kill wumpus
     # - rest: request/cfp tile_information
@@ -504,8 +502,21 @@ class Agent:
     def get_offer_type(self):
         if self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) > 0:
             return RequestObject.KILL_WUMPUS
-        return RequestObject.TILE_INFORMATION
-
+        match self.__role:
+            case AgentRole.BWL_STUDENT:
+                if self.__available_item_space > 0:
+                    return RequestObject.TILE_INFORMATION
+            case AgentRole.CARTOGRAPHER:
+                return RequestObject.TILE_INFORMATION
+            case AgentRole.KNIGHT:
+                if (len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) == 0 or
+                        (self.__available_item_space > 0 and
+                         len(self.__knowledge.get_tiles_by_condition(TileCondition.SHINY)) == 0 )):
+                    return RequestObject.TILE_INFORMATION
+            case AgentRole.HUNTER:
+                if len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)) == 0:
+                    return RequestObject.TILE_INFORMATION
+        return None
     # Überlegungen: Welche Felder sind von Interesse
     # Wumpuskiller wollen Infos zu Wumpus --> wollen PREDICTED_WUMPUS als WUMPUS aufdecken --> Frage andere Agenten nach den Felder + angrenzende Felder
     # keine PREDICTED_WUMPUS bekannt --> erkundeten Bereich ausweiten --> Wissen über Felder notwendig, die an visited tiles angrenzen
