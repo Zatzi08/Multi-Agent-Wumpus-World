@@ -116,18 +116,19 @@ class Agent:
     # Communication
     #
 
-    def start_communication(self, agents: list[tuple[int, AgentRole]]) \
-            -> tuple[list[int], tuple[OfferedObjects, RequestedObjects]]:
+    def start_communication(self, agents: list[tuple[int, AgentRole]], offer_type: RequestObject) \
+            -> tuple[list[int]]:
         """choose agents to communicate with and offer to make"""
-        # TODO decision making for choosing agents to communicate with
+        # decision making for choosing agents to communicate with
         agents_to_communicate_with: list[int] = []
         roles_to_communicate_with: list[AgentRole] = []
-        for agent in agents:
-            agents_to_communicate_with.append(agent[0])
-            roles_to_communicate_with.append(agent[1])
-        if agents_to_communicate_with:
-            return agents_to_communicate_with, self.create_offer(roles_to_communicate_with)
-        return agents_to_communicate_with, None
+        # if offer_type None -> initiator doesn't want to communicate
+        if offer_type != None:
+            for agent in agents:
+                agents_to_communicate_with.append(agent[0])
+                roles_to_communicate_with.append(agent[1])
+        
+            return agents_to_communicate_with
 
     # Annahme: abhängig von dem RequestObject sind Argumente wie desired_tiles, acceptable_tiles und wumpus_amount 0 oder empty
     # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
@@ -272,18 +273,16 @@ class Agent:
     
 
 
-    def answer_to_offer(self, initiator_request: RequestedObjects) -> tuple[
+    def answer_to_offer(self, initiator_request: RequestObject) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects]:
-        response: ResponseType = ResponseType.ACCEPT
         wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
 
         accept = self.accept_communication(initiator_request)
-        offer, request = self.create_offer(self, self.desired_tiles(), self.acceptable_tiles(self, self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
+        if accept:
+            offer, request = self.create_offer(self, self.desired_tiles(), self.acceptable_tiles(self, self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
+            
 
-        if not accept:
-            response = ResponseType.DENY
-
-        return response, offer, request
+        return accept, offer, request
 
     #
     # utility

@@ -14,11 +14,10 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
 
 #initiator: tuple[int, AgentRole]
     def communicate(self, initiator, potential_receivers) -> bool:
+        request_type = self.agents[initiator].agent.get_offer_type()
         answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
-            self.agents[initiator].agent.start_communication(potential_receivers))
+            self.agents[initiator].agent.start_communication(potential_receivers, request_type))
         receivers: list[int] = answer[0]
-        offered_objects: OfferedObjects = answer[1][0]
-        requested_objects: RequestedObjects = answer[1][1]
 
         # check if Communication should take place
         if not receivers:
@@ -30,15 +29,13 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
 
         # TODO create offer from offered_objects and requested_objects
 
-        initiator_offer: Offer = Offer(offered_objects, requested_objects, initiator[1])
-
         receiver_answers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]] = {}
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
             receiver_answers: dict[int, tuple]
             receiver_answers.update(
-                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, requested_objects)})
+                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, request_type)})
 
         # TODO evaluate answers
         if not receiver_answers:
@@ -120,9 +117,6 @@ def get_best_offer(offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]]
                 if rand == 0:
                     best_utility = offer_utility
                     best_offer = {participant: (p_answer[1], p_answer[2])}
-                
-                
-
 
     else:
         print(f"Everyone denied the offer from {sender}.")
@@ -143,7 +137,7 @@ def start_negotiation(self, initiator: int, receivers: dict[int: Offer]):
         for participant, offer in receivers.items():
             p_agent = self.agents[participant].agent
             desired_tiles = p_agent.desired_tiles()
-            counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles), p_agent.knowledge_tiles(), p_agent.__items[AgentItem.GOLD.value], len(p_agent.get_tiles_by_condition(TileCondition.WUMPUS)))
+            counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles))
             verify_offer(counter_offer, participant)
             if self.agents[participant].agent.evaluate_offer() > -1:
                 good_offers.update({participant: (counter_offer, counter_request)})
