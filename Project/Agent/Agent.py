@@ -393,9 +393,9 @@ class Agent:
             match self.__role:
                 case AgentRole.KNIGHT:
                     if self.__health > 1:
-                        goal_states = [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS, TileCondition.SHINY]
-                        if self.__available_item_space == 0:
-                            goal_states.remove(TileCondition.SHINY)
+                        goal_states = [TileCondition.WUMPUS, TileCondition.PREDICTED_WUMPUS]
+                        if self.__available_item_space > 0:
+                            goal_states.append(TileCondition.SHINY)
                         for condition in goal_states:
                             calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
                     else:
