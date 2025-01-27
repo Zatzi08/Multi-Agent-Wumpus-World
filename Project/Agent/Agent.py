@@ -446,7 +446,7 @@ class Agent:
                     if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
                         stench_tiles.remove(path[len(path)-1-index])
                         break
-                if len(self.__last_goal_tiles.difference(stench_tiles)) == 0:
+                if len(self.__last_goal_tiles.symmetric_difference(stench_tiles)) == 0:
                     next_action = self.__path_to_goal_tile[0]
                     self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
                     return next_action
@@ -454,7 +454,7 @@ class Agent:
                 return self.new_a_search(self.__knowledge.get_tiles_by_condition(TileCondition.STENCH))
             return AgentAction.SHOUT
         else:
-            if len(self.__last_goal_tiles.difference(calc_tiles)) == 0:
+            if len(calc_tiles.symmetric_difference(self.__last_goal_tiles)) == 0:
                 next_action = self.__path_to_goal_tile[0]
                 self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
                 return next_action
