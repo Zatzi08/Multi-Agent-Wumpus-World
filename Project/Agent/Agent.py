@@ -297,7 +297,7 @@ class Agent:
             best_heuristik, heuristik= None, None
             for row, col in goal_tiles:
                 utility = None
-                if len(self.__knowledge.get_conditions_of_tile(row,col)) == 0:
+                if len(self.__knowledge.get_conditions_of_tile(row, col)) == 0:
                     utility = self.__utility.get_utility_of_condition(-1)
                 else:
                     for condition in self.__knowledge.get_conditions_of_tile(row, col):
@@ -350,9 +350,9 @@ class Agent:
         # pos: [heuristik, x,y,next_move]
         while (pos[1], pos[2]) not in goal_tiles:
             #get neighbours of pos
-            neighbours = [[pos[1] + row, pos[2] + col, pos[3].append(move)] for row, col,move in
-                          [[0, 1,AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
-                           [-1, 0,AgentAction.MOVE_LEFT]] if 0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
+            neighbours = [[pos[1] + row, pos[2] + col, pos[3] + [move]] for row, col, move in
+                          [[0, 1, AgentAction.MOVE_UP], [1, 0, AgentAction.MOVE_RIGHT], [0, -1, AgentAction.MOVE_DOWN],
+                           [-1, 0, AgentAction.MOVE_LEFT]] if 0 <= pos[1] + row < width and 0 <= pos[2] + col < height]
 
             avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                            TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]

@@ -54,7 +54,9 @@ class Simulator:
             if self.__agents[agent].role == AgentRole.KNIGHT:
                 self.__grid.delete_condition(x, y, TileCondition.WUMPUS)
                 self.__agents[agent].agent.receive_wumpus_scream(x, y)
-                self.__goal_tracker[agent][AgentGoal.WUMPUS.value][0] += 1
+                self.__goal_tracker[agent][AgentGoal.WUMPUS.value] = (self.__goal_tracker[agent]
+                                                                      [AgentGoal.WUMPUS.value][0]+1,
+                                                                      self.__goal_tracker[agent][AgentGoal.WUMPUS.value][1])
             self.__agents[agent].health -= 1
             if self.__agents[agent].health == 0:
                 del self.__agents[agent]
@@ -84,7 +86,7 @@ class Simulator:
             self.__goal_tracker[agent.name][AgentGoal.GOLD.value] = (agent.items[AgentItem.GOLD.value],
                                                                      self.__goal_tracker[agent.name]
                                                                      [AgentGoal.GOLD.value][1])
-            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value] += (sum(len(conditions) == 0
+            self.__goal_tracker[agent.name][AgentGoal.MAP_PROGRESS.value] = (sum(not len(conditions) == 0 and TileCondition.WALL not in conditions
                                                                               for sub_list in agent.get_map()
                                                                               for conditions in sub_list),
                                                                               self.__goal_tracker[agent.name]
@@ -99,7 +101,7 @@ class Simulator:
     def simulate_next_step(self, view: int):
         print("\nstep:", self.__current_step)
         if self.__current_step == self.__number_of_simulation_steps:
-            return
+            return self.print_map(view)
         self.__current_step += 1
 
         # replenish
