@@ -9,8 +9,6 @@ class RequestObject(Enum):
 class ResponseType(Enum):
     ACCEPT = 1
     DENY = 2
-    COUNTEROFFER = 3
-
 
 class OfferedObjects:
     def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list]],
