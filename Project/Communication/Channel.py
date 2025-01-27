@@ -44,7 +44,7 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
         accepted_requests = dict[int, tuple[OfferedObjects, RequestedObjects]]
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
-                verify_offer(p_answer[1], participant) # soll verify_offer was returnen oder geht das so?
+                #verify_offer(p_answer[1], participant) # soll verify_offer was returnen oder geht das so?
                 accepted_requests.update({participant: p_answer})
             
 
@@ -138,7 +138,7 @@ def start_negotiation(self, initiator: int, receivers: dict[int: Offer]):
             p_agent = self.agents[participant].agent
             desired_tiles = p_agent.desired_tiles()
             counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles))
-            verify_offer(counter_offer, participant)
+            #verify_offer(counter_offer, participant)
             if self.agents[participant].agent.evaluate_offer() > -1:
                 good_offers.update({participant: (counter_offer, counter_request)})
 
@@ -156,7 +156,7 @@ def start_negotiation(self, initiator: int, receivers: dict[int: Offer]):
 
     else:
         print(f"The negotiation has failed")
-
+'''
 def verify_offer(self, offer: OfferedObjects, participant: int):
     if offer.gold_amount > self.agents[participant].__items[AgentItem.GOLD.value]:
         offer.gold_amount = self.agents[participant].__items[AgentItem.GOLD.value]
@@ -171,3 +171,4 @@ def verify_offer(self, offer: OfferedObjects, participant: int):
         # tile_information[2] ist eine list, get_map.. ist ein set. Wie soll ich das vergleichen? Soll ich tile_information in ein set machen?
         if not (self.agents[participant].return_map[tile[0]][tile[1]]) and knowledge.get_condition_of_tile(tile[0], tile[1]) == self.agents[participant].return_map[tile[0]][tile[1]]:
             offer.tile_information.remove(tile)
+'''
