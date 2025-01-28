@@ -128,14 +128,11 @@ class Agent:
         """choose agents to communicate with and offer to make"""
         # decision making for choosing agents to communicate with
         agents_to_communicate_with: list[int] = []
-        roles_to_communicate_with: list[AgentRole] = []
         # if offer_type None -> initiator doesn't want to communicate
         if offer_type is not None:
-            for agent in agents:
-                agents_to_communicate_with.append(agent[0])
-                roles_to_communicate_with.append(agent[1])
-        
-            return agents_to_communicate_with
+            for agentID, _ in agents:
+                agents_to_communicate_with.append(agentID)
+        return agents_to_communicate_with
 
     # Annahme: abhängig von dem RequestObject sind Argumente wie desired_tiles, acceptable_tiles und wumpus_amount 0 oder empty
     # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
