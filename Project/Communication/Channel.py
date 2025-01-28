@@ -76,31 +76,39 @@ class Channel:  # TODO: Sollte der Kanal nicht den state speichern; eventuell pe
             self.agents[receiver].agent.apply_changes(initiator[0], receiver, offer_answer[0][1], offer_answer[0][0])
             return True
 
-    def apply_changes(self, sender: int, receiver: int, sender_request: RequestedObjects, sender_offer: OfferedObjects):
+    def apply_changes(self, initiator: int, receiver: int, receiver_request: RequestedObjects, receiver_offer: OfferedObjects):
         """applies all changes to the associated agents after a successful Communication process"""
         # changes in simulated agents
         # change to requested objects, getter for the request stuff
-        if sender_request.gold_amount != 0:
-            self.agents[sender].items[AgentItem.GOLD.value] += sender_request.gold_amount
+        if receiver_request.gold != 0:
+            self.agents[receiver].items[AgentItem.GOLD.value] += receiver_request.gold
+            self.agents[initiator].items[AgentItem.GOLD.value] -= receiver_request.gold
 
-        if sender_offer.gold_amount != 0:
-            self.agents[receiver].items[AgentItem.GOLD.value] += sender_offer.gold_amount
+        if receiver_offer.gold_amount != 0:
+            self.agents[initiator].items[AgentItem.GOLD.value] += receiver_offer.gold
+            self.agents[receiver].items[AgentItem.GOLD.value] -= receiver_offer.gold
 
-        if sender_request.tile_information is not []:
-            for (x, y, conditions) in sender_offer.tile_information:
-                self.agents[sender].agent.receive_tile_from_communication(x, y, conditions)
+        if receiver_request.tiles:
+            for (x, y) in receiver_request.tiles:
+                self.agents[receiver].agent.receive_tile_from_communication(x, y, self.agents[receiver].agent.receive_tile_condition(x, y))
 
-        if sender_offer.tile_information is not []:
-            for (x, y, conditions) in sender_request.tile_information:
-                self.agents[receiver].agent.receive_tile_from_communication(x, y, conditions)
+        if receiver_offer.tile_information:
+            for (x, y, conditions) in receiver_offer.tile_information:
+                self.agents[initiator].agent.receive_tile_from_communication(x, y, set(conditions))
 
-        if sender_request.wumpus_positions is not []:
-            for (x, y) in sender_offer.wumpus_positions:
-                self.agents[sender].agent.add_kill_wumpus_task(x, y)
+        if receiver_request.wumpus_positions != 0:
+            pos = self.agents[initiator].agent.receive_found_wumpus()
+            a = list(pos)[:receiver_request.wumpus_positions]
 
-        if sender_offer.wumpus_positions is not []:
-            for (x, y) in sender_request.wumpus_positions:
+            for (x, y) in a:
                 self.agents[receiver].agent.add_kill_wumpus_task(x, y)
+
+        if receiver_offer.wumpus_positions != 0:
+            pos = self.agents[receiver].agent.receive_found_wumpus()
+            a = list(pos)[:receiver_offer.wumpus_positions]
+
+            for (x, y) in a:
+                self.agents[initiator].agent.add_kill_wumpus_task(x, y)
 
 
 def get_best_offer(offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]], sender:int, best_offer: dict[int: tuple[OfferedObjects, RequestedObjects]], best_utility: int):

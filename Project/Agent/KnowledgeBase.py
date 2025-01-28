@@ -130,6 +130,11 @@ class KnowledgeBase:
     def get_path(self) -> list[tuple[int, int]]:
         return self.__path
 
+    def get__Map(self) -> _Map:
+        return self.__map
+
+    def get_found_wumpus(self) -> set[tuple[int, int]]:
+        return self.__found_wumpus
     #
     # MAP
     #
@@ -315,7 +320,7 @@ class KnowledgeBase:
                     or self.__map.visited(x + position[0], y + position[1])):
                 self.__add_stench_or_breeze(x + position[0], y + position[1], set_condition)
 
-    def update_tile(self, x: int, y: int, tile_conditions: list[TileCondition], from_simulator: bool = False)\
+    def update_tile(self, x: int, y: int, tile_conditions: set[TileCondition], from_simulator: bool = False)\
             -> None:
         """updates map knowledge given some knowledge about a tile"""
         if from_simulator:
@@ -336,11 +341,11 @@ class KnowledgeBase:
 
         if TileCondition.SAFE in tile_conditions:
             tile_conditions.remove(TileCondition.SAFE)
-            tile_conditions.append(TileCondition.SAFE)
+            tile_conditions.add(TileCondition.SAFE)
 
         if TileCondition.SHINY in tile_conditions:
             tile_conditions.remove(TileCondition.SHINY)
-            tile_conditions.append(TileCondition.SHINY)
+            tile_conditions.add(TileCondition.SHINY)
 
         # for every condition: check for consistency and potentially add it
         for tile_condition in tile_conditions:
@@ -378,7 +383,7 @@ class KnowledgeBase:
                     self.__map.add_condition_to_tile(x, y, TileCondition.SHINY)
 
                     # Shiny[y][x] => Safe[y][x]
-                    self.update_tile(x, y, [TileCondition.SAFE])
+                    self.update_tile(x, y, {TileCondition.SAFE})
                 case TileCondition.WUMPUS:
                     # no lying
                     self.__found_wumpus.add((x, y))

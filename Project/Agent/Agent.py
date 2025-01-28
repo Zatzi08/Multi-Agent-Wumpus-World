@@ -100,8 +100,14 @@ class Agent:
         for tile in tiles:
             self.__knowledge.update_tile(tile[0], tile[1], [condition])
 
-    def receive_tile_from_communication(self, x: int, y: int, conditions: list[TileCondition]) -> None:
+    def receive_tile_from_communication(self, x: int, y: int, conditions: set[TileCondition]) -> None:
         self.__knowledge.update_tile(x, y, conditions)
+
+    def receive_tile_condition(self, x, y) -> set[TileCondition]:
+        return self.__knowledge.get__Map().get_conditions_of_tile(x, y)
+
+    def receive_found_wumpus(self) -> set[tuple[int, int]]:
+        self.__knowledge.get_found_wumpus()
 
     def return_map(self) -> list[list[set[TileCondition]]]:
         return self.__knowledge.return_map()
@@ -111,6 +117,7 @@ class Agent:
 
     def add_kill_wumpus_task(self, x: int, y: int) -> None:
         self.__knowledge.add_kill_wumpus_task(x, y)
+
 
     #
     # Communication
