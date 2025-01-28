@@ -264,7 +264,7 @@ class KnowledgeBase:
             for position in SURROUNDING_TILES:
                 if self.__map.tile_has_condition(x + position[0], y + position[1], predicted_danger):
                     self.__map.remove_condition_from_tile(x + position[0], y + position[1], predicted_danger)
-                    self.update_tile(x + position[0], y + position[1], [real_danger])
+                    self.update_tile(x + position[0], y + position[1], {real_danger})
                     return True
         return True
 
@@ -304,7 +304,7 @@ class KnowledgeBase:
                         if self.__map.tile_has_condition(x + outer_tile[0], y + outer_tile[1], predicted_danger):
                             self.__map.remove_condition_from_tile(x + outer_tile[0], y + outer_tile[1],
                                                                   predicted_danger)
-                            self.update_tile(x + outer_tile[0], y + outer_tile[1], [real_danger])
+                            self.update_tile(x + outer_tile[0], y + outer_tile[1], {real_danger})
 
     def __place_stenches_or_breezes_around_danger(self, x: int, y: int, condition: TileCondition):
         match condition:
@@ -462,7 +462,7 @@ class KnowledgeBase:
     #
 
     def add_shout(self, x: int, y: int, time: int) -> None:
-        self.update_tile(x, y, [TileCondition.SAFE])
+        self.update_tile(x, y, {TileCondition.SAFE})
         self.__map.add_shout(x, y, time)
 
     def get_shouts(self) -> dict[tuple[int, int], int]:

@@ -81,24 +81,24 @@ class Agent:
         self.__available_item_space = available_item_space
         self.__time = time
 
-    def receive_tile_from_simulator(self, x: int, y: int, tile_conditions: list[TileCondition]):
+    def receive_tile_from_simulator(self, x: int, y: int, tile_conditions: set[TileCondition]):
         self.__knowledge.update_tile(x, y, tile_conditions, True)
 
     def receive_shout_action_information(self, x: int, y: int):
         self.__knowledge.add_shout(x, y, self.__time)
 
     def receive_bump_information(self, x: int, y: int):
-        self.__knowledge.update_tile(x, y, [TileCondition.WALL])
+        self.__knowledge.update_tile(x, y, {TileCondition.WALL})
 
     def receive_wumpus_scream(self, x: int, y: int):
-        self.__knowledge.update_tile(x, y, [TileCondition.SAFE])
+        self.__knowledge.update_tile(x, y, {TileCondition.SAFE})
 
     def receive_gold_position(self, x: int, y: int):
-        self.__knowledge.update_tile(x, y, [TileCondition.SHINY])
+        self.__knowledge.update_tile(x, y, {TileCondition.SHINY})
 
     def receive_tiles_with_condition(self, tiles: list[tuple[int, int]], condition: TileCondition) -> None:
         for tile in tiles:
-            self.__knowledge.update_tile(tile[0], tile[1], [condition])
+            self.__knowledge.update_tile(tile[0], tile[1], {condition})
 
     def receive_tile_from_communication(self, x: int, y: int, conditions: set[TileCondition]) -> None:
         self.__knowledge.update_tile(x, y, conditions)
@@ -107,7 +107,7 @@ class Agent:
         return self.__knowledge.get__Map().get_conditions_of_tile(x, y)
 
     def receive_found_wumpus(self) -> set[tuple[int, int]]:
-        self.__knowledge.get_found_wumpus()
+        return self.__knowledge.get_found_wumpus()
 
     def return_map(self) -> list[list[set[TileCondition]]]:
         return self.__knowledge.return_map()
@@ -124,13 +124,13 @@ class Agent:
     #
 
     def start_communication(self, agents: list[tuple[int, AgentRole]], offer_type: RequestObject) \
-            -> tuple[list[int]]:
+            -> list[int]:
         """choose agents to communicate with and offer to make"""
         # decision making for choosing agents to communicate with
         agents_to_communicate_with: list[int] = []
         roles_to_communicate_with: list[AgentRole] = []
         # if offer_type None -> initiator doesn't want to communicate
-        if offer_type != None:
+        if offer_type is not None:
             for agent in agents:
                 agents_to_communicate_with.append(agent[0])
                 roles_to_communicate_with.append(agent[1])
