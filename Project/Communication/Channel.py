@@ -12,12 +12,10 @@ class Channel:
     def set_agents(self, agents):
         self.agents = agents
 
-# initiator: tuple[int, AgentRole]
+    # initiator: tuple[int, AgentRole]
     def communicate(self, initiator, potential_receivers) -> bool:
         request_type = self.agents[initiator].agent.get_offer_type()
-        answer: tuple[list[int], tuple[OfferedObjects, RequestedObjects]] = (
-            self.agents[initiator].agent.start_communication(potential_receivers, request_type))
-        receivers: list[int] = answer[0]
+        receivers: list[int] = self.agents[initiator].agent.start_communication(potential_receivers, request_type)
 
         # check if Communication should take place
         if not receivers:
@@ -34,48 +32,45 @@ class Channel:
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
             receiver_answers.update(
-                {str(participant): self.agents[participant].agent.answer_to_offer(self.initiator, request_type)})
+                {participant: self.agents[participant].agent.answer_to_offer(request_type)})
 
         # TODO evaluate answers
         if not receiver_answers:
             return False
         # put all accepting answers and counter-offers into new dicts
-        accepted_requests = dict[int, tuple[OfferedObjects, RequestedObjects]]
+        accepted_requests: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
                 # verify_offer(p_answer[1], participant) # soll verify_offer was returnen oder geht das so?
                 accepted_requests.update({participant: p_answer})
-            
 
         # get best offer out of accepted and counteroffers
         best_utility = -1
         best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
-        best_offer, best_utility = self.get_best_offer(accepted_requests, initiator[0], best_offer, best_utility)
-        
+        best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_offer, best_utility)
 
-        print(
-            f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {next(iter(best_offer.values()))[1]}")
+        #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
         # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
         if best_utility == -1:
             print(f"Sender received only bad offers. Starting negotiation!")
-            receiver_offers: dict[int: Offer]
+            receiver_offers: dict[int: Offer] = {}
             for participant, offer in accepted_requests.items():
                 receiver_offer: Offer = Offer(offer[0], offer[1], self.agents[participant].agent.AgentRole)
                 receiver_offers.update({participant: receiver_offer})
 
-
-            self.agents[initiator[0]].agent.start_negotiation(initiator[0], receiver_offers)
+            self.start_negotiation(initiator, receiver_offers)
 
         # finish Communication (distribute offered objects)
         else:
             receiver = list(best_offer.keys())
             offer_answer = list(best_offer.values())
             print(f"The request is completed, with {best_offer} as the accepted offer")
-            self.agents[receiver].agent.apply_changes(initiator[0], receiver[0], offer_answer[0][1], offer_answer[0][0])
+            self.apply_changes(initiator, receiver[0], offer_answer[0][1], offer_answer[0][0])
             return True
 
-    def apply_changes(self, initiator: int, receiver: int, receiver_request: RequestedObjects, receiver_offer: OfferedObjects):
+    def apply_changes(self, initiator: int, receiver: int, receiver_request: RequestedObjects,
+                      receiver_offer: OfferedObjects):
         """applies all changes to the associated agents after a successful Communication process"""
         # changes in simulated agents
         # change to requested objects, getter for the request stuff
@@ -89,7 +84,8 @@ class Channel:
 
         if receiver_request.tiles:
             for (x, y) in receiver_request.tiles:
-                self.agents[receiver].agent.receive_tile_from_communication(x, y, self.agents[receiver].agent.receive_tile_condition(x, y))
+                self.agents[receiver].agent.receive_tile_from_communication(x, y, self.agents[
+                    receiver].agent.receive_tile_condition(x, y))
 
         if receiver_offer.tile_information:
             for (x, y, conditions) in receiver_offer.tile_information:
@@ -109,7 +105,8 @@ class Channel:
             for (x, y) in a:
                 self.agents[initiator].agent.add_kill_wumpus_task(x, y)
 
-    def get_best_offer(self, offer_list: dict[int:tuple[OfferedObjects, RequestedObjects]], sender:int, best_offer: dict[int: tuple[OfferedObjects, RequestedObjects]], best_utility: int):
+    def get_best_offer(self, offer_list: dict[int, tuple[OfferedObjects, RequestedObjects]], sender: int,
+                       best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]], best_utility: int):
         if len(offer_list) >= 1:
             for participant, p_answer in offer_list.items():
                 offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[1], p_answer[2])
@@ -119,7 +116,7 @@ class Channel:
 
                 # choose randomly if two offers have same utility
                 elif offer_utility == best_utility:
-                    rand = random.choice([0,1])
+                    rand = random.choice([0, 1])
                     if rand == 0:
                         best_utility = offer_utility
                         best_offer = {participant: (p_answer[1], p_answer[2])}
@@ -143,7 +140,8 @@ class Channel:
             for participant, offer in receivers.items():
                 p_agent = self.agents[participant].agent
                 desired_tiles = p_agent.desired_tiles()
-                counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles, p_agent.accepted_tiles(desired_tiles))
+                counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles,
+                                                                              p_agent.accepted_tiles(desired_tiles))
                 # verify_offer(counter_offer, participant)
                 if self.agents[participant].agent.evaluate_offer() > -1:
                     good_offers.update({participant: (counter_offer, counter_request)})
@@ -156,7 +154,8 @@ class Channel:
                 break
 
         if best_offer:
-            print(f"The negotiation has reached an agreement with offer: {best_offer.values()} from {best_offer.keys()}")
+            print(
+                f"The negotiation has reached an agreement with offer: {best_offer.values()} from {best_offer.keys()}")
             receiver = list(best_offer.keys())[0]
             p_offer = list(best_offer.values())[0]
 
@@ -164,6 +163,8 @@ class Channel:
 
         else:
             print(f"The negotiation has failed")
+
+
 '''
 def verify_offer(self, offer: OfferedObjects, participant: int):
     if offer.gold_amount > self.agents[participant].__items[AgentItem.GOLD.value]:

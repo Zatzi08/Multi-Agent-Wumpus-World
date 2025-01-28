@@ -285,7 +285,7 @@ class Agent:
 
         accept = self.accept_communication(initiator_request)
         if accept:
-            offer, request = self.create_offer(self, self.desired_tiles(), self.acceptable_tiles(self, self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
+            offer, request = self.create_offer(self.desired_tiles(), self.acceptable_tiles(self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
             
 
         return accept, offer, request

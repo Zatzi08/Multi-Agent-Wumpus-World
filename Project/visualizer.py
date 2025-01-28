@@ -9,7 +9,7 @@ agent = -1
 templateHead = '{:10s} {:15s} {:15s} {:15s}'
 template = '{:>20s} {:>20s} {:>20s} {:>20s}\n'
 
-simulator = Simulator(60, 60, 6, 20000)
+simulator = Simulator(6, 6, 2, 20000)
 agents = simulator.get_agents()
 
 
@@ -102,7 +102,7 @@ def start_layout(plt, meta):
 p, me = simulator.print_map(agent)
 start_layout(p, me)
 
-#for _ in range(1800):  # Error bei 1789 Agent 0 loopt?
-#    simulator.simulate_next_step(agent)
+for _ in range(80):  # Error bei 1789 Agent 0 loopt?
+    simulator.simulate_next_step(agent)
 
-app.run(debug=True)
+#app.run(debug=True)

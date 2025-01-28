@@ -44,7 +44,7 @@ class Simulator:
             conditions: list[TileCondition] = self.__grid.get_tile_conditions(self.__agents[agent].position[0],
                                                                               self.__agents[agent].position[1])
             self.__agents[agent].agent.receive_tile_from_simulator(self.__agents[agent].position[0],
-                                                                   self.__agents[agent].position[1], conditions)
+                                                                   self.__agents[agent].position[1], set(conditions))
 
     def __agent_move_action(self, agent: int, x: int, y: int):
         if TileCondition.WALL in self.__grid.get_tile_conditions(x, y):
@@ -113,11 +113,23 @@ class Simulator:
         for agent in self.__agents.values():
             self.__spread_knowledge(agent.name, True)
 
+        # give every agent the possibility to establish Communication
+        for agent in self.__agents.values():
+            names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
+            agents_in_proximity: list[tuple[int, AgentRole]] = []
+            for name in names_of_agents_in_proximity:
+                agents_in_proximity.append((name, self.__agents[name].role))
+            if self.__communication_channel.communicate(agent.name, agents_in_proximity):
+                # update knowledge of participants
+                self.__spread_knowledge(agent.name, False)
+                for (receiver, _) in agents_in_proximity:
+                    self.__spread_knowledge(receiver, False)
+
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())
         for agent in agent_list:
             action: AgentAction = self.__agents[agent].agent.get_next_action()
-            print(agent, action.name)
+            #print(agent, action.name)
             x: int = self.__agents[agent].position[0]
             y: int = self.__agents[agent].position[1]
             match action:
@@ -152,20 +164,6 @@ class Simulator:
         # give every agent knowledge about their status and the tile they are on
         for agent in self.__agents.values():
             self.__spread_knowledge(agent.name, True)
-
-        # give every agent the possibility to establish Communication
-        """
-        for agent in self.__agents.values():
-            names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
-            agents_in_proximity: list[tuple[int, AgentRole]] = []
-            for name in names_of_agents_in_proximity:
-                agents_in_proximity.append((name, self.__agents[name].role))
-            if self.__communication_channel.communicate(agent.name, agents_in_proximity):
-                # update knowledge of participants
-                self.__spread_knowledge(agent.name, False)
-                for (receiver, _) in agents_in_proximity:
-                    self.__spread_knowledge(receiver, False)
-        """
 
         if self.__current_step == self.__number_of_simulation_steps:
             print("Simulation done.")

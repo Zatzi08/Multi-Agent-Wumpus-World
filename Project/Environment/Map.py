@@ -164,6 +164,7 @@ class Map:
                                  colorscale=cmap,
                                  showscale=False,
                                  hovertemplate="<br> x: %{x} <br> y: %{y} <br> %{text}"), )
+        plt.update_layout(dict(autosize=False, width=840, height=840))
 
         return plt
 
