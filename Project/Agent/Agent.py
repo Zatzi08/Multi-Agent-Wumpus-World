@@ -145,7 +145,7 @@ class Agent:
 
         # offer
         offered_gold: int = 0
-        offered_tiles: set[tuple[int, int, list[TileCondition]]] = set()
+        offered_tiles: set[tuple[int, int, set[TileCondition]]] = set()
         offered_wumpus_positions: list[tuple[int, int]] = []
 
         # request
@@ -170,25 +170,26 @@ class Agent:
         #tile_info
         #agents want tile_info
         if len(desired_tiles) > 0:
-            offer_desired_tiles = [(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col in
-                                   desired_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0]
+            offer_desired_tiles = {(row, col, self.__knowledge.get_conditions_of_tile(row, col)) for row, col in
+                                   desired_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0}
             if self.utility_information(offer_desired_tiles) > request_utility:
                 reduced_amount = int(
                     len(offer_desired_tiles) * request_utility / self.utility_information(offer_desired_tiles))
-                offered_tiles = set(offer_desired_tiles[:reduced_amount])
-                return OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
+                offered_tiles = set(list(offer_desired_tiles)[:reduced_amount])
+                return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
                     requested_gold, list(requested_tiles), requested_wumpus_positions)
-            offered_tiles = set(offer_desired_tiles)
+            print(offer_desired_tiles)
+            offered_tiles = offer_desired_tiles
             offer_utility += self.utility_information(offer_desired_tiles)
         if len(acceptable_tiles) > 0:
-            offer_acceptable_tiles = [(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col
-                                      in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0]
+            offer_acceptable_tiles = {(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col
+                                      in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0}
             if self.utility_information(
                     offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > request_utility:
                 reduced_amount = int(len(offer_acceptable_tiles) * request_utility / (
                         self.utility_information(offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
                 offered_tiles = offered_tiles.union(set(offer_acceptable_tiles[:reduced_amount]))
-                return OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
+                return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
                     requested_gold, list(requested_tiles), requested_wumpus_positions)
             offered_tiles = offered_tiles.union(offer_acceptable_tiles)
             offer_utility += self.utility_information(offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
@@ -296,7 +297,7 @@ class Agent:
         accept = self.accept_communication(initiator_request)
         offer, request = None, None
         if accept:
-            offer, request = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
+            responsetype, offer, request = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
             
 
         return responsetype, offer, request
@@ -554,11 +555,11 @@ class Agent:
             # add pred_wumpus and unknown neighbours of pred_wumpus to wanted tiles
             wanted_tiles = pred_wumpus_tiles
             height, width = self.__utility.get_dimensions()
-            for tile in pred_wumpus_tiles:
+            for tile in pred_wumpus_tiles.copy():
                 pos_row, pos_col = tile
                 neighbours = [(row + pos_row, col + pos_col) for row, col in [(-1, 0), (1, 0), (0, -1), (0, 1)] if
                               0 <= row + pos_row < height and 0 <= col + pos_col < width]
-                for new_tile in neighbours:
+                for new_tile in neighbours.copy():
                     row, col = new_tile
                     # add unknown tile
                     if len(self.__knowledge.get_conditions_of_tile(row, col)) == 0:
@@ -602,7 +603,7 @@ class Agent:
     # offer: anderer bietet mir ... | request: anderer möchte ...
     def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
         # calculate give_utility
-        give_utility = 0
+        give_utility, get_utility = 0, 0
         if request.gold > 0:
             if self.__items[AgentItem.GOLD.value] < request.gold:
                 return -1
