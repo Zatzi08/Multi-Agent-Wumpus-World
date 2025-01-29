@@ -145,7 +145,7 @@ class Agent:
 
         # offer
         offered_gold: int = 0
-        offered_tiles: set[tuple[int, int, set[TileCondition]]] = set()
+        offered_tiles: set[tuple[int, int, frozenset[TileCondition]]] = set()
         offered_wumpus_positions: list[tuple[int, int]] = []
 
         # request
@@ -170,7 +170,7 @@ class Agent:
         #tile_info
         #agents want tile_info
         if len(desired_tiles) > 0:
-            offer_desired_tiles = {(row, col, self.__knowledge.get_conditions_of_tile(row, col)) for row, col in
+            offer_desired_tiles = {(row, col, frozenset(self.__knowledge.get_conditions_of_tile(row, col))) for row, col in
                                    desired_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0}
             if self.utility_information(offer_desired_tiles) > request_utility:
                 reduced_amount = int(
@@ -182,7 +182,7 @@ class Agent:
             offered_tiles = offer_desired_tiles
             offer_utility += self.utility_information(offer_desired_tiles)
         if len(acceptable_tiles) > 0:
-            offer_acceptable_tiles = {(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col
+            offer_acceptable_tiles = {(row, col, frozenset(self.__knowledge.get_conditions_of_tile(row, col))) for row, col
                                       in acceptable_tiles if len(self.__knowledge.get_conditions_of_tile(row, col)) > 0}
             if self.utility_information(
                     offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > request_utility:
