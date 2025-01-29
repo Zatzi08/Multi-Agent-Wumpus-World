@@ -5,11 +5,10 @@ from Project.SimulatedAgent.AgentEnums import AgentRole, AgentItem, AgentAction,
 from Project.Communication.Channel import Channel
 import random
 
-random.seed()
-
 
 class Simulator:
-    def __init__(self, map_width: int, map_height: int, number_of_agents: int, number_of_simulation_steps: int):
+    def __init__(self, map_width: int, map_height: int, number_of_agents: int, number_of_simulation_steps: int, seed: int = 123):
+        random.seed(seed)
         self.__current_step: int = 0
         self.__number_of_simulation_steps: int = number_of_simulation_steps
         self.__grid: Map = Map(map_width, map_height)
@@ -119,7 +118,8 @@ class Simulator:
             agents_in_proximity: list[tuple[int, AgentRole]] = []
             for name in names_of_agents_in_proximity:
                 agents_in_proximity.append((name, self.__agents[name].role))
-            if self.__communication_channel.communicate(agent.name, agents_in_proximity):
+            if self.__communication_channel.communicate(agent.name, agents_in_proximity, self.__current_step):
+                print(f"Initiator: {agent.name}, proximity: {agents_in_proximity}")
                 # update knowledge of participants
                 self.__spread_knowledge(agent.name, False)
                 for (receiver, _) in agents_in_proximity:

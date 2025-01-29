@@ -292,6 +292,8 @@ class Agent:
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
         bool, OfferedObjects, RequestedObjects]:
         wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
+        responsetype = ResponseType.DENY
+        offer, request = None, None
 
         accept = self.accept_communication(initiator_request)
         offer, request = None, None
@@ -299,7 +301,7 @@ class Agent:
             offer, request = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
             
 
-        return accept, offer, request
+        return responsetype, offer, request
 
     #
     # utility
@@ -602,7 +604,7 @@ class Agent:
     # offer: anderer bietet mir ... | request: anderer möchte ...
     def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
         # calculate give_utility
-        give_utility, get_utility = 0, 0
+        give_utility = 0
         if request.gold > 0:
             if self.__items[AgentItem.GOLD.value] < request.gold:
                 return -1
