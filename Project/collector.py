@@ -41,4 +41,3 @@ def multiple_run_result_collector(simulation_count, number_of_agents: int = 5, n
                               meta[agentName][AgentGoal.MAP_PROGRESS.value][0]])
 
     return pd.DataFrame(dataArray, columns=colName)
-

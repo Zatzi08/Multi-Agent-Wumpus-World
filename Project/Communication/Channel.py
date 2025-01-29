@@ -42,10 +42,10 @@ class Channel:
             wumpus_amount = 0
             if self.agents[participant].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
                 wumpus_amount = len(self.agents[participant].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
-            print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
-
             receiver_answers.update(
                 {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
+            #print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
+
 
         # TODO evaluate answers
         if not receiver_answers:
