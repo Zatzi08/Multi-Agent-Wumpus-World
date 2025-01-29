@@ -34,6 +34,9 @@ class Agent:
     #
     # next agent move
     #
+    def get_knowledgebase(self):
+        return self.__knowledge
+
 
     def get_next_action(self) -> AgentAction:
 
@@ -158,10 +161,13 @@ class Agent:
         request_utility = self.utility_help_wumpus() * requested_wumpus_positions + self.utility_gold() * requested_gold + self.utility_information(
             request_desired_tiles) + self.utility_information(request_acceptable_tiles) + ACCEPTABLE_TILE_FACTOR
 
+        # request no content
+        if request_utility == 0:
+            return None, None
         # get offer
         offer_utility = 0
 
-        #tile-__info
+        #tile_info
         #agents want tile_info
         if len(desired_tiles) > 0:
             offer_desired_tiles = [(row, col, list(self.__knowledge.get_conditions_of_tile(row, col))) for row, col in
@@ -193,6 +199,10 @@ class Agent:
         if self.__role is [AgentRole.HUNTER, AgentRole.CARTOGRAPHER]:
             max_gold_amount = int((request_utility - offer_utility) / self.utility_gold())
             offered_gold = min(max_gold_amount, self.__items[AgentItem.GOLD.value()])
+
+        # offer ohne content
+        if offer_utility == 0:
+            return None, None
         return OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
             requested_gold, list(requested_tiles), requested_wumpus_positions)
 
@@ -278,14 +288,15 @@ class Agent:
     
     
 
-
-    def answer_to_offer(self, initiator_request: RequestObject) -> tuple[
-        ResponseType, OfferedObjects, RequestedObjects]:
+    # TODO: answer_to_offer verändern, s.d. desired,acceptable, knowledge etc. vom initiator kommt
+    def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
+        bool, OfferedObjects, RequestedObjects]:
         wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
 
         accept = self.accept_communication(initiator_request)
+        offer, request = None, None
         if accept:
-            offer, request = self.create_offer(self.desired_tiles(), self.acceptable_tiles(self.desired_tiles()), self.knowledge_tiles(), self.__items[AgentItem.GOLD.value], len(wumpus_tiles))
+            offer, request = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
             
 
         return accept, offer, request
@@ -591,7 +602,7 @@ class Agent:
     # offer: anderer bietet mir ... | request: anderer möchte ...
     def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
         # calculate give_utility
-        give_utility = 0
+        give_utility, get_utility = 0, 0
         if request.gold > 0:
             if self.__items[AgentItem.GOLD.value] < request.gold:
                 return -1
@@ -600,16 +611,16 @@ class Agent:
             if request.wumpus_positions > len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
                 return -1
             if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
-                give_utility += self.utility_help_wumpus() * request.wumpus_positions
+                return -1
             elif self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
                 # utiltiy, dass denen ein Wumpus gekillt wird
-                give_utility += MAX_UTILITY / 2 * request.wumpus_positions
+                get_utility += MAX_UTILITY / 2 * request.wumpus_positions
         if len(request.tiles) > 0:
             # Durch negotiating-Konzept muss keine Überprüfung der tile-Menge geamcht werden
             give_utility += self.utility_information(request.tiles)
 
         # calculate get_utility
-        get_utility = 0
+
         if offer.gold_amount > 0:
             if self.__available_item_space < offer.gold_amount:
                 return -1

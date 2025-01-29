@@ -1,5 +1,6 @@
-from Project.SimulatedAgent.AgentEnums import AgentItem
+from Project.SimulatedAgent.AgentEnums import AgentItem, AgentRole
 from Project.Communication.Offer import Offer, OfferedObjects, RequestedObjects, ResponseType, RequestObject
+from Project.Environment.TileCondition import TileCondition
 import random
 
 
@@ -31,8 +32,16 @@ class Channel:
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
+            desired_tiles = self.agents[participant].agent.desired_tiles()
+            acceptable_tiles = self.agents[participant].agent.acceptable_tiles(desired_tiles)
+            knowledge_tiles = self.agents[participant].agent.knowledge_tiles()
+            gold_amount = self.agents[participant].items[AgentItem.GOLD.value]
+            wumpus_amount = 0
+            if self.agents[participant].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
+                wumpus_amount = len(self.agents[participant].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
+
             receiver_answers.update(
-                {participant: self.agents[participant].agent.answer_to_offer(request_type)})
+                {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
 
         # TODO evaluate answers
         if not receiver_answers:
