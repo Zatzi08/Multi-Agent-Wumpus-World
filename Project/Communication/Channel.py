@@ -51,7 +51,7 @@ class Channel:
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
                 # verify_offer(p_answer[1], participant) # soll verify_offer was returnen oder geht das so?
-                accepted_requests.update({participant: p_answer})
+                accepted_requests.update({participant: (p_answer[1], p_answer[2])})
 
         # get best offer out of accepted and counteroffers
         best_utility = -1
@@ -61,11 +61,11 @@ class Channel:
         #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
         # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
-        if best_utility == -1:
+        if best_utility < 0:
             print(f"Sender received only bad offers. Starting negotiation!")
-            receiver_offers: dict[int: Offer] = {}
+            receiver_offers: dict[int, Offer] = {}
             for participant, offer in accepted_requests.items():
-                receiver_offer: Offer = Offer(offer[0], offer[1], self.agents[participant].agent.AgentRole)
+                receiver_offer: Offer = Offer(offer[0], offer[1], self.agents[participant].role)
                 receiver_offers.update({participant: receiver_offer})
 
             self.start_negotiation(initiator, receiver_offers)
