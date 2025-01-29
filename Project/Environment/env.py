@@ -6,17 +6,16 @@ import numpy as np
 
 
 class EnvGenerator:
-    __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'seed', 'grid',
+    __slots__ = ['height', 'width', 'start_pos', 'wumpus_prob', 'pit_prob', 'treasure_prob', 'grid',
                  'num_dead_end', '__info']
 
-    def __init__(self, height, width, seed=42):
+    def __init__(self, height, width):
         self.height = height
         self.width = width
         self.start_pos = (1, 1)
         self.wumpus_prob = 0.05
         self.pit_prob = 0.03
         self.treasure_prob = 0.03
-        self.seed = seed
         self.num_dead_end: int = -1
         self.grid = []
         self.__info: dict = dict()
@@ -159,7 +158,6 @@ class EnvGenerator:
         tile_count = 0
         blank_count = 0
         blank_ratio = 2
-        random.seed(self.seed)
 
         tile_con = dict()
         for y_con in range(1, self.height, 3):
@@ -332,7 +330,6 @@ class EnvGenerator:
 
         if self.grid is None:
             raise Exception("No Grid defined")
-        random.seed(self.seed)
 
         grid = self.grid.copy()
 

@@ -14,12 +14,15 @@ class Channel:
         self.agents = agents
 
     # initiator: tuple[int, AgentRole]
-    def communicate(self, initiator, potential_receivers) -> bool:
+    def communicate(self, initiator, potential_receivers, step) -> bool:
         request_type = self.agents[initiator].agent.get_offer_type()
         receivers: list[int] = self.agents[initiator].agent.start_communication(potential_receivers, request_type)
+        print(f"initiator in comm: {initiator}, receivers in comm: {receivers}")
+
 
         # check if Communication should take place
         if not receivers:
+            print(f"{initiator} found no receivers")
             return False
 
         # set sender and receivers
@@ -39,12 +42,14 @@ class Channel:
             wumpus_amount = 0
             if self.agents[participant].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
                 wumpus_amount = len(self.agents[participant].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
+            print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
 
             receiver_answers.update(
                 {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
 
         # TODO evaluate answers
         if not receiver_answers:
+            print("No answers!")
             return False
         # put all accepting answers and counter-offers into new dicts
         accepted_requests: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
@@ -57,6 +62,7 @@ class Channel:
         best_utility = -1
         best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
         best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_offer, best_utility)
+        print(f"best offer: {list(best_offer.values())} with utility: {best_utility} from {list(best_offer.keys())}")
 
         #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
@@ -109,7 +115,7 @@ class Channel:
 
         if receiver_offer.wumpus_positions != 0:
             pos = self.agents[receiver].agent.receive_found_wumpus()
-            a = list(pos)[:receiver_offer.wumpus_positions]
+            a = list(pos)[:receiver_offer.wumpus_positions] # TODO: Zana das ist BS
 
             for (x, y) in a:
                 self.agents[initiator].agent.add_kill_wumpus_task(x, y)

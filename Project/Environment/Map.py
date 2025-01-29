@@ -22,7 +22,7 @@ class Map:
             self.height += 3 - (height % 3)
 
         self.start_pos = (1, 1)
-        gen = EnvGenerator(self.height, self.width, 123)
+        gen = EnvGenerator(self.height, self.width)
         self.map = gen.getGrid()
         gen.placeWorldItems()
         self.filled_map = gen.getGrid()
@@ -78,6 +78,8 @@ class Map:
         # find adjacent agents (on adjacent tiles)
         adjacent_agents = []
         for agent in self.agents.values():
+            if agent.name == name:
+                continue
             if agent.position in adjacent_tiles:
                 adjacent_agents.append(agent.name)
         return adjacent_agents
