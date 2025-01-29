@@ -539,8 +539,7 @@ class Agent:
             pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)
             # keine PREDICTED_WUMPUS tiles in der Knowledgebase --> closest unvisited tiles
             if len(pred_wumpus_tiles) == 0:
-                return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles().intersection(
-                    self.__knowledge.get_closest_unvisited_tiles())
+                return self.__knowledge.get_closest_unvisited_tiles()
             # add pred_wumpus and unknown neighbours of pred_wumpus to wanted tiles
             wanted_tiles = pred_wumpus_tiles
             height, width = self.__utility.get_dimensions()
@@ -567,15 +566,8 @@ class Agent:
                 self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)) > 0:
             non_acceptable_tiles = []
         else:
-            non_acceptable_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles().intersection(
-                self.__knowledge.get_closest_unvisited_tiles())
-        acceptable_tiles = []
-        for tile in all_tiles:
-            row, col = tile
-            if tile in non_acceptable_tiles:
-                continue
-            if len(self.__knowledge.get_conditions_of_tile(row, col)) == 0:
-                acceptable_tiles.append(tile)
+            non_acceptable_tiles = self.__knowledge.get_closest_unvisited_tiles()
+        acceptable_tiles = [tile for tile in all_tiles if tile not in non_acceptable_tiles and len(self.__knowledge.get_conditions_of_tile(tile[0], tile[1])) == 0]
         # desired tiles und acceptable_tiles dürfen keine Schnittmenge haben, da Funktionen unter der Annahme arbeiten
         return set(acceptable_tiles).difference(desired_tiles)
 
