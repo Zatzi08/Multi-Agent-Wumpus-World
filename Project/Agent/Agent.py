@@ -39,7 +39,7 @@ class Agent:
         return self.__knowledge
 
     def change_gold_amount(self, gold_amount):
-        self.__position[AgentItem.GOLD.value] += gold_amount
+        self.__items[AgentItem.GOLD.value] += gold_amount
 
     def get_next_action(self) -> AgentAction:
 
