@@ -22,7 +22,7 @@ class OfferedObjects:
         self.wumpus_positions = wumpus_positions
 
     def __repr__(self):
-        return f"OO: (Gold: {self.gold_amount}, Info: {self.tile_information}, WPos: {self.wumpus_positions})"
+        return f"OO: (Gold: {self.gold_amount}, Info: {len(self.tile_information)}, WPos: {len(self.wumpus_positions)})"
 
 
 class RequestedObjects:
@@ -32,7 +32,7 @@ class RequestedObjects:
         self.wumpus_positions: int = wumpus_positions
 
     def __repr__(self):
-        return f"RedO: (Gold: {self.gold}, Tiles: {self.tiles}, WPos: {self.wumpus_positions})"
+        return f"RedO: (Gold: {self.gold}, Tiles: {len(self.tiles)}, WPos: {self.wumpus_positions})"
 
 
 class Offer:
@@ -48,4 +48,4 @@ class Offer:
         self.req_wumpus_positions: int = requested_objects.wumpus_positions
 
     def __repr__(self):
-        return f"Off: (O: (Gold: {self.off_gold}, Tiles: {self.off_tiles}, WPos: {self.off_wumpus_positions}, ORole: {self.off_role}), R: (Gold: {self.req_gold}, Tiles: {self.req_tiles}, WPos: {self.req_wumpus_positions}))"
+        return f"Off: (O: (Gold: {self.off_gold}, Tiles: {len(self.off_tiles)}, WPos: {len(self.off_wumpus_positions)}, ORole: {self.off_role}), R: (Gold: {self.req_gold}, Tiles: {len(self.req_tiles)}, WPos: {self.req_wumpus_positions}))"

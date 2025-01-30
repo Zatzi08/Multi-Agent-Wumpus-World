@@ -7,8 +7,9 @@ import random
 
 
 class Simulator:
-    def __init__(self, map_width: int, map_height: int, number_of_agents: int, number_of_simulation_steps: int, seed: int = 123):
+    def __init__(self, map_width: int, map_height: int, number_of_agents: int, number_of_simulation_steps: int, with_communication: bool = True, seed: int = 123):
         random.seed(seed)
+        self.__with_communication = with_communication
         self.__current_step: int = 0
         self.__number_of_simulation_steps: int = number_of_simulation_steps
         self.__grid: Map = Map(map_width, map_height)
@@ -112,18 +113,19 @@ class Simulator:
         for agent in self.__agents.values():
             self.__spread_knowledge(agent.name, True)
 
-        # give every agent the possibility to establish Communication
-        for agent in self.__agents.values():
-            names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
-            agents_in_proximity: list[tuple[int, AgentRole]] = []
-            for name in names_of_agents_in_proximity:
-                agents_in_proximity.append((name, self.__agents[name].role))
-            if self.__communication_channel.communicate(agent.name, agents_in_proximity, self.__current_step):
-                print(f"Initiator: {agent.name}, proximity: {agents_in_proximity}")
-                # update knowledge of participants
-                self.__spread_knowledge(agent.name, False)
-                for (receiver, _) in agents_in_proximity:
-                    self.__spread_knowledge(receiver, False)
+        if self.__with_communication:
+            # give every agent the possibility to establish Communication
+            for agent in self.__agents.values():
+                names_of_agents_in_proximity: list[int] = self.__grid.get_agents_in_reach(self.__agents[agent.name].name, 1)
+                agents_in_proximity: list[tuple[int, AgentRole]] = []
+                for name in names_of_agents_in_proximity:
+                    agents_in_proximity.append((name, self.__agents[name].role))
+                if self.__communication_channel.communicate(agent.name, agents_in_proximity, self.__current_step):
+                    print(f"Initiator: {agent.name}, proximity: {agents_in_proximity}")
+                    # update knowledge of participants
+                    self.__spread_knowledge(agent.name, False)
+                    for (receiver, _) in agents_in_proximity:
+                        self.__spread_knowledge(receiver, False)
 
         # have every agent perform an action
         agent_list: list[int] = list(self.__agents.keys())

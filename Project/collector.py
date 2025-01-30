@@ -3,11 +3,11 @@ from Project.Simulator import Simulator
 import pandas as pd
 
 
-def single_run_collector(number_of_agents: int = 5, number_of_simulation_steps: int = 200, seed: int = 123,
+def single_run_collector(number_of_agents: int = 5, number_of_simulation_steps: int = 200, with_communication: bool = True, seed: int = 123,
                          map_width: int = 30, map_height: int = 30):
     colName = ["Agent", "Role", "Round", "Gold", "Killed_Wumpus", "Map_Progress"]
     dataArray = []
-    simulator = Simulator(map_width, map_height, number_of_agents, number_of_simulation_steps, seed)
+    simulator = Simulator(map_width, map_height, number_of_agents, number_of_simulation_steps, with_communication, seed)
     agents = simulator.get_agents()
     for round in range(1, number_of_simulation_steps):
         _, meta = simulator.simulate_next_step(-1)
@@ -23,11 +23,11 @@ def single_run_collector(number_of_agents: int = 5, number_of_simulation_steps: 
 
 
 def multiple_run_result_collector(simulation_count, number_of_agents: int = 5, number_of_simulation_steps: int = 200,
-                                  seed: int = 123, map_width: int = 30, map_height: int = 30):
+                                  with_communication: bool = True, seed: int = 123, map_width: int = 30, map_height: int = 30):
     colName = ["Agent", "Role", "Simulation", "Gold", "Killed_Wumpus", "Map_Progress"]
     dataArray = []
     for simulationID in range(1, simulation_count):
-        simulator = Simulator(map_width, map_height, number_of_agents, number_of_simulation_steps, seed)
+        simulator = Simulator(map_width, map_height, number_of_agents, number_of_simulation_steps, with_communication, seed)
         agents = simulator.get_agents()
         for _ in range(1, number_of_simulation_steps - 1):
             _, meta = simulator.simulate_next_step(-1)
