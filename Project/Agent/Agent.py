@@ -108,8 +108,8 @@ class Agent:
     def receive_tile_from_communication(self, x: int, y: int, conditions: set[TileCondition]) -> None:
         self.__knowledge.update_tile(x, y, conditions)
 
-    def receive_tile_condition(self, x, y) -> set[TileCondition]:
-        return self.__knowledge.get__Map().get_conditions_of_tile(x, y)
+    def return_tile_conditions(self, x, y) -> set[TileCondition]:
+        return self.__knowledge.get_conditions_of_tile(x, y)
 
     def receive_found_wumpus(self) -> set[tuple[int, int]]:
         return self.__knowledge.get_found_wumpus()

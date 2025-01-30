@@ -130,9 +130,6 @@ class KnowledgeBase:
     def get_path(self) -> list[tuple[int, int]]:
         return self.__path
 
-    def get__Map(self) -> _Map:
-        return self.__map
-
     def get_found_wumpus(self) -> set[tuple[int, int]]:
         return self.__found_wumpus
     #
@@ -320,35 +317,37 @@ class KnowledgeBase:
                     or self.__map.visited(x + position[0], y + position[1])):
                 self.__add_stench_or_breeze(x + position[0], y + position[1], set_condition)
 
-    def update_tile(self, x: int, y: int, tile_conditions: set[TileCondition], from_simulator: bool = False)\
+    def update_tile(self, x: int, y: int, tile_conditions: set[TileCondition], entire_tile: bool = False)\
             -> None:
         """updates map knowledge given some knowledge about a tile"""
-        if from_simulator:
+        conditions = list(tile_conditions)
+
+        if entire_tile:
             if (x, y) == self.__position:
                 if not self.__map.visited(x, y):
                     self.__map.set_visited(x, y)
                 self.__map.remove_shout(x, y)
 
             if (self.__map.tile_has_condition(x, y, TileCondition.STENCH)
-                    and TileCondition.STENCH not in tile_conditions):
+                    and TileCondition.STENCH not in conditions):
                 self.__map.remove_condition_from_tile(x, y, TileCondition.STENCH)
                 for tile in SURROUNDING_TILES:
                     self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
                     self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.WUMPUS)
 
-            if self.__map.tile_has_condition(x, y, TileCondition.SHINY) and TileCondition.SHINY not in tile_conditions:
+            if self.__map.tile_has_condition(x, y, TileCondition.SHINY) and TileCondition.SHINY not in conditions:
                 self.__map.remove_condition_from_tile(x, y, TileCondition.SHINY)
 
-        if TileCondition.SAFE in tile_conditions:
-            tile_conditions.remove(TileCondition.SAFE)
-            tile_conditions.add(TileCondition.SAFE)
+        if TileCondition.SAFE in conditions:
+            conditions.remove(TileCondition.SAFE)
+            conditions.append(TileCondition.SAFE)
 
-        if TileCondition.SHINY in tile_conditions:
-            tile_conditions.remove(TileCondition.SHINY)
-            tile_conditions.add(TileCondition.SHINY)
+        if TileCondition.SHINY in conditions:
+            conditions.remove(TileCondition.SHINY)
+            conditions.append(TileCondition.SHINY)
 
         # for every condition: check for consistency and potentially add it
-        for tile_condition in tile_conditions:
+        for tile_condition in conditions:
             # filter already known conditions
             if self.__map.tile_has_condition(x, y, tile_condition):
                 continue

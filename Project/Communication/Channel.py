@@ -104,7 +104,7 @@ class Channel:
         if receiver_request.tiles:
             for (x, y) in receiver_request.tiles:
                 self.agents[receiver].agent.receive_tile_from_communication(x, y, self.agents[
-                    initiator].agent.receive_tile_condition(x, y))
+                    initiator].agent.return_tile_conditions(x, y))
 
         if receiver_offer.tile_information:
             for (x, y, conditions) in receiver_offer.tile_information:
