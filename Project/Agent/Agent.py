@@ -287,7 +287,6 @@ class Agent:
 
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects]:
-        wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
         responsetype = ResponseType.DENY
         offer, request = None, None
 
@@ -422,25 +421,25 @@ class Agent:
                         if self.__available_item_space > 0:
                             goal_states.append(TileCondition.SHINY)
                         for condition in goal_states:
-                            tiles_with_condition = self.__knowledge.get_tiles_by_condition(condition)
+                            tiles_with_condition = self.__knowledge.get_tiles_by_condition(condition).copy()
                             calc_tiles = calc_tiles.union(tiles_with_condition)
                     else:
-                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
+                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS).copy():
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
                                           len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.HUNTER:
                     if self.__items[AgentItem.ARROW.value] > 0:
-                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS))
-                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
+                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS).copy())
+                        for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS).copy():
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
                                           [(0, 1), (1, 0), (-1, 0), (0, -1)] if
                                           len(self.__knowledge.get_conditions_of_tile(row + tiles[0], col + tiles[1])) == 0 and 0 <= row + tiles[0] < self.__utility.get_dimensions()[1] and 0 <= col + tiles[1] < self.__utility.get_dimensions()[0] ]
                             calc_tiles = calc_tiles.union(set(neighbours))
                 case AgentRole.BWL_STUDENT:
                     if self.__available_item_space > 0:
-                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(TileCondition.SHINY))
+                        calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(TileCondition.SHINY).copy())
         avoid_tiles = [TileCondition.WALL, TileCondition.PREDICTED_PIT, TileCondition.PIT,
                        TileCondition.PREDICTED_WUMPUS, TileCondition.WUMPUS]
         if self.__role == AgentRole.KNIGHT and self.__health > 1:
@@ -551,7 +550,7 @@ class Agent:
     # Ausgabe: tiles: list[tuple(int,int)]
     def desired_tiles(self):
         if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
-            pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)
+            pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS).copy()
             # keine PREDICTED_WUMPUS tiles in der Knowledgebase --> closest unvisited tiles
             if len(pred_wumpus_tiles) == 0:
                 return self.__knowledge.get_closest_unvisited_tiles()
@@ -589,7 +588,7 @@ class Agent:
     def knowledge_tiles(self):
         knowledge_tiles = set()
         for condition in TileCondition:
-            tiles = self.__knowledge.get_tiles_by_condition(condition)
+            tiles = self.__knowledge.get_tiles_by_condition(condition).copy()
             if len(tiles) > 0:
                 knowledge_tiles = knowledge_tiles.union(tiles)
         return knowledge_tiles
