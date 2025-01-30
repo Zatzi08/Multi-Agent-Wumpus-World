@@ -428,7 +428,8 @@ class Agent:
 
         name = self.__name
         time = self.__time
-        if self.__role in [AgentRole.HUNTER, AgentRole.KNIGHT] and len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
+        if (((self.__role == AgentRole.HUNTER and self.__items[AgentItem.ARROW.value] > 0) or (self.__role == AgentRole.KNIGHT and self.__health > 1))
+                and len(self.__knowledge.get_kill_wumpus_tasks()) > 0):
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
             calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
