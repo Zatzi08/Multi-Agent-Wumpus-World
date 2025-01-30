@@ -31,23 +31,21 @@ class Channel:
 
         # TODO create offer from offered_objects and requested_objects
 
-        receiver_answers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects]] = {}
+        receiver_answers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects, int]] = {}
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
+        desired_tiles = self.agents[initiator].agent.desired_tiles()
+        acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
+        knowledge_tiles = self.agents[initiator].agent.knowledge_tiles()
+        gold_amount = self.agents[initiator].items[AgentItem.GOLD.value]
+        wumpus_amount = 0
+        if self.agents[initiator].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and request_type==RequestObject.KILL_WUMPUS:
+            wumpus_amount = len(self.agents[initiator].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
         for participant in self.participants:
-            desired_tiles = self.agents[initiator].agent.desired_tiles()
-            acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
-            knowledge_tiles = self.agents[initiator].agent.knowledge_tiles()
-            gold_amount = self.agents[initiator].items[AgentItem.GOLD.value]
-            wumpus_amount = 0
-            if self.agents[initiator].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and request_type==RequestObject.KILL_WUMPUS:
-                wumpus_amount = len(self.agents[initiator].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
             receiver_answers.update(
                 {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
             print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
 
-
-        # TODO evaluate answers
         if not receiver_answers:
             print("No answers!")
             return False
@@ -131,7 +129,7 @@ class Channel:
             for participant, p_answer in offer_list.items():
                 offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1], p_answer[2])
                 print(f"Offer utility: {offer_utility}, best utility: {best_utility}")
-                if offer_utility > best_utility:
+                if offer_utility > best_utility or best_offer is None:
                     best_utility = offer_utility
                     best_offer = (participant, p_answer[0], p_answer[1])
 
@@ -154,15 +152,14 @@ class Channel:
         good_offers: dict[int, tuple[OfferedObjects,RequestedObjects, int]] = {}
         best_utility = -2
         best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
-
+        desired_tiles = self.agents[initiator].agent.desired_tiles()
+        acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
         print("A negotiation has started!")
         while negotiation_round < limit:
             negotiation_round += 1
             for participant, offer in receivers.copy().items():
                 p_agent = self.agents[participant].agent
                 print("Type of agent: " + str(type(p_agent)))
-                desired_tiles = p_agent.desired_tiles()
-                acceptable_tiles = p_agent.acceptable_tiles(desired_tiles)
                 counter_offer, counter_request, desired_tiles_amount = p_agent.create_counter_offer(offer, desired_tiles,acceptable_tiles)
                 # verify_offer(counter_offer, participant)
                 if counter_offer is None:

@@ -32,7 +32,7 @@ class RequestedObjects:
         self.wumpus_positions: int = wumpus_positions
 
     def __repr__(self):
-        return f"RedO: (Gold: {self.gold}, Tiles: {len(self.tiles)}, WPos: {self.wumpus_positions})"
+        return f"RedO: (Gold: {self.gold}, Tiles: {self.tiles}, WPos: {self.wumpus_positions})"
 
 
 class Offer:

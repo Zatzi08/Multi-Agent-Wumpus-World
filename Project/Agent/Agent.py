@@ -296,7 +296,7 @@ class Agent:
     
 
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
-        ResponseType, OfferedObjects, RequestedObjects]:
+        ResponseType, OfferedObjects, RequestedObjects,int]:
         responsetype = ResponseType.DENY
         name = self.__name
         offer, request = None, None
@@ -567,7 +567,7 @@ class Agent:
             pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS).copy()
             # keine PREDICTED_WUMPUS tiles in der Knowledgebase --> closest unvisited tiles
             if len(pred_wumpus_tiles) == 0:
-                return self.__knowledge.get_closest_unvisited_tiles()
+                return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
             # add pred_wumpus and unknown neighbours of pred_wumpus to wanted tiles
             wanted_tiles = pred_wumpus_tiles
             height, width = self.__utility.get_dimensions()
@@ -583,21 +583,16 @@ class Agent:
             return set(wanted_tiles)
 
         # BWL-Student und Cartograph übrig --> closest unvisited tiles
-        return self.__knowledge.get_closest_unvisited_tiles()
+        return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
 
     # unknown tiles, die nicht an known/visited-tiles angrenzen
     def acceptable_tiles(self, desired_tiles: set[tuple[int, int]]):
         height, width = self.__utility.get_dimensions()
         all_tiles = [(row, col) for row in range(height) for col in range(width)]
         # Agent will neue Infos zu bekannten tiles
-        if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER] and len(
-                self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS)) > 0:
-            non_acceptable_tiles = []
-        else:
-            non_acceptable_tiles = self.__knowledge.get_closest_unvisited_tiles()
-        acceptable_tiles = [tile for tile in all_tiles if tile not in non_acceptable_tiles and len(self.__knowledge.get_conditions_of_tile(tile[0], tile[1])) == 0]
+        acceptable_tiles = [tile for tile in all_tiles if tile not in desired_tiles and len(self.__knowledge.get_conditions_of_tile(tile[0], tile[1])) == 0]
         # desired tiles und acceptable_tiles dürfen keine Schnittmenge haben, da Funktionen unter der Annahme arbeiten
-        return set(acceptable_tiles).difference(desired_tiles)
+        return set(acceptable_tiles)
 
     def knowledge_tiles(self):
         knowledge_tiles = set()
