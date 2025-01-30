@@ -609,13 +609,13 @@ class Agent:
                 return -1
             give_utility += self.utility_gold() * request.gold
         if request.wumpus_positions > 0:
-            if request.wumpus_positions > len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
-                return -1
             if self.__role in [AgentRole.KNIGHT, AgentRole.HUNTER]:
                 return -1
-            elif self.__role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
-                # utiltiy, dass denen ein Wumpus gekillt wird
-                get_utility += MAX_UTILITY / 2 * request.wumpus_positions
+            if request.wumpus_positions > len(self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)):
+                return -1
+            # BWL-Student und Cartograf left
+            # utiltiy, dass denen ein Wumpus gekillt wird
+            get_utility += MAX_UTILITY / 2 * request.wumpus_positions
         if len(request.tiles) > 0:
             # Durch negotiating-Konzept muss keine Überprüfung der tile-Menge geamcht werden
             give_utility += self.utility_information(request.tiles)

@@ -115,7 +115,7 @@ class Channel:
 
         if receiver_offer.wumpus_positions != 0:
             pos = self.agents[receiver].agent.receive_found_wumpus()
-            a = list(pos)[:receiver_offer.wumpus_positions] # TODO: Zana das ist BS
+            a = list(pos)[:len(receiver_offer.wumpus_positions)]
 
             for (x, y) in a:
                 self.agents[initiator].agent.add_kill_wumpus_task(x, y)
