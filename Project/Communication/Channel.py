@@ -35,10 +35,10 @@ class Channel:
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
         for participant in self.participants:
-            desired_tiles = self.agents[participant].agent.desired_tiles()
-            acceptable_tiles = self.agents[participant].agent.acceptable_tiles(desired_tiles)
-            knowledge_tiles = self.agents[participant].agent.knowledge_tiles()
-            gold_amount = self.agents[participant].items[AgentItem.GOLD.value]
+            desired_tiles = self.agents[initiator].agent.desired_tiles()
+            acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
+            knowledge_tiles = self.agents[initiator].agent.knowledge_tiles()
+            gold_amount = self.agents[initiator].items[AgentItem.GOLD.value]
             wumpus_amount = 0
             if self.agents[initiator].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and request_type==RequestObject.KILL_WUMPUS:
                 wumpus_amount = len(self.agents[initiator].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
@@ -59,7 +59,7 @@ class Channel:
                 accepted_requests.update({participant: (p_answer[1], p_answer[2], p_answer[3])})
 
         # get best offer out of accepted and counteroffers
-        best_utility = 0
+        best_utility = -2
         best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_utility)
 
         if best_offer is not None:
@@ -68,7 +68,7 @@ class Channel:
         #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
         # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
-        if best_utility <= 0:
+        if best_utility < -1:
             print(f"Sender received only bad offers. Starting negotiation!")
             receiver_offers: dict[int, Offer] = {}
             for participant, offer in accepted_requests.items():
@@ -152,7 +152,7 @@ class Channel:
         negotiation_round = 0
         limit = 3
         good_offers: dict[int, tuple[OfferedObjects,RequestedObjects, int]] = {}
-        best_utility = -1
+        best_utility = -2
         best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
 
         print("A negotiation has started!")
@@ -170,14 +170,14 @@ class Channel:
                     del receivers[participant]
                     continue
                 receivers[participant] = Offer(counter_offer, counter_request, self.agents[initiator].role)
-                print("Evaluate utility:", p_agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount), "for counteroffer", counter_offer, counter_request)
-                if p_agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount) >= 0:
+                print("Evaluate utility:", self.agents[initiator].agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount), "for counteroffer", counter_offer, counter_request)
+                if self.agents[initiator].agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount) >= -1:
                     good_offers.update({participant: (counter_offer, counter_request, desired_tiles_amount)})
 
 
             if len(good_offers) > 0:
                 print("Good offers are found, looking for the best")
-                best_offer, _ = self.get_best_offer(good_offers, initiator, best_utility)
+                best_offer, best_utility= self.get_best_offer(good_offers, initiator, best_utility)
                 break
 
         if best_offer is not None:

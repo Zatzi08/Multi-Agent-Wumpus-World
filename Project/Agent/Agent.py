@@ -154,6 +154,7 @@ class Agent:
                      knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects, int]:
 
+        name = self.__name
         # offer
         offered_gold: int = 0
         offered_tiles: set[tuple[int, int, frozenset[TileCondition]]] = set()
@@ -199,7 +200,7 @@ class Agent:
                     offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR + offer_utility > request_utility:
                 reduced_amount = int(len(offer_acceptable_tiles) * request_utility / (
                         self.utility_information(offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
-                offered_tiles = offered_tiles.union(set(offer_acceptable_tiles[:reduced_amount]))
+                offered_tiles = offered_tiles.union(set(list(offer_acceptable_tiles)[:reduced_amount]))
                 return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
                     requested_gold, list(requested_tiles), requested_wumpus_positions), len(request_desired_tiles)
             offered_tiles = offered_tiles.union(offer_acceptable_tiles)
@@ -297,6 +298,7 @@ class Agent:
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
         ResponseType, OfferedObjects, RequestedObjects]:
         responsetype = ResponseType.DENY
+        name = self.__name
         offer, request = None, None
 
         accept = self.accept_communication(initiator_request)
@@ -426,7 +428,7 @@ class Agent:
 
         name = self.__name
         time = self.__time
-        if len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
+        if self.__role in [AgentRole.HUNTER, AgentRole.KNIGHT] and len(self.__knowledge.get_kill_wumpus_tasks()) > 0:
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
             calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
