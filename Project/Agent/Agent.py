@@ -141,7 +141,7 @@ class Agent:
     # Idee: erstes offer ist maxed out, damit counter-offer auf eine Reduktion des offers beschränkt ist
     def create_offer(self, desired_tiles: set[tuple[int, int]], acceptable_tiles: set[tuple[int, int]],
                      knowledge_tiles: set[tuple[int, int]], other_gold_amount: int, other_wumpus_amount: int) -> tuple[
-        ResponseType, OfferedObjects, RequestedObjects]:
+        ResponseType, OfferedObjects, RequestedObjects, int]:
 
         # offer
         offered_gold: int = 0
@@ -159,11 +159,11 @@ class Agent:
         request_acceptable_tiles = self.acceptable_tiles(my_desired_tiles).intersection(knowledge_tiles)
         requested_tiles = request_acceptable_tiles.union(request_desired_tiles)
         request_utility = self.utility_help_wumpus() * requested_wumpus_positions + self.utility_gold() * requested_gold + self.utility_information(
-            request_desired_tiles) + self.utility_information(request_acceptable_tiles) + ACCEPTABLE_TILE_FACTOR
+            request_desired_tiles) + self.utility_information(request_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
 
         # request no content
         if request_utility == 0:
-            return ResponseType.DENY,None, None
+            return ResponseType.DENY,None, None, 0
         # get offer
         offer_utility = 0
 
@@ -177,7 +177,7 @@ class Agent:
                     len(offer_desired_tiles) * request_utility / self.utility_information(offer_desired_tiles))
                 offered_tiles = set(list(offer_desired_tiles)[:reduced_amount])
                 return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
-                    requested_gold, list(requested_tiles), requested_wumpus_positions)
+                    requested_gold, list(requested_tiles), requested_wumpus_positions), len(request_desired_tiles)
             print(offer_desired_tiles)
             offered_tiles = offer_desired_tiles
             offer_utility += self.utility_information(offer_desired_tiles)
@@ -190,7 +190,7 @@ class Agent:
                         self.utility_information(offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR))
                 offered_tiles = offered_tiles.union(set(offer_acceptable_tiles[:reduced_amount]))
                 return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
-                    requested_gold, list(requested_tiles), requested_wumpus_positions)
+                    requested_gold, list(requested_tiles), requested_wumpus_positions), len(request_desired_tiles)
             offered_tiles = offered_tiles.union(offer_acceptable_tiles)
             offer_utility += self.utility_information(offer_acceptable_tiles) * ACCEPTABLE_TILE_FACTOR
 
@@ -203,16 +203,12 @@ class Agent:
 
         # offer ohne content
         if offer_utility == 0:
-            return ResponseType.DENY,None, None
+            return ResponseType.DENY,None, None, 0
         return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
-            requested_gold, list(requested_tiles), requested_wumpus_positions)
+            requested_gold, list(requested_tiles), requested_wumpus_positions), len(request_desired_tiles)
 
-    # TODO Henry mit Paula reden über:
-    #  1. OfferObjects:  off_tiles soll nicht tileCondition beinhalten,
-    #  weil sonst in counter_offer die TileConditions für die tiles geholt werden müssen (unnötiger Aufwand)
-    #  2. Was soll die Rückgabe von counter_offer sein, wenn kein neues Counteroffer erstellt wird? Aktuell: None
     def create_counter_offer(self, offer: Offer, desired_tiles: set[tuple[int, int]],
-                             acceptable_tiles: set[tuple[int, int]]) -> tuple[OfferedObjects, RequestedObjects]:
+                             acceptable_tiles: set[tuple[int, int]]) -> tuple[OfferedObjects, RequestedObjects, int]:
         set_off_tiles = set(offer.off_tiles)
         set_req_tiles = set(offer.req_tiles)
         # Ist ein Counteroffer noch zu machen --> ermittle Differenz der utilities
@@ -231,7 +227,7 @@ class Agent:
             request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR
         # Abbruchbedingung
         if request_utility <= offer_utility + 1:
-            return None, None
+            return None, None, 0
 
         diff_utility = request_utility - offer_utility
         current_diff_utility = diff_utility
@@ -247,17 +243,17 @@ class Agent:
         # check if utility is low enough
         if current_diff_utility <= diff_utility / 2:
             return OfferedObjects(offer.off_gold, offer_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
-                request_gold, list(request_tiles), request_wumpus_positions)
+                request_gold, list(request_tiles), request_wumpus_positions), len(request_desired_subset)
 
         if len(offer.req_tiles) > 0:
             # reduce/remove acceptable tiles
             if current_diff_utility < self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR:
                 reduced_amount = int(len(request_acceptable_subset) * current_diff_utility / (
                         self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR))
-                request_tiles = request_tiles.difference(set(list(request_acceptable_subset)[reduced_amount:]))
+                request_tiles = request_tiles.difference(set(list(request_acceptable_subset)[:reduced_amount]))
                 return OfferedObjects(offer.off_gold, offer_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold, list(request_tiles),
-                                                                                          request_wumpus_positions)
+                                                                                          request_wumpus_positions), len(request_desired_subset)
             request_tiles = request_tiles.difference(request_acceptable_subset)
             current_diff_utility -= self.utility_information(request_acceptable_subset) * ACCEPTABLE_TILE_FACTOR
 
@@ -266,25 +262,25 @@ class Agent:
                 return OfferedObjects(offer.off_gold, offer_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold,
                                                                                           list(request_tiles),
-                                                                                          request_wumpus_positions)
+                                                                                          request_wumpus_positions), len(request_desired_subset)
 
             # reduce/remove desired tiles
             if current_diff_utility < self.utility_information(request_desired_subset):
                 reduced_amount = int(len(request_desired_subset) * current_diff_utility / self.utility_information(
                     request_desired_subset))
-                request_tiles = request_tiles.difference(set(list(request_desired_subset)[reduced_amount:]))
+                request_tiles = request_tiles.difference(set(list(request_desired_subset)[:reduced_amount]))
                 return OfferedObjects(offer.off_gold, offer_tiles,
                                       list(offer.off_wumpus_positions)), RequestedObjects(request_gold,
                                                                                           list(request_tiles),
-                                                                                          request_wumpus_positions)
+                                                                                          request_wumpus_positions), reduced_amount
             request_tiles = request_tiles.difference(request_desired_subset)
             return OfferedObjects(offer.off_gold, offer_tiles, list(offer.off_wumpus_positions)), RequestedObjects(
-                request_gold, list(request_tiles), request_wumpus_positions)
+                request_gold, list(request_tiles), request_wumpus_positions), len(request_desired_subset)
 
         # req_wumpus nicht behandelt, weil anderer größere Utility davon hat als man selbst --> Reduktion von req_wumpus hilft nicht
 
         # keine Veränderung möglich, ohne negative utility
-        return None, None
+        return None, None, 0
     
 
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
@@ -296,10 +292,10 @@ class Agent:
         accept = self.accept_communication(initiator_request)
         offer, request = None, None
         if accept:
-            responsetype, offer, request = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
+            responsetype, offer, request, desired_tiles_amount = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
             
 
-        return responsetype, offer, request
+        return responsetype, offer, request, desired_tiles_amount
 
     #
     # utility
@@ -600,7 +596,7 @@ class Agent:
     # Funktion: Werte aus, ob ein Angebot eines Agentens annehmbar für den Agenten ist
     # Ausgabe: bool
     # offer: anderer bietet mir ... | request: anderer möchte ...
-    def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects):
+    def evaluate_offer(self, offer: OfferedObjects, request: RequestedObjects, desired_tiles_amount):
         # calculate give_utility
         give_utility, get_utility = 0, 0
         if request.gold > 0:
@@ -617,7 +613,7 @@ class Agent:
             get_utility += MAX_UTILITY / 2 * request.wumpus_positions
         if len(request.tiles) > 0:
             # Durch negotiating-Konzept muss keine Überprüfung der tile-Menge geamcht werden
-            give_utility += self.utility_information(request.tiles)
+            give_utility += self.utility_information(request.tiles[:desired_tiles_amount]) + self.utility_information(request.tiles[desired_tiles_amount:]) * ACCEPTABLE_TILE_FACTOR
 
         # calculate get_utility
 

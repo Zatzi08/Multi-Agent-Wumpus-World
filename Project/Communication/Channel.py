@@ -52,11 +52,11 @@ class Channel:
             print("No answers!")
             return False
         # put all accepting answers and counter-offers into new dicts
-        accepted_requests: dict[int, tuple[OfferedObjects, RequestedObjects]] = {}
+        accepted_requests: dict[int, tuple[OfferedObjects, RequestedObjects, int]] = {}
         for participant, p_answer in receiver_answers.items():
             if p_answer[0] == ResponseType.ACCEPT:
                 # verify_offer(p_answer[1], participant) # soll verify_offer was returnen oder geht das so?
-                accepted_requests.update({participant: (p_answer[1], p_answer[2])})
+                accepted_requests.update({participant: (p_answer[1], p_answer[2], p_answer[3])})
 
         # get best offer out of accepted and counteroffers
         best_utility = -1
@@ -122,12 +122,12 @@ class Channel:
             for (x, y) in a:
                 self.agents[initiator].agent.add_kill_wumpus_task(x, y)
 
-    def get_best_offer(self, offer_list: dict[int, tuple[OfferedObjects, RequestedObjects]], sender: int,
+    def get_best_offer(self, offer_list: dict[int, tuple[OfferedObjects, RequestedObjects, int]], sender: int,
                         best_utility: int):
         best_offer = None
         if len(offer_list) >= 1:
             for participant, p_answer in offer_list.items():
-                offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1])
+                offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1], p_answer[2])
                 if offer_utility > best_utility:
                     best_utility = offer_utility
                     best_offer = (participant, p_answer[0], p_answer[1])
@@ -148,9 +148,9 @@ class Channel:
         # the sender has constant request, the receivers are changing their offer to fit the sender
         negotiation_round = 0
         limit = 3
-        good_offers: dict[int, tuple[OfferedObjects,RequestedObjects]] = {}
+        good_offers: dict[int, tuple[OfferedObjects,RequestedObjects, int]] = {}
         best_utility = -1
-        best_offer: tuple[int, OfferedObjects, RequestedObjects]  = None
+        best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
 
         print("A negotiation has started!")
         while negotiation_round < limit:
@@ -160,14 +160,14 @@ class Channel:
                 print("Type of agent: " + str(type(p_agent)))
                 desired_tiles = p_agent.desired_tiles()
                 acceptable_tiles = p_agent.acceptable_tiles(desired_tiles)
-                counter_offer, counter_request = p_agent.create_counter_offer(offer, desired_tiles,acceptable_tiles)
+                counter_offer, counter_request, desired_tiles_amount = p_agent.create_counter_offer(offer, desired_tiles,acceptable_tiles)
                 # verify_offer(counter_offer, participant)
                 if counter_offer is None:
                     del receivers[participant]
                     continue
                 receivers[participant] = Offer(counter_offer, counter_request, self.agents[initiator].role)
-                if p_agent.evaluate_offer(counter_offer,counter_request) >= 0:
-                    good_offers.update({participant: (counter_offer, counter_request)})
+                if p_agent.evaluate_offer(counter_offer,counter_request, desired_tiles_amount) >= 0:
+                    good_offers.update({participant: (counter_offer, counter_request, desired_tiles_amount)})
 
 
             if len(good_offers) > 0:
