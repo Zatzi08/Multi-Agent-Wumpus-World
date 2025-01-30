@@ -37,7 +37,7 @@ def multiple_run_result_collector(simulation_count, number_of_agents: int = 5, n
         if len(agents) < number_of_agents:
             ss.append(start_seed + simulationID)
         for agent in agents.values():
-            dataArray.append([agent,
+            dataArray.append([agent.name,
                               agent.role.name,
                               simulationID,
                               meta[agent.name][AgentGoal.GOLD.value][0],
