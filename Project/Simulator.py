@@ -120,8 +120,7 @@ class Simulator:
                 agents_in_proximity: list[tuple[int, AgentRole]] = []
                 for name in names_of_agents_in_proximity:
                     agents_in_proximity.append((name, self.__agents[name].role))
-                if self.__communication_channel.communicate(agent.name, agents_in_proximity, self.__current_step):
-                    print(f"Initiator: {agent.name}, proximity: {agents_in_proximity}")
+                if agents_in_proximity and self.__communication_channel.communicate(agent.name, agents_in_proximity, self.__current_step):
                     # update knowledge of participants
                     self.__spread_knowledge(agent.name, False)
                     for (receiver, _) in agents_in_proximity:
