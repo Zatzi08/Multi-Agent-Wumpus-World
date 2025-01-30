@@ -37,6 +37,8 @@ class Agent:
     def get_knowledgebase(self):
         return self.__knowledge
 
+    def change_gold_amount(self, gold_amount):
+        self.__position[AgentItem.GOLD.value] += gold_amount
 
     def get_next_action(self) -> AgentAction:
 
@@ -284,13 +286,14 @@ class Agent:
     
 
     def answer_to_offer(self, initiator_request: RequestObject, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount) -> tuple[
-        bool, OfferedObjects, RequestedObjects]:
+        ResponseType, OfferedObjects, RequestedObjects]:
         wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.WUMPUS)
         responsetype = ResponseType.DENY
         offer, request = None, None
 
         accept = self.accept_communication(initiator_request)
         offer, request = None, None
+        desired_tiles_amount = 0
         if accept:
             responsetype, offer, request, desired_tiles_amount = self.create_offer(desired_tiles, acceptable_tiles, knowledge_tiles,gold_amount, wumpus_amount)
             

@@ -93,16 +93,20 @@ class Channel:
         # change to requested objects, getter for the request stuff
         if receiver_request.gold != 0:
             self.agents[receiver].items[AgentItem.GOLD.value] += receiver_request.gold
+            self.agents[receiver].agent.change_gold_amount(receiver_request.gold)
             self.agents[initiator].items[AgentItem.GOLD.value] -= receiver_request.gold
+            self.agents[initiator].agent.change_gold_amount(-receiver_request.gold)
 
         if receiver_offer.gold_amount != 0:
             self.agents[initiator].items[AgentItem.GOLD.value] += receiver_offer.gold_amount
+            self.agents[initiator].agent.change_gold_amount(receiver_offer.gold_amount)
             self.agents[receiver].items[AgentItem.GOLD.value] -= receiver_offer.gold_amount
+            self.agents[receiver].agent.change_gold_amount(-receiver_offer.gold_amount)
 
         if receiver_request.tiles:
             for (x, y) in receiver_request.tiles:
                 self.agents[receiver].agent.receive_tile_from_communication(x, y, self.agents[
-                    receiver].agent.receive_tile_condition(x, y))
+                    initiator].agent.receive_tile_condition(x, y))
 
         if receiver_offer.tile_information:
             for (x, y, conditions) in receiver_offer.tile_information:
