@@ -63,8 +63,7 @@ class Channel:
         best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
         best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_utility)
     
-        else:
-            print(f"best offer: Offer: {best_offer[1]} | Request: {best_offer[2]} with utility: {best_utility} from {best_offer[0]}")
+        print(f"best offer: Offer: {best_offer[1]} | Request: {best_offer[2]} with utility: {best_utility} from {best_offer[0]}")
 
         #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
