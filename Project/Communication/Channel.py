@@ -59,7 +59,7 @@ class Channel:
                 accepted_requests.update({participant: (p_answer[1], p_answer[2])})
 
         # get best offer out of accepted and counteroffers
-        best_utility = -1
+        best_utility = 0
         best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
         best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_utility)
         if best_offer is None:
@@ -128,6 +128,7 @@ class Channel:
         if len(offer_list) >= 1:
             for participant, p_answer in offer_list.items():
                 offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1])
+                print(f"Offer utility: {offer_utility}, best utility: {best_utility}")
                 if offer_utility > best_utility:
                     best_utility = offer_utility
                     best_offer = (participant, p_answer[0], p_answer[1])
