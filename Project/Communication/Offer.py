@@ -15,7 +15,7 @@ class ResponseType(Enum):
 
 
 class OfferedObjects:
-    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, list]],
+    def __init__(self, gold_amount: int, tile_information: list[tuple[int, int, frozenset]],
                  wumpus_positions: list[tuple[int, int]]):
         self.gold_amount = gold_amount
         self.tile_information = tile_information

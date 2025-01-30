@@ -124,17 +124,17 @@ class Channel:
                        best_offer: dict[int, tuple[OfferedObjects, RequestedObjects]], best_utility: int):
         if len(offer_list) >= 1:
             for participant, p_answer in offer_list.items():
-                offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[1], p_answer[2])
+                offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1])
                 if offer_utility > best_utility:
                     best_utility = offer_utility
-                    best_offer = {participant: (p_answer[1], p_answer[2])}
+                    best_offer = {participant: (p_answer[0], p_answer[1])}
 
                 # choose randomly if two offers have same utility
                 elif offer_utility == best_utility:
                     rand = random.choice([0, 1])
                     if rand == 0:
                         best_utility = offer_utility
-                        best_offer = {participant: (p_answer[1], p_answer[2])}
+                        best_offer = {participant: (p_answer[0], p_answer[1])}
 
         else:
             print(f"Everyone denied the offer from {sender}.")
