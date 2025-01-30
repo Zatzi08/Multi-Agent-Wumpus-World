@@ -40,8 +40,8 @@ class Channel:
             knowledge_tiles = self.agents[participant].agent.knowledge_tiles()
             gold_amount = self.agents[participant].items[AgentItem.GOLD.value]
             wumpus_amount = 0
-            if self.agents[participant].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER]:
-                wumpus_amount = len(self.agents[participant].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
+            if self.agents[initiator].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and request_type==RequestObject.KILL_WUMPUS:
+                wumpus_amount = len(self.agents[initiator].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
             receiver_answers.update(
                 {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
             print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
