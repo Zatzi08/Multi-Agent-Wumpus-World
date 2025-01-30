@@ -170,8 +170,8 @@ class Channel:
                     del receivers[participant]
                     continue
                 receivers[participant] = Offer(counter_offer, counter_request, self.agents[initiator].role)
-                print("Evaluate utility:", p_agent.evaluate_offer(counter_offer,counter_request), "for counteroffer", counter_offer, counter_request)
-                if p_agent.evaluate_offer(counter_offer,counter_request, desired_tiles_amount) >= 0:
+                print("Evaluate utility:", p_agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount), "for counteroffer", counter_offer, counter_request)
+                if p_agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount) >= 0:
                     good_offers.update({participant: (counter_offer, counter_request, desired_tiles_amount)})
 
 
