@@ -355,8 +355,6 @@ class Agent:
         # Abbruchbedingung: only "game over" tiles as neighbours (kann theoretisch nich eintreten)
         if len(neighbours) == 0:
             return AgentAction.SHOUT
-        if len(neighbours) == 1:
-            return neighbours[0][2][0]
         queue = [[get_heuristik(row, col, steps, goal_tiles), row, col, path] for row, col, path in neighbours]
         heapq.heapify(queue)
         pos = heapq.heappop(queue)
@@ -456,28 +454,32 @@ class Agent:
         #print(f"{self.__name} {calc_tiles}")
         # keine Goal-tiles --> geh zum besten Nachbarn
         # Case: Agent alles durchforstet und ist stuck
-        if len(calc_tiles) == 0:
-            stench_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.STENCH)
-            if len(stench_tiles) > 0:
-                path = self.__knowledge.get_path()
-                for index in range(len(path)):
-                    if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
-                        stench_tiles.discard(path[len(path)-1-index])
-                        break
-                if len(self.__last_goal_tiles.symmetric_difference(stench_tiles)) == 0 and len(self.__path_to_goal_tile) > 0:
-                    next_action = self.__path_to_goal_tile[0]
-                    self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
-                    return next_action
-                self.__last_goal_tiles = stench_tiles
-                return self.new_a_search(self.__knowledge.get_tiles_by_condition(TileCondition.STENCH))
-            return AgentAction.SHOUT
-        else:
-            if len(calc_tiles.symmetric_difference(self.__last_goal_tiles)) == 0 and len(self.__path_to_goal_tile) > 0:
+        if len(calc_tiles.symmetric_difference(self.__last_goal_tiles)) == 0:
+            if len(self.__path_to_goal_tile) > 0:
                 next_action = self.__path_to_goal_tile[0]
                 self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
                 return next_action
-            self.__last_goal_tiles = calc_tiles
-            return self.new_a_search(calc_tiles)
+            else:
+                stench_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.STENCH).copy()
+                if len(stench_tiles) > 0:
+                    path = self.__knowledge.get_path()
+                    for index in range(len(path)):
+                        if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
+                            stench_tiles.discard(path[len(path)-1-index])
+                            break
+                    self.__last_goal_tiles = stench_tiles
+                    return self.new_a_search(stench_tiles)
+                return AgentAction.SHOUT
+        for tile in self.__last_goal_tiles.copy():
+            if not (self.__knowledge.tile_has_condition(tile[0],tile[1], TileCondition.STENCH)):
+                self.__last_goal_tiles = calc_tiles
+                return self.new_a_search(calc_tiles)
+        if len(self.__path_to_goal_tile) > 0:
+            next_action = self.__path_to_goal_tile[0]
+            self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
+            return next_action
+        self.__last_goal_tiles = calc_tiles
+        return self.new_a_search(calc_tiles)
 
     # Funktion: Ermittle utility einer Menge von Feldern
     #  utility of unknown fields --> Erwartungswert
