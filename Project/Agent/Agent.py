@@ -28,8 +28,9 @@ class Agent:
         self.__available_item_space: int = 0
         self.__time = 0
         self.__map_info = map_info
-        self.__last_goal_tiles = set()
+        self.__last_goal_tiles : list= []
         self.__path_to_goal_tile = []
+        self.__stench_queue: list = []
 
     #
     # next agent move
@@ -45,6 +46,14 @@ class Agent:
         #print(f"{self.__name} : {self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()} {self.__knowledge.get_closest_unvisited_tiles()}")
 
         pos_row, pos_col = self.__position
+        if self.__knowledge.tile_has_condition(pos_row, pos_col, TileCondition.STENCH):
+            if self.__position in self.__stench_queue:
+                self.__stench_queue.remove(self.__position)
+            self.__stench_queue.append(self.__position)
+        else:
+            if self.__position in self.__stench_queue:
+                self.__stench_queue.remove(self.__position)
+
         height, width = self.__utility.get_dimensions()
 
         # on gold-tile
@@ -308,6 +317,15 @@ class Agent:
     def new_a_search(self, goal_tiles):
         def get_heuristik(pos_row, pos_col, steps, goal_tiles):
             best_heuristik, heuristik= None, None
+            if len(goal_tiles) == 1:
+                utility = None
+                if len(self.__knowledge.get_conditions_of_tile(goal_tiles[0][0], goal_tiles[0][1])) == 0:
+                    utility = self.__utility.get_utility_of_condition(-1)
+                else:
+                    for condition in self.__knowledge.get_conditions_of_tile(goal_tiles[0][0], goal_tiles[0][1]):
+                        if utility is None or utility < self.__utility.get_utility_of_condition(condition):
+                            utility = self.__utility.get_utility_of_condition(condition)
+                return float((steps + abs(pos_row - goal_tiles[0][0]) + abs(pos_col - goal_tiles[0][1])) / utility)
             for row, col in goal_tiles:
                 utility = None
                 if len(self.__knowledge.get_conditions_of_tile(row, col)) == 0:
@@ -453,32 +471,26 @@ class Agent:
         #print(f"{self.__name} {calc_tiles}")
         # keine Goal-tiles --> geh zum besten Nachbarn
         # Case: Agent alles durchforstet und ist stuck
-        if len(calc_tiles.symmetric_difference(self.__last_goal_tiles)) == 0:
+        if len(calc_tiles.symmetric_difference(set(self.__last_goal_tiles))) == 0:
             if len(self.__path_to_goal_tile) > 0:
                 next_action = self.__path_to_goal_tile[0]
                 self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
                 return next_action
             else:
-                stench_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.STENCH).copy()
-                if len(stench_tiles) > 0:
-                    path = self.__knowledge.get_path()
-                    for index in range(len(path)):
-                        if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
-                            stench_tiles.discard(path[len(path)-1-index])
-                            break
-                    self.__last_goal_tiles = stench_tiles
-                    return self.new_a_search(stench_tiles)
+                if len(self.__stench_queue) > 0:
+                    self.__last_goal_tiles = [] + [self.__stench_queue[0]]
+                    return self.new_a_search(self.__last_goal_tiles.copy())
                 return AgentAction.SHOUT
         for tile in self.__last_goal_tiles.copy():
             if not (self.__knowledge.tile_has_condition(tile[0],tile[1], TileCondition.STENCH)):
-                self.__last_goal_tiles = calc_tiles
-                return self.new_a_search(calc_tiles)
+                self.__last_goal_tiles = list(calc_tiles)
+                return self.new_a_search(self.__last_goal_tiles.copy())
         if len(self.__path_to_goal_tile) > 0:
             next_action = self.__path_to_goal_tile[0]
             self.__path_to_goal_tile = self.__path_to_goal_tile[1:]
             return next_action
-        self.__last_goal_tiles = calc_tiles
-        return self.new_a_search(calc_tiles)
+        self.__last_goal_tiles = list(calc_tiles)
+        return self.new_a_search(self.__last_goal_tiles.copy())
 
     # Funktion: Ermittle utility einer Menge von Feldern
     #  utility of unknown fields --> Erwartungswert
