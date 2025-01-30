@@ -92,7 +92,7 @@ class _Map:
         self.__kill_wumpus_tasks.add((x, y))
 
     def get_kill_wumpus_tasks(self) -> set[tuple[int, int]]:
-        for x, y in self.__kill_wumpus_tasks:
+        for x, y in self.__kill_wumpus_tasks.copy():
             if (TileCondition.SAFE in self.__map[y][x] or TileCondition.WALL in self.__map[y][x]
                     or TileCondition.PIT in self.__map[y][x] or TileCondition.STENCH in self.__map[y][x]):
                 self.__kill_wumpus_tasks.discard((x, y))

@@ -19,6 +19,15 @@ class AgentAction(Enum):
     SHOOT_DOWN: int = 8
     SHOUT: int = 9
 
+    def __lt__(self, other):
+        if type(other) != type(self):
+            raise Exception("Invalid Type")
+        return self.value < other.value
+
+    def __eq__(self, other):
+        if type(other) != type(self):
+            raise Exception("Invalid Type")
+        return self.value == other.value
 
 class AgentItem(Enum):
     GOLD: int = 0
