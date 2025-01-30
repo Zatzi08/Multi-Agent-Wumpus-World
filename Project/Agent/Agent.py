@@ -6,7 +6,7 @@ import heapq  # für a*-search
 from numpy import ndarray
 
 MAX_UTILITY = 200
-ACCEPTABLE_TILE_FACTOR = 0.6
+ACCEPTABLE_TILE_FACTOR = 0.4
 
 class Agent:
     def __init__(self, name: int, role: AgentRole, goals: set[AgentGoal], spawn_position: tuple[int, int],
@@ -317,12 +317,14 @@ class Agent:
                     for condition in self.__knowledge.get_conditions_of_tile(row, col):
                         if utility is None or utility < self.__utility.get_utility_of_condition(condition):
                             utility = self.__utility.get_utility_of_condition(condition)
-                heuristik = steps + float((abs(pos_row - row) + abs(pos_col - col)) / utility)
-                if best_heuristik is None or best_heuristik < utility:
+                heuristik = float((steps + abs(pos_row - row) + abs(pos_col - col)) / utility)
+                if best_heuristik is None or best_heuristik > heuristik:
                     best_heuristik = heuristik
-            return heuristik
+            return best_heuristik
 
         name = self.__name
+        time = self.__time
+
         pos_row, pos_col = self.__position
         visited_map = ndarray(shape=self.__utility.get_dimensions()).astype(bool)
         visited_map.fill(False)
@@ -422,7 +424,8 @@ class Agent:
                         if self.__available_item_space > 0:
                             goal_states.append(TileCondition.SHINY)
                         for condition in goal_states:
-                            calc_tiles = calc_tiles.union(self.__knowledge.get_tiles_by_condition(condition))
+                            tiles_with_condition = self.__knowledge.get_tiles_by_condition(condition)
+                            calc_tiles = calc_tiles.union(tiles_with_condition)
                     else:
                         for tiles in self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS):
                             neighbours = [(row + tiles[0], col + tiles[1]) for row, col in
@@ -459,7 +462,7 @@ class Agent:
                 path = self.__knowledge.get_path()
                 for index in range(len(path)):
                     if self.__knowledge.tile_has_condition(path[len(path)-1-index][0],path[len(path)-1-index][1], TileCondition.STENCH):
-                        stench_tiles.remove(path[len(path)-1-index])
+                        stench_tiles.discard(path[len(path)-1-index])
                         break
                 if len(self.__last_goal_tiles.symmetric_difference(stench_tiles)) == 0 and len(self.__path_to_goal_tile) > 0:
                     next_action = self.__path_to_goal_tile[0]
