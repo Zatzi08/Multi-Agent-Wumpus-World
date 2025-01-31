@@ -296,12 +296,15 @@ class KnowledgeBase:
                     self.__map.remove_condition_from_tile(x + inner_tile[0], y + inner_tile[1], prediction_condition)
                     del self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)]
                 elif self.__surrounding_danger_count[(x + inner_tile[0], y + inner_tile[1], prediction_condition)] == 1:
-                    for outer_tile in {(inner_tile[0] + tile[0], inner_tile[1] + tile[1])
-                                       for tile in SURROUNDING_TILES}:
-                        if self.__map.tile_has_condition(x + outer_tile[0], y + outer_tile[1], predicted_danger):
-                            self.__map.remove_condition_from_tile(x + outer_tile[0], y + outer_tile[1],
-                                                                  predicted_danger)
-                            self.update_tile(x + outer_tile[0], y + outer_tile[1], {real_danger})
+                    if prediction_condition == TileCondition.BREEZE:
+                        for outer_tile in {(inner_tile[0] + tile[0], inner_tile[1] + tile[1])
+                                           for tile in SURROUNDING_TILES}:
+                            if self.__map.tile_has_condition(x + outer_tile[0], y + outer_tile[1],
+                                                             TileCondition.PREDICTED_PIT):
+                                self.__map.remove_condition_from_tile(x + outer_tile[0], y + outer_tile[1],
+                                                                      TileCondition.PREDICTED_PIT)
+                                self.update_tile(x + outer_tile[0], y + outer_tile[1], {TileCondition.PIT})
+                    # for stenches: do not resolve predicted wumpus to wumpus based on other predicted wumpus
 
     def __place_stenches_or_breezes_around_danger(self, x: int, y: int, condition: TileCondition):
         match condition:
