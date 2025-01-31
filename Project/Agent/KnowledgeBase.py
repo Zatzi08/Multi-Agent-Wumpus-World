@@ -353,6 +353,15 @@ class KnowledgeBase:
         for tile_condition in conditions:
             # filter already known conditions
             if self.__map.tile_has_condition(x, y, tile_condition):
+                if tile_condition == TileCondition.SAFE:
+                    if self.__map.visited(x, y) and not self.__map.tile_has_condition(x, y, TileCondition.STENCH):
+                        for tile in SURROUNDING_TILES:
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_WUMPUS)
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.WUMPUS)
+
+                    if self.__map.visited(x, y) and not self.__map.tile_has_condition(x, y, TileCondition.BREEZE):
+                        for tile in SURROUNDING_TILES:
+                            self.__discard_and_re_predict(x + tile[0], y + tile[1], TileCondition.PREDICTED_PIT)
                 continue
             # consistency
             match tile_condition:
