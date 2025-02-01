@@ -10,7 +10,7 @@ class _Map:
         self.__visited_map: list[list[bool]] = [[False for _ in range(map_height)] for _ in range(map_width)]
         self.__tiles_by_tile_condition: list[set[tuple[int, int]]] = [set() for _ in range(len(TileCondition))]
         self.__closest_unvisited_tiles: set[tuple[int, int]] = set()
-        self.__closest_unknown_tiles_to_any_known_tiles: set[tuple[int, int]] = set()
+        self.__closest_unknown_tiles: set[tuple[int, int]] = set()
         self.__shouts: dict[tuple[int, int], int] = {}
         self.__kill_wumpus_tasks: set[tuple[int, int]] = set()
 
@@ -22,8 +22,8 @@ class _Map:
             self.__map[0][y].add(TileCondition.WALL)
             self.__map[map_width - 1][y].add(TileCondition.WALL)
 
-    def __update_closest_unknown_tiles_using_new_tile(self, x: int, y: int) -> None:
-        self.__closest_unknown_tiles_to_any_known_tiles.discard((x, y))
+    def __update_closest_unknown_tiles(self, x: int, y: int) -> None:
+        self.__closest_unknown_tiles.discard((x, y))
 
         if TileCondition.WALL in self.__map[y][x] or TileCondition.PIT in self.__map[y][x]:
             return
@@ -31,12 +31,12 @@ class _Map:
         for position in SURROUNDING_TILES:
             if self.__map[y + position[1]][x + position[0]]:
                 continue
-            self.__closest_unknown_tiles_to_any_known_tiles.add((x + position[0], y + position[1]))
+            self.__closest_unknown_tiles.add((x + position[0], y + position[1]))
 
     def add_condition_to_tile(self, x: int, y: int, condition: TileCondition) -> None:
         self.__map[y][x].add(condition)
         self.__tiles_by_tile_condition[condition.value].add((x, y))
-        self.__update_closest_unknown_tiles_using_new_tile(x, y)
+        self.__update_closest_unknown_tiles(x, y)
         if condition == TileCondition.WALL and (x, y) in self.__closest_unvisited_tiles:
             self.__closest_unvisited_tiles.discard((x, y))
 
@@ -75,8 +75,8 @@ class _Map:
     def get_closest_unvisited_tiles(self) -> set[tuple[int, int]]:
         return self.__closest_unvisited_tiles
 
-    def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
-        return self.__closest_unknown_tiles_to_any_known_tiles
+    def get_closest_unknown_tiles(self) -> set[tuple[int, int]]:
+        return self.__closest_unknown_tiles
 
     def add_shout(self, x: int, y: int, time: int) -> None:
         self.__shouts[(x, y)] = time
@@ -465,8 +465,8 @@ class KnowledgeBase:
     def get_closest_unvisited_tiles(self) -> set[tuple[int, int]]:
         return self.__map.get_closest_unvisited_tiles()
 
-    def get_closest_unknown_tiles_to_any_known_tiles(self) -> set[tuple[int, int]]:
-        return self.__map.get_closest_unknown_tiles_to_any_known_tiles()
+    def get_closest_unknown_tiles(self) -> set[tuple[int, int]]:
+        return self.__map.get_closest_unknown_tiles()
 
     #
     # AGENTS

@@ -432,7 +432,7 @@ class Agent:
                 and len(self.__knowledge.get_kill_wumpus_tasks()) > 0):
             calc_tiles = self.__knowledge.get_kill_wumpus_tasks()
         else:
-            calc_tiles = self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
+            calc_tiles = self.__knowledge.get_closest_unknown_tiles()
             calc_tiles = calc_tiles.union(self.__knowledge.get_closest_unvisited_tiles())
             calc_tiles = set(calc_tiles)
             match self.__role:
@@ -568,7 +568,7 @@ class Agent:
             pred_wumpus_tiles = self.__knowledge.get_tiles_by_condition(TileCondition.PREDICTED_WUMPUS).copy()
             # keine PREDICTED_WUMPUS tiles in der Knowledgebase --> closest unvisited tiles
             if len(pred_wumpus_tiles) == 0:
-                return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
+                return self.__knowledge.get_closest_unknown_tiles()
             # add pred_wumpus and unknown neighbours of pred_wumpus to wanted tiles
             wanted_tiles = pred_wumpus_tiles
             height, width = self.__utility.get_dimensions()
@@ -584,7 +584,7 @@ class Agent:
             return set(wanted_tiles)
 
         # BWL-Student und Cartograph übrig --> closest unvisited tiles
-        return self.__knowledge.get_closest_unknown_tiles_to_any_known_tiles()
+        return self.__knowledge.get_closest_unknown_tiles()
 
     # unknown tiles, die nicht an known/visited-tiles angrenzen
     def acceptable_tiles(self, desired_tiles: set[tuple[int, int]]):
