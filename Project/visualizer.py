@@ -9,7 +9,7 @@ agent = -1
 templateHead = '{:10s} {:15s} {:15s} {:15s}'
 template = '{:>20s} {:>20s} {:>20s} {:>20s}\n'
 
-simulator = Simulator(30, 30, 5, 200, seed=134)
+simulator = Simulator(30, 30, 5, 200, seed=140, with_communication=False)
 agents = simulator.get_agents()
 
 

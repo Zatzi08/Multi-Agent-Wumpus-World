@@ -99,7 +99,7 @@ class Simulator:
                                    self.__agents[view]), self.__goal_tracker
 
     def simulate_next_step(self, view: int):
-        print("\nstep:", self.__current_step)
+        #print("\nstep:", self.__current_step)
         if self.__current_step == self.__number_of_simulation_steps:
             return self.print_map(view)
         self.__current_step += 1

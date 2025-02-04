@@ -17,12 +17,12 @@ class Channel:
     def communicate(self, initiator, potential_receivers, step) -> bool:
         request_type = self.agents[initiator].agent.get_offer_type()
         receivers: list[int] = self.agents[initiator].agent.start_communication(potential_receivers, request_type)
-        print(f"initiator in comm: {initiator}, receivers in comm: {receivers}")
+        #print(f"initiator in comm: {initiator}, receivers in comm: {receivers}")
 
 
         # check if Communication should take place
         if not receivers:
-            print(f"{initiator} found no receivers")
+            #print(f"{initiator} found no receivers")
             return False
 
         # set sender and receivers
@@ -44,10 +44,10 @@ class Channel:
         for participant in self.participants:
             receiver_answers.update(
                 {participant: self.agents[participant].agent.answer_to_offer(request_type, desired_tiles, acceptable_tiles, knowledge_tiles, gold_amount, wumpus_amount)})
-            print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
+            #print(f"receiver: {participant}, answer: ({receiver_answers[participant][0].name}, {receiver_answers[participant][1]}, {receiver_answers[participant][2]})")
 
         if not receiver_answers:
-            print("No answers!")
+            #print("No answers!")
             return False
         # put all accepting answers and counter-offers into new dicts
         accepted_requests: dict[int, tuple[OfferedObjects, RequestedObjects, int]] = {}
@@ -61,13 +61,14 @@ class Channel:
         best_offer, best_utility = self.get_best_offer(accepted_requests, initiator, best_utility)
 
         if best_offer is not None:
-            print(f"best offer: Offer: {best_offer[1]} | Request: {best_offer[2]} with utility: {best_utility} from {best_offer[0]}")
+            #print(f"best offer: Offer: {best_offer[1]} | Request: {best_offer[2]} with utility: {best_utility} from {best_offer[0]}")
+            pass
 
         #print(f"[CFP] {best_offer.keys()} offers: {best_offer.values()} for the request {list(best_offer.values())[0][1]}") TODO: Fix
 
         # if every offer is bad, negotiate with everyone who has accepted the request or gave a counteroffer
         if best_utility < -1:
-            print(f"Sender received only bad offers. Starting negotiation!")
+            #print(f"Sender received only bad offers. Starting negotiation!")
             receiver_offers: dict[int, Offer] = {}
             for participant, offer in accepted_requests.items():
                 receiver_offer: Offer = Offer(offer[0], offer[1], self.agents[participant].role)
@@ -78,7 +79,7 @@ class Channel:
         # finish Communication (distribute offered objects)
         else:
             receiver = best_offer[0]
-            print(f"The request is completed, with {best_offer} as the accepted offer")
+            #print(f"The request is completed, with {best_offer} as the accepted offer")
             self.apply_changes(initiator, receiver, best_offer[2], best_offer[1])
             return True
 
@@ -128,7 +129,7 @@ class Channel:
         if len(offer_list) >= 1:
             for participant, p_answer in offer_list.items():
                 offer_utility = self.agents[sender].agent.evaluate_offer(p_answer[0], p_answer[1], p_answer[2])
-                print(f"Offer utility: {offer_utility}, best utility: {best_utility}")
+                #print(f"Offer utility: {offer_utility}, best utility: {best_utility}")
                 if offer_utility > best_utility or best_offer is None:
                     best_utility = offer_utility
                     best_offer = (participant, p_answer[0], p_answer[1])
@@ -141,7 +142,8 @@ class Channel:
                         best_offer = (participant, p_answer[0], p_answer[1])
 
         else:
-            print(f"Everyone denied the offer from {sender}.")
+            #print(f"Everyone denied the offer from {sender}.")
+            pass
 
         return best_offer, best_utility
 
@@ -154,38 +156,38 @@ class Channel:
         best_offer: tuple[int, OfferedObjects, RequestedObjects] = None
         desired_tiles = self.agents[initiator].agent.desired_tiles()
         acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
-        print("A negotiation has started!")
+        #print("A negotiation has started!")
         while negotiation_round < limit:
             negotiation_round += 1
             for participant, offer in receivers.copy().items():
                 p_agent = self.agents[participant].agent
-                print("Type of agent: " + str(type(p_agent)))
+                #print("Type of agent: " + str(type(p_agent)))
                 counter_offer, counter_request, desired_tiles_amount = p_agent.create_counter_offer(offer, desired_tiles,acceptable_tiles)
                 # verify_offer(counter_offer, participant)
                 if counter_offer is None:
-                    print(f"Counteroffer from {participant} is None, leaving")
+                    #print(f"Counteroffer from {participant} is None, leaving")
                     del receivers[participant]
                     continue
                 receivers[participant] = Offer(counter_offer, counter_request, self.agents[initiator].role)
-                print("Evaluate utility:", self.agents[initiator].agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount), "for counteroffer", counter_offer, counter_request)
+                #print("Evaluate utility:", self.agents[initiator].agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount), "for counteroffer", counter_offer, counter_request)
                 if self.agents[initiator].agent.evaluate_offer(counter_offer, counter_request, desired_tiles_amount) >= -1:
                     good_offers.update({participant: (counter_offer, counter_request, desired_tiles_amount)})
 
 
             if len(good_offers) > 0:
-                print("Good offers are found, looking for the best")
+                #print("Good offers are found, looking for the best")
                 best_offer, best_utility= self.get_best_offer(good_offers, initiator, best_utility)
                 break
 
         if best_offer is not None:
-            print(
-                f"The negotiation has reached an agreement with offer: {best_offer[1]} and request {best_offer[2]} from {best_offer[0]}")
+            #print(f"The negotiation has reached an agreement with offer: {best_offer[1]} and request {best_offer[2]} from {best_offer[0]}")
             receiver = best_offer[0]
 
             self.apply_changes(initiator, receiver, best_offer[2], best_offer[1])
 
         else:
-            print(f"The negotiation has failed")
+            #print(f"The negotiation has failed")
+            pass
 
 
 '''

@@ -190,7 +190,7 @@ class Agent:
                 offered_tiles = set(list(offer_desired_tiles)[:reduced_amount])
                 return ResponseType.ACCEPT,OfferedObjects(offered_gold, list(offered_tiles), offered_wumpus_positions), RequestedObjects(
                     requested_gold, list(requested_tiles), requested_wumpus_positions), len(request_desired_tiles)
-            print(offer_desired_tiles)
+            #print(offer_desired_tiles)
             offered_tiles = offer_desired_tiles
             offer_utility += self.utility_information(offer_desired_tiles)
         if len(acceptable_tiles) > 0:

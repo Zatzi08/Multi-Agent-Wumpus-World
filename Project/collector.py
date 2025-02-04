@@ -27,7 +27,7 @@ def multiple_run_result_collector(simulation_count, number_of_agents: int = 5, n
     colName = ["Agent", "Role", "Simulation", "Gold", "Killed_Wumpus", "Map_Progress"]
     dataArray = []
     ss = []
-    for simulationID in range(1, simulation_count):
+    for simulationID in range(0, simulation_count):
         simulator = Simulator(map_width, map_height, number_of_agents, number_of_simulation_steps, with_communication, start_seed + simulationID)
         print(f"seed: {start_seed + simulationID}")
         for step in range(1, number_of_simulation_steps - 1):
