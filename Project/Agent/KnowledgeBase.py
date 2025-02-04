@@ -149,6 +149,9 @@ class KnowledgeBase:
 
         # get tile condition that the surrounding tiles have to fulfill
         if tile_condition == TileCondition.PREDICTED_PIT:
+            for tile in SURROUNDING_TILES:
+                if self.__map.tile_has_condition(x + tile[0], y + tile[1], TileCondition.PIT):
+                    return False
             surrounding_tiles_condition = TileCondition.BREEZE
         else:
             # wumpus or predicted wumpus -> return if there is/was a wumpus already on surrounding tiles
