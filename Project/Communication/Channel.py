@@ -34,12 +34,15 @@ class Channel:
         receiver_answers: dict[int, tuple[ResponseType, OfferedObjects, RequestedObjects, int]] = {}
 
         # for each participant: get answer to offer, answer_to_offer -> tuple[ResponseType, OfferedObjects, RequestedObjects]
-        desired_tiles = self.agents[initiator].agent.desired_tiles()
-        acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
+        desired_tiles = set()
+        acceptable_tiles = set()
         knowledge_tiles = self.agents[initiator].agent.knowledge_tiles()
         gold_amount = self.agents[initiator].items[AgentItem.GOLD.value]
         wumpus_amount = 0
-        if self.agents[initiator].role in [AgentRole.BWL_STUDENT, AgentRole.CARTOGRAPHER] and request_type==RequestObject.KILL_WUMPUS:
+        if request_type == RequestObject.TILE_INFORMATION:
+            desired_tiles = self.agents[initiator].agent.desired_tiles()
+            acceptable_tiles = self.agents[initiator].agent.acceptable_tiles(desired_tiles)
+        if request_type == RequestObject.KILL_WUMPUS:
             wumpus_amount = len(self.agents[initiator].agent.get_knowledgebase().get_tiles_by_condition(TileCondition.WUMPUS))
         for participant in self.participants:
             receiver_answers.update(
