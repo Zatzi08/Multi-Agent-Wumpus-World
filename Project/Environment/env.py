@@ -354,7 +354,7 @@ class EnvGenerator:
 
         for px, py in pit:
             if set(grid[py][px]).intersection(
-                    {TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE}):
+                    {TileCondition.PIT, TileCondition.WUMPUS, TileCondition.SHINY, TileCondition.BREEZE, TileCondition.STENCH}):
                 continue
             grid[py][px].remove(TileCondition.SAFE)
             grid[py][px].append(TileCondition.PIT)
