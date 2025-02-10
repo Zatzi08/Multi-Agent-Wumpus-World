@@ -1,4 +1,4 @@
-# Multiagent Wumpus-World
+<h1 align="center">Multi-Agent Wumpus-World</h1>
 
 <details>
   <summary>Table of Contents</summary>
@@ -13,12 +13,13 @@
 </details>
 
 ## About the project
-is an extension of the Wumpus game by an multi-agent environment approach with
-- communication between agents
+is an extension of the Wumpus game by a multi-agent environment approach with
+- communication between agents through a channel object
 - different classes of agents with different focuses
+- A*-algorithm as the traversal algorithm through the map
 
 ### Build with
-* [![Python][Python]][Java-url]
+* [![Python][Python]][https://www.python.org/]
 
 ## Agententypen:
 -
