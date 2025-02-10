@@ -1,4 +1,4 @@
-#Multiagent Wumpus-World
+# Multiagent Wumpus-World
 
 <details>
   <summary>Table of Contents</summary>
@@ -12,14 +12,14 @@
   </ol>
 </details>
 
-##About the project
+## About the project
 is an extension of the Wumpus game by an multi-agent environment approach with
 - communication between agents
 - different classes of agents with different focuses
 
-###Build with
+### Build with
 * [![Python][Python]][Java-url]
 
-##Agententypen:
+## Agententypen:
 -
 
