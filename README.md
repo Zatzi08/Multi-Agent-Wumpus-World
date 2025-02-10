@@ -25,7 +25,32 @@ is an extension of the Wumpus game by a multi-agent environment approach with
 [![Python][Python]][Python-url]
 
 ## Agent Types:
--
+<ol>
+  <li>Hunter</li>
+  <ul>
+    <li>can kill wumpi with an arrow whose range is his von neumann neighbourhood</li>
+    <li>arrow replenishes every 32 rounds</li>
+    <li>prioritizes killing wumpi</li>
+  </ul>
+  <li>Cartograph</li>
+  <ul>
+    <li>has a map of all the tiles with condition "WALL" (ref)</li>
+    <li>prioritizes map progress</li>
+  </ul>
+  <li>Knight</li>
+  <ul>
+    <li>can kill wumpi by standing on its inhabited tile every 32 rounds</li>
+    <li>if the knight steps on a wumpi without waiting for the replenish, it dies</li>
+    <li>prioritizes gold and killing wumpi</li>
+  </ul>
+  <li>BWL-Student</li>
+  <ul>
+    <li>can sniff out gold tiles through a radius of 5 tiles</li>
+    <li>prioritizes gold</li>
+  </ul>
+</ol>
+
+## Map
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
