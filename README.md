@@ -19,7 +19,7 @@ is an extension of the Wumpus game by a multi-agent environment approach with
 - A*-algorithm as the traversal algorithm through the map
 
 ### Build with
-* [![Python][Python]][https://www.python.org/]
+* [![Python][python.org]][https://www.python.org/]
 
 ## Agententypen:
 -
