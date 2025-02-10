@@ -19,8 +19,12 @@ is an extension of the Wumpus game by a multi-agent environment approach with
 - A*-algorithm as the traversal algorithm through the map
 
 ### Build with
-* [![Python][python.org]][https://www.python.org/]
+* [![Python][Python]][Python-url]
 
 ## Agententypen:
 -
 
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[Python]: [https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[Python-url]: [https://vuejs.org/](https://www.python.org/)
