@@ -51,6 +51,7 @@ is an extension of the Wumpus game by a multi-agent environment approach with
 </ol>
 
 ## Map
+<img src="media/wumpusMap.png" width="500" height="500"/>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
