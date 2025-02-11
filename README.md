@@ -17,14 +17,23 @@
 
 ## About the project
 is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) by a multi-agent environment approach with
-- communication between agents through a channel object
+- communication between agents
 - different classes of agents with different focuses
-- A*-algorithm as the traversal algorithm through the map
+- A*-algorithm (heuristic: utility function coupled with the Manhatten distance) as the traversal algorithm through the map
 
 ### Build with
 [![Python][Python]][Python-url]
 
-## Agent Types:
+### Rough structural diagram
+<img src="media/wumpusStructure.png" width="500" height="350"/>
+
+## Agents
+<ul>
+  <li>in general the agents are risk-avoidant in the context of exploring the map, meaning they won't walk on ◊Wumpus or ◊Pit tiles (for context see section <a href="##map">Map</a>)</li>
+  <li>agents were implemented as being selfish as they follow their own goal</li>
+</ul>
+
+### Agent classes
 <ol>
   <li>Hunter</li>
   <ul>
@@ -54,23 +63,22 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 <table>
   <tr>
     <td><img src="media/wumpusMap.png" width="500" height="500"/>
-    <td>🟥 <strong>Red:</strong> Wumpus<br>🟩 <strong>Green:</strong> Stench<br>🟦 <strong>Blue:</strong> Pit<br>🟦 <strong>Light Blue:</strong> Breeze<br>🟨 <strong>Yellow:</strong> Shiny<br>🟠 <strong>Orange:</strong> Agent
+    <td>⬛ <strong>Black:</strong> Wall<br>🟥 <strong>Red:</strong> Wumpus<br>🟩 <strong>Green:</strong> Stench<br>🟦 <strong>Blue:</strong> Pit<br>🟦 <strong>Light Blue:</strong> Breeze<br>🟨 <strong>Yellow:</strong> Shiny<br>🟠 <strong>Orange:</strong> Agent
       </ul>
     </td>
   </tr>
 </table>
 
-### Quick explanation of the world
+### Brief explanation of the world
 <ul>
   <li>a wumpus is always surrounded by stenches</li>
   <li>a pit is always surrounded by breezes</li>
   <li>stepping on a wumpus tile or a pit tile leads to the agent dying</li>
+  <li>walls cannot be stepped upon
   <li>collecting gold by stepping on it stores it inside the agents inventory</li>
 </ul>
 
 ## Knowledge Base
-### Possible states of a field (in der Wissensbasis)
-
 ### Possible states of a field (in der Wissensbasis)
 
 <table>
@@ -116,7 +124,46 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   <li>predictions are marked accordingly in the map through pink for "◊Wumpus" and teal for "◊Pit"</li>
 </ul>
 
+### Example prediction
+<img src="media/examplePrediction.png" width="750" height="250"/>
 
+## Communication
+<ul>
+  <li>communication (1:n) happens if it helps the agent to achieve his goal quicker</li>
+  <li>the trading objects that can be exchanged in a communication are</li>
+  <ul>
+    <li>gold</li>
+    <li>tile information</li>
+    <li>wumpus kill tasks</li>
+  </ul>
+  <li>agents can only communicate with agents on the same tile</li>
+  <li>if an agent wants to initiate a communication, it creates a channel</li>
+  <li>the implementation of the communication follows the contract net protocol</li>
+  <li>here a brief sequence of steps after the initialization of the channel</li>
+  <ol>
+    <li>initiator requests a trading object</li>
+    <li>participants decide if to join the communication</li>
+    <li>if joined, they will give their offers</li>
+    <li>initiator evaluates offer</li>
+    <li>if satisfying offers found, choose the best</li>
+    <li>if no satisfying offers found $\forall$ participants, go into negotiation (max 3 rounds)</li>
+  </ol>
+  <li>to briefly summarize the negotiation: the initiator asks for new offers and the process repeats itself; if an agent does not have a better offer, it leaves the communication entirely</li>
+  <li>if no satisfying deal is found after the 3 negotiation rounds, the communication is discontinued without a result</li>
+</ul>
+
+## How to use
+  1. Clone the repository
+  ```sh
+  git clone https://github.com/Zatzi08/Wumpus.git
+  ```
+  2. Install requirements (make sure you have the right Python version)
+  ```sh
+  pip install -r .\requirements.txt
+  ```
+  3. Run `visualizer.py` to start the Dash App
+  4. Copy the local host url that Dash created from the console into your prefered browser
+  5. enjoy
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
