@@ -169,7 +169,10 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   <li>if no satisfying deal is found after the 3 negotiation rounds, the communication is discontinued without a result</li>
 </ul>
 
-## Demo
+## Demo (both gifs aren't synchronized)
+| **Full View** | **Agent View** |
+|:------------:|:-------------:|
+| ![](media/wumpusFullMapView.gif) | ![](media/wumpusAgentView.gif) |
 
 
 ## How to use
@@ -183,7 +186,10 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   ```
   3. Run `visualizer.py` to start the Dash App
   4. Copy the local host url that Dash created from the console into your prefered browser
-  5. enjoy
+  5. if changing the parameters of the Simulator is desired change this line of code in the `visualizer.py`
+  ```py
+  simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
+  ```
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
