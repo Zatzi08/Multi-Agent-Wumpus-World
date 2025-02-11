@@ -7,11 +7,25 @@
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
+        <li><a href="#rough-structural-diagram">Rough structural diagram</a>
       </ul>
     </li>
     <li>
-      <a href="#agent-types">Agent Types</a>
+      <a href="#agents">Agents</a>
+      <ul>
+        <li><a href="#agent-classes">Agent classes</a></li>
+      </ul>
     </li>
+    <li><a href="#map">Map</a></li>
+    <ul>
+      <li><a href="#brief-explanation-of-the-world">Brief explanation of the world</a></li>
+    </ul>
+    <li><a href="#knowledge-base">Knowledge Base</a></li>
+    <ol>
+      <li><a href="#possible-states-of-a-field">Possible states of a field</a></li>
+      <li><a href="#example-prediction">Example prediction</a></li>
+    </ol>
+    <li><a href="#how-to-use">How to use</a></li>
   </ol>
 </details>
 
@@ -29,7 +43,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 
 ## Agents
 <ul>
-  <li>in general the agents are risk-avoidant in the context of exploring the map, meaning they won't walk on ◊Wumpus or ◊Pit tiles (for context see section <a href="##map">Map</a>)</li>
+  <li>in general the agents are risk-avoidant in the context of exploring the map, meaning they won't walk on ◊Wumpus or ◊Pit tiles (for context see section <a href="#map">Map</a>)</li>
   <li>agents were implemented as being selfish as they follow their own goal</li>
 </ul>
 
@@ -79,7 +93,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 </ul>
 
 ## Knowledge Base
-### Possible states of a field (in der Wissensbasis)
+### Possible states of a field
 
 <table>
   <tr>
