@@ -1,5 +1,8 @@
 <h1 align="center">Multi-Agent Wumpus-World</h1>
-
+<div align="center">
+  
+[![Unlicense License][license-shield]][license-url]
+</div>
 <details>
   <summary>Table of Contents</summary>
   <ol>
@@ -166,6 +169,9 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   <li>if no satisfying deal is found after the 3 negotiation rounds, the communication is discontinued without a result</li>
 </ul>
 
+## Demo
+
+
 ## How to use
   1. Clone the repository
   ```sh
@@ -181,3 +187,5 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
+[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
+[license-url]: https://github.com/Zatzi08/Wumpus/blob/main/LICENSE
