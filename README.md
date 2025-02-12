@@ -192,12 +192,12 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   ```py
   simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_MAX_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
   ```
-   - `MAP_WIDTH`: sets the map width
-   - `MAP_HEIGHT`: sets the map height
-   - `NUMBER_OF_AGENTS`: spawns agents in random spawn locations (excluding pit, wumpus and wall tiles) with agent classes being randomly chosen 
-   - `NUMBER_OF_MAX_SIMULATION_STEPS`: upper border; after the specified number is reached, no further steps are calculated (view remains unchanged)
-   - `seed`: seed to allow for reproducibility of a simulation
-   - `with_communication`: choose if communication is allowed; if set to `true`, it will be logged inside the console
+`MAP_WIDTH`: sets the map width
+`MAP_HEIGHT`: sets the map height
+`NUMBER_OF_AGENTS`: spawns agents in random spawn locations (excluding pit, wumpus and wall tiles) with agent classes being randomly chosen 
+`NUMBER_OF_MAX_SIMULATION_STEPS`: upper border; after the specified number is reached, no further steps are calculated (view remains unchanged)
+`seed`: seed to allow for reproducibility of a simulation
+`with_communication`: choose if communication is allowed; if set to `true`, it will be logged inside the console
 
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
