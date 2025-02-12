@@ -38,11 +38,11 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 - different classes of agents with different focuses
 - A*-algorithm (heuristic: utility function coupled with the Manhatten distance) as the traversal algorithm through the map
 
-### Build with
-[![Python][Python]][Python-url]
-
 ### Rough structural diagram
 <img src="media/wumpusStructure.png" width="500" height="350"/>
+
+### Build with
+[![Python][Python]][Python-url]
 
 ## Agents
 <ul>
