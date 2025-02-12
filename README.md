@@ -180,6 +180,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   1. Clone the repository
   ```sh
   git clone https://github.com/Zatzi08/Wumpus.git
+  cd Wumpus
   ```
   2. Install requirements (make sure you have the right Python version)
   ```sh
@@ -189,7 +190,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   4. Copy the local host url that Dash created from the console into your prefered browser
   5. if changing the parameters of the Simulator is desired change this line of code in the `visualizer.py`
   ```py
-  simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
+  simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_MAX_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
   ```
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
