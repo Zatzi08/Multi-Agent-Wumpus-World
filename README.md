@@ -174,7 +174,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 |:------------:|:-------------:|
 | ![](media/wumpusFullMapView.gif) | ![](media/wumpusAgentView.gif) |
 
-(you can hover over every tile and get information about the tile, condition[s] and agents)
+*(you can hover over every tile and get information about the tile, condition[s] and agents)*
 
 ## How to use
   1. Clone the repository
