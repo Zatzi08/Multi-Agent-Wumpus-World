@@ -182,7 +182,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   git clone https://github.com/Zatzi08/Wumpus.git
   cd Wumpus
   ```
-  2. Install requirements (make sure you have the right Python version)
+  2. Install requirements (requires Python 3.12+)
   ```sh
   pip install -r .\requirements.txt
   ```
