@@ -188,10 +188,14 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   ```
   3. Run `visualizer.py` to start the Dash App
   4. Copy the local host url that Dash created from the console into your prefered browser
-  5. if changing the parameters of the Simulator is desired change this line of code in the `visualizer.py`
+  5. if changing the parameters of the Simulator is desired change this line of code in `visualizer.py`
   ```py
   simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_MAX_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
   ```
+   - *`NUMBER_OF_MAX_SIMULATION_STEPS` means that after the specified number is reached, no further steps are calculated (view remains unchanged)*
+   - *if communication is set to `true`, the communication will be logged inside the console if occuring*
+   - *`NUMBER_OF_AGENTS` spawns agents in random spawn locations inside the map (excluding pit, wumpus and wall tiles) with agent classes being randomly chosen 
+
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
