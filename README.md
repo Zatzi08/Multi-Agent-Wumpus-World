@@ -173,6 +173,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 | **Full View** | **Agent View** |
 |:------------:|:-------------:|
 | ![](media/wumpusFullMapView.gif) | ![](media/wumpusAgentView.gif) |
+
 (you can hover over every tile and get information about the tile, condition[s] and agents)
 
 ## How to use
