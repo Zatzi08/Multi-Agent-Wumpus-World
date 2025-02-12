@@ -192,12 +192,38 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   ```py
   simulator = Simulator(MAP_WIDTH, MAP_HEIGHT, NUMBER_OF_AGENTS, NUMBER_OF_MAX_SIMULATION_STEPS, seed=SEED, with_communication=INSERT_BOOLEAN)
   ```
-`MAP_WIDTH`: sets the map width\
-`MAP_HEIGHT`: sets the map height\
-`NUMBER_OF_AGENTS`: spawns agents in random spawn locations (excluding pit, wumpus and wall tiles) with agent classes being randomly chosen\
-`NUMBER_OF_MAX_SIMULATION_STEPS`: upper border; after the specified number is reached, no further steps are calculated (view remains unchanged)\
-`seed`: seed to allow for reproducibility of a simulation\
-`with_communication`: choose if communication is allowed; if set to `true`, it will be logged inside the console
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>MAP_WIDTH</code></td>
+      <td>sets the map width</td>
+    </tr>
+    <tr>
+      <td><code>MAP_HEIGHT</code></td>
+      <td>sets the map height</td>
+    </tr>
+    <tr>
+      <td><code>NUMBER_OF_AGENTS</code></td>
+      <td>spawns agents in random spawn locations (excluding pit, wumpus, and wall tiles) with agent classes being randomly chosen</td>
+    </tr>
+    <tr>
+      <td><code>NUMBER_OF_MAX_SIMULATION_STEPS</code></td>
+      <td>upper border; after the specified number is reached, no further steps are calculated (view remains unchanged)</td>
+    </tr>
+    <tr>
+      <td><code>seed</code></td>
+      <td>seed to allow for reproducibility of a simulation</td>
+    </tr>
+    <tr>
+      <td><code>with_communication</code></td>
+      <td>choose if communication is allowed; if set to true, it
+
 
 <!-- MARKDOWN LINKS & IMAGES -->
 [Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
