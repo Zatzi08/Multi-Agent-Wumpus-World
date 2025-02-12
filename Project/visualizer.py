@@ -9,7 +9,7 @@ agent = -1
 templateHead = '{:10s} {:15s} {:15s} {:15s}'
 template = '{:>20s} {:>20s} {:>20s} {:>20s}\n'
 
-simulator = Simulator(30, 30, 5, 200, seed=140, with_communication=False)
+simulator = Simulator(60, 60, 10, 200, seed=140, with_communication=False)
 agents = simulator.get_agents()
 
 
@@ -51,30 +51,37 @@ def update_graph(n_clicks, agent, value):
 
 
 def set_layout(plt, text):
-    app.layout = [html.Div(
+    app.layout = html.Div(
         dbc.Row(
             [
-                dbc.Col(html.Div(dcc.Graph(figure=plt, id="graph")), style={'width': 'auto'}),
-                dbc.Col(html.Div([
+                dbc.Col(
+                    html.Div(dcc.Graph(figure=plt, id="graph"), style={'width': '100%'}),
+                    width={'size': 12, 'sm': 6, 'md': 6, 'lg': 6},
+                ),
+                dbc.Col(
                     html.Div([
-                        dcc.Markdown(templateHead.format('Name', "Gold owned", "Wumpus killed", "Map Progress"),
-                                     id="junk", style={'white-space': 'pre', 'position': 'sticky', 'margin-top': 150}),
-                        dcc.Markdown(children=text,
-                                     id="log",
-                                     style={'width': 600, 'height': 500, 'white-space': 'pre', 'overflow': 'auto', 'margin-top': -20, 'margin-left': 30})],
-                        style={}),
-                    html.Div(dcc.Dropdown(id='agent_choice', options=[
-                                                                         {'label': 'All', 'value': -1}] + [
-                                                                         {'label': ag.name, 'value': ag.name} for ag in
-                                                                         agents.values()]
-                                          , value=-1, style={'textAlign': 'center', 'margin-right': 15, 'width': 150})),
-                    dbc.Input(id='count', value=1, type='number', style={'margin-right': 15}),
-                    html.Button('Next', id='submit-next', n_clicks=0,
-                                style={'margin-right': 15, 'width': 150, 'margin-top': 15})
-                ], style={'display': 'inline-block'}), style={'width': 'auto'})
-            ], justify="evenly", style={'display': 'inline-flex', 'width': 'auto'}
-        ), style={'display': 'inline-flex', 'width': 'auto'}
-    )]
+                        html.Div([
+                            dcc.Markdown(templateHead.format('Name', "Gold owned", "Wumpus killed", "Map Progress"),
+                                         id="junk", style={'white-space': 'pre', 'position': 'sticky', 'margin-top': 150}),
+                            dcc.Markdown(children=text, id="log", style={'width': '100%', 'height': 500, 'white-space': 'pre', 'overflow': 'auto', 'margin-top': -20, 'margin-left': 30})
+                        ], style={'margin-top': '20px'}),
+                        html.Div(
+                            dcc.Dropdown(id='agent_choice', placeholder='Select agent view', options=[{'label': 'Full Map View', 'value': -1}] + [{'label': f"Agent view: {ag.name}", 'value': ag.name} for ag in agents.values()],
+                                         value=-1, style={'textAlign': 'center', 'margin-right': 15, 'width': '100%'}),
+                            style={'margin-bottom': '20px'}
+                        ),
+                        dbc.Input(id='count', value=1, type='number',
+                                  style={'width': '50%'}),
+                        html.Button('Next', id='submit-next', n_clicks=0,
+                                    style={'width': '46%'})
+                    ], style={'display': 'inline-block', 'width': '100%', 'max-width': '600px'}),
+                    width={'size': 12, 'sm': 6, 'md': 6, 'lg': 6}
+                ),
+            ],
+            justify="center", align="center", style={'min-height': '100vh', 'display': 'flex'}
+        ),
+        style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center'}
+    )
 
 def start_layout(plt, meta):
     s = ""
