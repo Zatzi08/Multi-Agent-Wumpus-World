@@ -178,12 +178,13 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 *(you can hover over every tile and get information about the tile, conditions and agents)*
 
 ## How to use
+*Requirements: Python 3.12*
   1. Clone the repository
   ```sh
   git clone https://github.com/Zatzi08/Wumpus.git
   cd Wumpus
   ```
-  2. Install requirements (requires Python 3.12+)
+  2. Install requirements
   ```sh
   pip install -r .\requirements.txt
   ```
