@@ -28,6 +28,7 @@
       <li><a href="#possible-states-of-a-field">Possible states of a field</a></li>
       <li><a href="#example-prediction">Example prediction</a></li>
     </ol>
+    <li><a href="#demo">Demo</a></li>
     <li><a href="#how-to-use">How to use</a></li>
   </ol>
 </details>
@@ -169,12 +170,12 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   <li>if no satisfying deal is found after the 3 negotiation rounds, the communication is discontinued without a result</li>
 </ul>
 
-## Demo (both gifs aren't synchronized)
+## Demo
 | **Full View** | **Agent View** |
 |:------------:|:-------------:|
 | ![](media/wumpusFullMapView.gif) | ![](media/wumpusAgentView.gif) |
 
-*(you can hover over every tile and get information about the tile, condition[s] and agents)*
+*(you can hover over every tile and get information about the tile, conditions and agents)*
 
 ## How to use
   1. Clone the repository
