@@ -61,7 +61,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
   </ul>
   <li>Cartograph</li>
   <ul>
-    <li>has a map of all the tiles with condition "WALL" (ref)</li>
+    <li>has a map of all the tiles with condition <code>WALL</code></li>
     <li>prioritizes map progress</li>
   </ul>
   <li>Knight</li>
@@ -148,7 +148,7 @@ is an extension of the [wumpus game](https://de.wikipedia.org/wiki/Wumpus-Welt) 
 ## Communication
 <ul>
   <li>communication (1:n) happens if it helps the agent to achieve his goal quicker</li>
-  <li>the trading objects that can be exchanged in a communication are</li>
+  <li>the trading objects that can be exchanged in a communication are either</li>
   <ul>
     <li>gold</li>
     <li>tile information</li>
